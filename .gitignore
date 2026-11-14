@@ -1,0 +1,27 @@
+# Build output
+target/
+
+# Maven Wrapper downloads
+.mvn/wrapper/maven-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+nbproject/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs and local data
+*.log
+/uploads/
+
+# Local configuration and secrets
+.env
+application-local.yml
+application-local.properties

@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: bookstore
+  threads:
+    virtual:
+      enabled: true
+  messages:
+    basename: messages
+    encoding: UTF-8
+    fallback-to-system-locale: false
+  web:
+    locale: tr

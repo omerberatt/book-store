@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.bookstore</groupId>
+        <artifactId>bookstore-parent</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>bookstore-persistence</artifactId>
+    <name>Book Store :: Persistence</name>
+    <description>JDBC implementations of the repository interfaces and the database schema.</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.bookstore</groupId>
+            <artifactId>bookstore-application</artifactId>
+        </dependency>
+    </dependencies>
+</project>
