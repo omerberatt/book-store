@@ -14,11 +14,12 @@ Phases 0–3 were built before the course notes were adopted. The code still liv
 - One module with its dependencies: `./mvnw -B -ntp -pl <module> -am verify`
 - Requires JDK 21. On this machine: `C:\Program Files\Eclipse Adoptium\jdk-21.0.13.9-hotspot`. Maven comes from the wrapper.
 
-## Workflow (ADR-0001)
+## Workflow (ADR-0017)
 
-- Gitflow: `main` (released), `develop` (next release). Work on `feature/<name>` branches cut from `develop`, merged back by Pull Request with `--no-ff`. No direct commits to `main` or `develop`. Release tags use CalVer: `v2026.11.1`.
+- Work directly on `main`: commit and push to `main`. Do not create `develop`, `feature/*`, `release/*` or `hotfix/*` branches and do not open Pull Requests unless the user asks. (ADR-0001 adopted Gitflow; ADR-0017 replaced it at the owner's request.)
+- Every commit pushed to `main` passes `./mvnw verify`. Keep each phase or phase step in its own commit. If a release is made, tag `main` with CalVer: `v2026.11.1`.
 - Commit messages in English, imperative, one topic each.
-- A change that makes or changes an architectural decision adds or amends an ADR in `docs/adr/` in the same Pull Request. Accepted ADRs are never deleted; superseded points get a dated note.
+- A change that makes or changes an architectural decision adds or amends an ADR in `docs/adr/` in the same commit. Accepted ADRs are never deleted; superseded points get a dated note.
 - If a curriculum topic moves or a planned class name changes, update `docs/CURRICULUM-MAP.md` in the same change.
 
 ## Target architecture

@@ -22,7 +22,7 @@ Book Store, tek bir uygulama olarak dağıtılan, içi iş alanlarına göre mod
 | Transaction | JTA `@Transactional` *(Faz 4–5'te `TransactionRunner` portu)* | 0008, 0010 |
 | Arayüz | WAR içinde HTML, CSS, JavaScript; REST API'nin istemcisi | 0011 |
 | Test | JUnit, AssertJ, ArchUnit, Testcontainers, JerseyTest | 0003, 0008, 0010 |
-| Dal stratejisi | Gitflow, CalVer etiketleri | 0001 |
+| Dal stratejisi | Doğrudan `main`, yayınlarda CalVer etiketi | 0017 |
 
 ## 2. Modüller
 
@@ -237,15 +237,15 @@ Ayrıntıları ve ArchUnit karşılıkları ADR-0004 ve ADR-0005'tedir:
 
 | Konu | Bugün *(Faz 3 sonu)* | Hedef | Adım |
 | --- | --- | --- | --- |
-| Modüller | Katmana göre altı modül | İş alanına göre beş modül + `app` + mimari testler | 4.2 |
-| Ortak modül | `bookstore-common` | `shared-kernel` | 4.2 |
-| Web | Spring Boot iskeleti, Thymeleaf ana sayfası | Payara Micro, JAX-RS, statik arayüz | 4.2, 5, 6, 7 |
-| Mimari kurallar | Maven bağımlılıkları ve elle `grep` | ArchUnit | 4.3 |
-| Kimlikler | `long` | Tipli kimlikler | 4.4 |
-| Hatalar | `BookstoreException` alt türleri | `DomainException` + `Kind` + `code` | 4.4 |
-| Arama ölçütü | `Optional` bileşenli `BookSearchCriteria` | `Specification<Book>` | 4.3, 4.4 |
-| Servis sonuçları | Application paketinde okuma modeli `record`'ları | `api` paketinde DTO'lar, façade'lar, mapper'lar | 4.5 |
-| Bildirim | `Notifier` portu | `DomainEventPublisher` + gözlemciler | 4.6 |
-| Veritabanı | H2 MySQL modu, tek migration dosyası, `CHECK` içinde `CASE` | PostgreSQL 17, modül başına migration, referans tablolar | 4.7 |
-| Repository testleri | Implementasyon başına ayrı testler | Ortak sözleşme testleri | 4.7 |
+| Modüller | Katmana göre altı modül | İş alanına göre beş modül + `app` + mimari testler | 4.1 |
+| Ortak modül | `bookstore-common` | `shared-kernel` | 4.1 |
+| Web | Spring Boot iskeleti, Thymeleaf ana sayfası | Payara Micro, JAX-RS, statik arayüz | 4.1, 5, 6, 7 |
+| Mimari kurallar | Maven bağımlılıkları ve elle `grep` | ArchUnit | 4.2 |
+| Kimlikler | `long` | Tipli kimlikler | 4.3 |
+| Hatalar | `BookstoreException` alt türleri | `DomainException` + `Kind` + `code` | 4.3 |
+| Arama ölçütü | `Optional` bileşenli `BookSearchCriteria` | `Specification<Book>` | 4.2, 4.3 |
+| Servis sonuçları | Application paketinde okuma modeli `record`'ları | `api` paketinde DTO'lar, façade'lar, mapper'lar | 4.4 |
+| Bildirim | `Notifier` portu | `DomainEventPublisher` + gözlemciler | 4.5 |
+| Veritabanı | H2 MySQL modu, tek migration dosyası, `CHECK` içinde `CASE` | PostgreSQL 17, modül başına migration, referans tablolar | 4.6 |
+| Repository testleri | Implementasyon başına ayrı testler | Ortak sözleşme testleri | 4.6 |
 | Transaction | `TransactionRunner` portu, `JdbcTransactionRunner` | JTA `@Transactional` | 6 |

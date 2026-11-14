@@ -8,13 +8,13 @@ ADR-0003 ile ADR-0010 arası, ders notlarındaki aynı numaralı ADR'lerin konul
 
 - Kabul edilmiş bir ADR silinmez. Değişen bir madde için yeni bir ADR yazılır ve eski ADR'ye tarihli bir **Not** düşülür *(dersteki "ADR-0010 ile 3. madde güncellendi" notları gibi)*.
 - Bir ADR'nin **Doğrulama** tablosundaki her satır ya bir ArchUnit kuralına ya da bir teste karşılık gelir. Karşılığı henüz yazılmamış satırlar *(planlı)* olarak işaretlenir.
-- Yeni bir ADR, onu gerektiren kod değişikliğiyle aynı Pull Request'te gelir.
+- Yeni bir ADR, onu gerektiren kod değişikliğiyle aynı commit'te gelir.
 
 ## Liste
 
 | ADR | Başlık | Ders bölümü | Durum |
 | --- | --- | --- | --- |
-| [0001](ADR-0001.md) | Gitflow ve Sürümleme | 1, 2 | Kabul edildi |
+| [0001](ADR-0001.md) | Gitflow ve Sürümleme | 1, 2 | Yerini aldı (0017) |
 | [0002](ADR-0002.md) | İş Alanına Göre Maven Modülleri | 6, 9 | Kabul edildi |
 | [0003](ADR-0003.md) | Modül ve Paket Bağımlılıklarının Yönü | 9 | Kabul edildi |
 | [0004](ADR-0004.md) | Domain Modeli ve Paylaşılan Çekirdek Kuralları | 2, 3, 4, 7 | Kabul edildi |
@@ -30,6 +30,7 @@ ADR-0003 ile ADR-0010 arası, ders notlarındaki aynı numaralı ADR'lerin konul
 | [0014](ADR-0014.md) | Sipariş Öncesi Sepet Kontrolü | 10 | Kabul edildi |
 | [0015](ADR-0015.md) | İyimser Kilitleme | 12, 14 | Kabul edildi |
 | [0016](ADR-0016.md) | Türkçe Duyarsız Arama İçin Normalleştirilmiş Anahtarlar | 4, 12 | Kabul edildi |
+| [0017](ADR-0017.md) | Doğrudan main Üzerinde Çalışma | 1, 2 | Kabul edildi |
 
 ## Eski karar numaraları
 

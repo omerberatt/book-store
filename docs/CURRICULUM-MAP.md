@@ -21,8 +21,8 @@ Faz numaraları [ROADMAP.md](ROADMAP.md) içindeki aşamalardır; ADR'ler [docs/
 
 | Konu | Kitap mağazasında | Durum | Faz |
 | --- | --- | --- | --- |
-| Gitflow: `main`, `develop`, `feature/*`, `release/*`, `hotfix/*` | [ADR-0001](adr/ADR-0001.md). Faz 0–3 doğrudan `main`'e yapıldı. | ⏳ | 4 |
-| Sürüm etiketleri, CalVer | `v2026.11.1` biçimi *(ADR-0001)* | ⏳ | 4 |
+| Gitflow: `main`, `develop`, `feature/*`, `release/*`, `hotfix/*` | Bilinçli olarak uygulanmıyor; proje doğrudan `main` üzerinde ilerliyor *([ADR-0017](adr/ADR-0017.md); Gitflow'u kabul eden [ADR-0001](adr/ADR-0001.md) uygulanmadan değiştirildi)* | — | — |
+| Sürüm etiketleri, CalVer | Yayın yapıldığında `main` üzerinde `v2026.11.1` biçimi *(ADR-0017)* | ⏳ | yayında |
 | POJO'dan değişmez *(immutable)* iş nesnesine | `Money`, `Isbn`, `Email`, `PersonName`, `Address`, `Stock`, `Rating` (`record`) | ✅ | 1 |
 | Kurucuda doğrulama, `final` sınıf | Değer nesnelerinin compact constructor'ları; `shared-kernel` `Guard` | ✅ | 1 |
 | Boş `catch` ile hatayı yutmamak | Exception'lar sarılıp yeniden fırlatılıyor *(`DataAccessException`)* | ✅ | 3 |
@@ -32,7 +32,7 @@ Faz numaraları [ROADMAP.md](ROADMAP.md) içindeki aşamalardır; ADR'ler [docs/
 
 | Konu | Kitap mağazasında | Durum | Faz |
 | --- | --- | --- | --- |
-| Feature dalı, `--no-ff` merge, Pull Request | [ADR-0001](adr/ADR-0001.md) | ⏳ | 4 |
+| Feature dalı, `--no-ff` merge, Pull Request | Bilinçli olarak uygulanmıyor *(ADR-0017)* | — | — |
 | Anemik model ve sorunları | Domain baştan zengin tasarlandı; anemik karşı örnek tutulmuyor | — | — |
 | Value object, `equals` / `hashCode` | `record`'lar değere göre; `Entity` kimliğe göre eşit *(`EntityTest`)* | ✅ | 1 |
 | Class ile record karşılaştırması | Değer nesneleri `record`; kimliği olan varlıklar sınıf | ✅ | 1 |

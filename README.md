@@ -12,7 +12,7 @@ Projenin amacı: çalışan bir e-ticaret uygulaması ortaya koymak.
 | --- | --- |
 | [SPEC.md](docs/SPEC.md) | Sistem ne yapar: aktörler, gereksinimler, kapsam dışı kalanlar |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Hedef mimari: modüller, paketler, uygulama sunucusu, veritabanı, test |
-| [adr/](docs/adr/README.md) | Mimari karar kayıtları *(ADR-0001 – ADR-0016)* |
+| [adr/](docs/adr/README.md) | Mimari karar kayıtları *(ADR-0001 – ADR-0017)* |
 | [CURRICULUM-MAP.md](docs/CURRICULUM-MAP.md) | Ders notlarının her bölümü projenin neresinde |
 | [ROADMAP.md](docs/ROADMAP.md) | Fazlar ve sıradaki adımlar |
 
@@ -55,4 +55,4 @@ mvnw.cmd verify
 
 ## Geliştirme akışı
 
-Gitflow kullanılır *([ADR-0001](docs/adr/ADR-0001.md))*: işler `develop`'tan açılan `feature/<ad>` dallarında yapılır ve Pull Request ile `develop`'a birleştirilir. Yayınlar `main` üzerinde `v2026.11.1` biçiminde etiketlenir.
+Değişiklikler doğrudan `main` dalına gönderilir *([ADR-0017](docs/adr/ADR-0017.md))*; `main`'e giden her commit'te `./mvnw verify` geçer. Yayınlar `main` üzerinde `v2026.11.1` biçiminde etiketlenir.

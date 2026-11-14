@@ -1,6 +1,6 @@
 # Yol Haritası
 
-Fazlar, ders notlarının *([java-study-notes](https://github.com/software-lecture-labs/java-study-notes), Bölüm 01–14)* sırasını izler: önce iş nesneleri ve kurallar, sonra modül sınırları, servisler, olaylar, kalıcılık, HTTP sınırı ve en son uygulama sunucusu. Her faz `develop` dalından açılan bir ya da birkaç `feature/*` dalında yapılır *(ADR-0001)*. Her fazın sonunda `./mvnw verify` Docker olmadan geçer.
+Fazlar, ders notlarının *([java-study-notes](https://github.com/software-lecture-labs/java-study-notes), Bölüm 01–14)* sırasını izler: önce iş nesneleri ve kurallar, sonra modül sınırları, servisler, olaylar, kalıcılık, HTTP sınırı ve en son uygulama sunucusu. Değişiklikler doğrudan `main`'e gönderilir; her faz ya da faz adımı kendi commit'indedir *(ADR-0017)*. Her commit'te `./mvnw verify` Docker olmadan geçer.
 
 Hangi konunun hangi fazda işlendiği [CURRICULUM-MAP.md](CURRICULUM-MAP.md) içindedir.
 
@@ -10,7 +10,7 @@ Hangi konunun hangi fazda işlendiği [CURRICULUM-MAP.md](CURRICULUM-MAP.md) iç
 | **1** | ✅ | Domain modeli | 1–5, 7, 8 | Değer nesneleri, varlıklar, sipariş durum makinesi, kargo kuralı, arama ölçütü, repository arayüzleri; 144 birim testi |
 | **2** | ✅ | Kullanım senaryoları | 10, 11 | Katalog, sepet, hesap, sipariş verme, sipariş geçmişi, sipariş durum yönetimi ve yorum servisleri; beş port; bellek içi repository'lerle 54 test |
 | **3** | ✅ | Kalıcılık | 12 | Flyway şeması, JDBC araç seti, yedi repository, sipariş numarası sayacı, işlem yönetimi; H2 üzerinde 59 test |
-| **4** | | Dersle hizalama | 1, 2, 4–12 | İş alanına göre modüller, ArchUnit, tipli kimlikler, `api` sözleşmesi, olay yayıncısı, PostgreSQL ve sözleşme testleri |
+| **4** | | Dersle hizalama | 4–12 | İş alanına göre modüller, ArchUnit, tipli kimlikler, `api` sözleşmesi, olay yayıncısı, PostgreSQL ve sözleşme testleri |
 | **5** | | HTTP sınırı *(elle)* | 13 | JDK HTTP sunucusu, DTO'lar, Bean Validation, RFC 9457 |
 | **6** | | Uygulama sunucusu | 14 | Payara Micro 7 üzerinde WAR: CDI, JTA, CDI olayları, JAX-RS, JSON-B, MicroProfile Config ve OpenAPI |
 | **7** | | Güvenlik ve arayüz | — | Jakarta Security, BCrypt, HTML ve JavaScript sayfaları, iki dilli arayüz |
@@ -21,17 +21,16 @@ Hangi konunun hangi fazda işlendiği [CURRICULUM-MAP.md](CURRICULUM-MAP.md) iç
 
 ## Faz 4 — Dersle hizalama
 
-Faz 0–3, ders notları görülmeden önce genel bir Java müfredatı varsayılarak yapıldı. Kodun büyük kısmı dersle örtüşüyor; farklar [CURRICULUM-MAP.md](CURRICULUM-MAP.md) içinde 🔁 ile işaretli. Bu faz o farkları kapatır. Her adım ayrı bir `feature/*` dalıdır ve kendinden önceki adımın üzerine kurulur.
+Faz 0–3, ders notları görülmeden önce genel bir Java müfredatı varsayılarak yapıldı. Kodun büyük kısmı dersle örtüşüyor; farklar [CURRICULUM-MAP.md](CURRICULUM-MAP.md) içinde 🔁 ile işaretli. Bu faz o farkları kapatır. Her adım ayrı bir commit'tir ve kendinden önceki adımın üzerine kurulur.
 
-| Adım | Dal | İş | ADR |
+| Adım | Konu | İş | ADR |
 | --- | --- | --- | --- |
-| 4.1 | — | `develop` dalını Faz 3'ün son commit'inden aç; GitHub'da `main` ve `develop` için dal koruması | 0001 |
-| 4.2 | `feature/module-restructure` | Modülleri iş alanına göre yeniden kur: `shared-kernel`, `catalog`, `customer`, `sales`, `review`, `app`, `quality/architecture-tests`. Her modülde `api`, `application`, `domain`, `persistence` paketleri. Spring Boot'u kaldır. `Order.place` ve `Cart.add` için `ProductSnapshot`; stok ayırma `catalog.api` üzerinden. | 0002, 0003 |
-| 4.3 | `feature/architecture-rules` | ArchUnit modülü ve ADR-0003–0008'deki kurallar. Kuralların yakaladığı ihlalleri düzelt: `Optional` bileşenli record'lar, `common` adı, eksik `private final`. | 0003–0008 |
-| 4.4 | `feature/domain-model-alignment` | Tipli kimlikler; `DomainException` + `Kind` + `code`; `restore` → `reconstitute`; `shared-kernel`'de `Specification<T>` ve `BookSpecifications`. | 0004 |
-| 4.5 | `feature/api-contract` | Her modülde `api` paketi: komutlar, DTO'lar, façade arayüzleri; `application` paketinde mapper'lar. `app` modülünde elle yazılmış composition root *(`BookstoreModule`)* ve smoke test. | 0003, 0006 |
-| 4.6 | `feature/domain-events` | `DomainEventPublisher` portu, `InProcessEventPublisher`, bildirim gözlemcisi; dual-write problemini belgeleyen test. | 0007 |
-| 4.7 | `feature/postgresql` | Modül başına migration'lar, referans tablolar, PostgreSQL 17 lehçesi; `docker-compose.yml`; H2 PostgreSQL modu; repository sözleşme testleri *(bellek içi, H2, Testcontainers)*; bellek içi repository'ler kopya saklar. | 0008 |
+| 4.1 | Modül yapısı | Modülleri iş alanına göre yeniden kur: `shared-kernel`, `catalog`, `customer`, `sales`, `review`, `app`, `quality/architecture-tests`. Her modülde `api`, `application`, `domain`, `persistence` paketleri. Spring Boot'u kaldır. `Order.place` ve `Cart.add` için `ProductSnapshot`; stok ayırma `catalog.api` üzerinden. | 0002, 0003 |
+| 4.2 | Mimari kurallar | ArchUnit modülü ve ADR-0003–0008'deki kurallar. Kuralların yakaladığı ihlalleri düzelt: `Optional` bileşenli record'lar, `common` adı, eksik `private final`. | 0003–0008 |
+| 4.3 | Domain modeli | Tipli kimlikler; `DomainException` + `Kind` + `code`; `restore` → `reconstitute`; `shared-kernel`'de `Specification<T>` ve `BookSpecifications`. | 0004 |
+| 4.4 | `api` sözleşmesi | Her modülde `api` paketi: komutlar, DTO'lar, façade arayüzleri; `application` paketinde mapper'lar. `app` modülünde elle yazılmış composition root *(`BookstoreModule`)* ve smoke test. | 0003, 0006 |
+| 4.5 | Domain olayları | `DomainEventPublisher` portu, `InProcessEventPublisher`, bildirim gözlemcisi; dual-write problemini belgeleyen test. | 0007 |
+| 4.6 | PostgreSQL | Modül başına migration'lar, referans tablolar, PostgreSQL 17 lehçesi; `docker-compose.yml`; H2 PostgreSQL modu; repository sözleşme testleri *(bellek içi, H2, Testcontainers)*; bellek içi repository'ler kopya saklar. | 0008 |
 
 **Faz 4 sonunda:** Faz 1–3'ün bütün davranışı ve testleri yeni yapıda çalışır; ArchUnit kuralları geçer; Spring bağımlılığı kalmaz.
 
@@ -100,4 +99,4 @@ Ders notlarının soru bölümlerinde Lab projesine bırakılan konular ve son k
 
 - `CheckoutWithDatabaseTest`, reddedilen ödemede stok, sipariş, sepet ve sipariş numarasının geri alındığını ve son kopyayı aynı anda isteyen iki müşteriden yalnızca birinin aldığını gerçek işlemlerle doğruluyor.
 - H2 2.4.240'ın `CHECK (… IN …)` hatası bulundu; ders notlarının ADR-0008'i aynı hatayı belgeliyor.
-- Testler yalnızca H2'nin MySQL modunda çalıştı. Faz 4.7'de PostgreSQL'e geçilir.
+- Testler yalnızca H2'nin MySQL modunda çalıştı. Faz 4.6'da PostgreSQL'e geçilir.
