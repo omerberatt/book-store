@@ -2,7 +2,7 @@
 
 Java ile yazılmış, katmanlı ve çok modüllü bir çevrimiçi kitap mağazası.
 
-Projenin iki amacı var: çalışan bir e-ticaret uygulaması ortaya koymak.
+Projenin amacı: çalışan bir e-ticaret uygulaması ortaya koymak.
 
 > **Durum:** Faz 3 tamamlandı — domain modeli, kullanım senaryoları ve JDBC ile veritabanı katmanı testleriyle hazır. Altyapı servisleri ve web sayfaları henüz yok. Sıradaki adımlar için [yol haritasına](docs/ROADMAP.md) bakın.
 
