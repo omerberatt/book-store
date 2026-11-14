@@ -88,13 +88,16 @@ bookstore-domain          com.bookstore.domain
   └─ event                DomainEvent (sealed), OrderPlaced, OrderStatusChanged
 
 bookstore-application     com.bookstore.application
-  ├─ catalog              CatalogService
-  ├─ cart                 CartService
-  ├─ order                CheckoutService, OrderService
-  ├─ account              AccountService
-  ├─ review               ReviewService
-  ├─ admin                CatalogAdminService, OrderAdminService, UserAdminService
-  └─ port                 TransactionRunner, PasswordHasher, Notifier, FileStorage, PaymentGateway
+  ├─ catalog              CatalogService, BookSearchQuery, BookSummary, BookDetails, CategoryNode
+  ├─ cart                 CartService, CartRef (sealed), CartView, CartChangedException
+  ├─ order                CheckoutService, OrderService, PlaceOrderCommand, OrderSummary,
+  │                       OrderDetails, PaymentDeclinedException
+  ├─ account              AccountService, RegistrationCommand, CustomerView, LoginAccount
+  ├─ review               ReviewService, ReviewCommand, ReviewView
+  ├─ admin                OrderAdminService; Faz 7'de CatalogAdminService, UserAdminService,
+  │                       ReviewAdminService
+  └─ port                 TransactionRunner, PasswordHasher, Notifier, PaymentGateway,
+                          OrderNumberSequence; Faz 7'de FileStorage
 
 bookstore-persistence     com.bookstore.persistence
   ├─ jdbc                 JdbcExecutor, RowMapper<T>, JdbcTransactionRunner
@@ -141,6 +144,13 @@ Her kullanım senaryosu bir servis metodudur. Tipik bir metot:
 5. Sonucu kaydeder, olayları yayınlar, bir **sonuç** nesnesi döner.
 
 Application servisleri HTTP, HTML, JSON ya da SQL bilmez. Bu yüzden veritabanı olmadan, sahte (*in-memory*) repository'lerle test edilebilir.
+
+Ek kurallar:
+
+- **Okuma modelleri:** Servisler web katmanına domain varlıklarını değil, değiştirilemez `record` kopyalarını döner (`BookSummary`, `CartView`, `OrderDetails` …). Böylece web katmanı bir varlığı yanlışlıkla değiştiremez.
+- **Önce doğrulama:** Girdi, işlem başlamadan önce değer nesnelerine çevrilerek doğrulanır (`Email.of`, `Rating.of`, `PasswordPolicy.check`). Geçersiz bir istek hiçbir işlem açmaz.
+- **Olaylar commit'ten sonra:** Domain olayları işlem içinde toplanır, `Notifier`'a işlem başarıyla bittikten sonra verilir. Geri alınan bir işlem için müşteriye bildirim gitmez.
+- **Sepet referansı:** Sepet işlemleri `CartRef` alır: `Guest` (HTTP oturumundaki sepet, yerinde değiştirilir) ya da `Customer` (veritabanındaki sepet, yüklenip kaydedilir). Servis ikisini bir `switch` ile ayırır.
 
 ### 4.3 Persistence
 
@@ -200,6 +210,11 @@ sequenceDiagram
 ```
 
 Stok yetersizse `InsufficientStockException` fırlar, işlem geri alınır ve müşteri sepet sayfasına uyarıyla döner.
+
+Diyagram ana yolu gösterir. `CheckoutService` aslında iki işlem açar:
+
+1. **Sepet kontrolü:** Sepet güncel katalogla karşılaştırılır (`Cart.reconcile`). Fiyat, stok veya satış durumu değiştiyse düzeltilmiş sepet kaydedilir ve `CartChangedException` fırlatılır. Müşteri, görmediği bir tutarı ödemez.
+2. **Sipariş:** Kontrol bir kez daha yapılır (iki işlem arasında bir şey değişmiş olabilir), sipariş oluşturulur, kartla ödemede `PaymentGateway` çağrılır. Ödeme reddedilirse `PaymentDeclinedException` fırlar ve hiçbir şey kaydedilmez. Ödeme onaylanırsa sipariş `PAID` olur; havale ve kapıda ödemede `CREATED` kalır.
 
 ## 6. Veritabanı
 

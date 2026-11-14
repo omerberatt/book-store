@@ -3,6 +3,8 @@ package com.bookstore.domain.customer;
 import com.bookstore.common.paging.Page;
 import com.bookstore.common.paging.PageRequest;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -25,6 +27,15 @@ public interface CustomerRepository {
      * @return the customer with their addresses, or empty
      */
     Optional<Customer> findByEmail(Email email);
+
+    /**
+     * Finds several customers at once, for example the authors of a page of reviews. Ids with no
+     * customer are skipped.
+     *
+     * @param ids the ids
+     * @return the customers found, in no particular order
+     */
+    List<Customer> findAllById(Collection<Long> ids);
 
     /**
      * Tells whether an e-mail address is already registered.

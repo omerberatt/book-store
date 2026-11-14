@@ -27,6 +27,7 @@ import java.util.regex.Pattern;
  *
  * @param text            words to find in the title, an author's name or the ISBN
  * @param categoryIds     categories to include; empty means every category
+ * @param authorId        only books by this author
  * @param minPrice        lowest price, inclusive
  * @param maxPrice        highest price, inclusive
  * @param language        required language
@@ -37,6 +38,7 @@ import java.util.regex.Pattern;
 public record BookSearchCriteria(
         Optional<String> text,
         Set<Long> categoryIds,
+        Optional<Long> authorId,
         Optional<Money> minPrice,
         Optional<Money> maxPrice,
         Optional<Language> language,
@@ -57,6 +59,7 @@ public record BookSearchCriteria(
                 .filter(t -> !t.isEmpty())
                 .map(t -> Guard.requireMaxLength(t, "text", MAX_TEXT_LENGTH));
         categoryIds = Set.copyOf(Guard.requireNonNull(categoryIds, "categoryIds"));
+        Guard.requireNonNull(authorId, "authorId");
         Guard.requireNonNull(minPrice, "minPrice");
         Guard.requireNonNull(maxPrice, "maxPrice");
         Guard.requireNonNull(language, "language");
@@ -98,6 +101,11 @@ public record BookSearchCriteria(
         if (!categoryIds.isEmpty()) {
             predicate = predicate.and(book -> !book.category().isNew() && categoryIds.contains(book.category().id()));
         }
+        if (authorId.isPresent()) {
+            long required = authorId.get();
+            predicate = predicate.and(book -> book.authors().stream()
+                    .anyMatch(author -> !author.isNew() && author.id() == required));
+        }
         if (minPrice.isPresent()) {
             Money min = minPrice.get();
             predicate = predicate.and(book -> book.price().isAtLeast(min));
@@ -132,6 +140,7 @@ public record BookSearchCriteria(
 
         private String text;
         private final Set<Long> categoryIds = new HashSet<>();
+        private Long authorId;
         private Money minPrice;
         private Money maxPrice;
         private Language language;
@@ -151,6 +160,12 @@ public record BookSearchCriteria(
         /** @param ids categories to include @return this builder */
         public Builder categoryIds(Set<Long> ids) {
             this.categoryIds.addAll(ids);
+            return this;
+        }
+
+        /** @param value only books by this author @return this builder */
+        public Builder authorId(long value) {
+            this.authorId = value;
             return this;
         }
 
@@ -196,7 +211,8 @@ public record BookSearchCriteria(
          * @return the criteria
          */
         public BookSearchCriteria build() {
-            return new BookSearchCriteria(Optional.ofNullable(text), categoryIds, Optional.ofNullable(minPrice),
+            return new BookSearchCriteria(Optional.ofNullable(text), categoryIds, Optional.ofNullable(authorId),
+                    Optional.ofNullable(minPrice),
                     Optional.ofNullable(maxPrice), Optional.ofNullable(language), inStockOnly, includeInactive, sort);
         }
     }

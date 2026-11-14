@@ -71,6 +71,13 @@ class BookSearchCriteriaTest {
     }
 
     @Test
+    void filtersByAuthor() {
+        assertThat(search(criteria().authorId(10))).containsExactly(madonna);
+        assertThat(search(criteria().authorId(102))).containsExactly(dune);
+        assertThat(search(criteria().authorId(999))).isEmpty();
+    }
+
+    @Test
     void inactiveBooksAreIncludedOnlyOnRequest() {
         assertThat(search(criteria().includeInactive(true))).contains(hidden);
     }

@@ -79,3 +79,27 @@ Her karar kısa bir kayıt olarak tutulur: ne seçildi, neden, neyi göze aldık
 **Neden:** Katalog listesi ortalama puanı göstermek ve puana göre sıralamak zorunda (REV-5, SRC-3). Her listelemede yorum tablosunu gruplamak gereksiz yük olur.
 
 **Göze alınan:** Veri iki yerde durur (yorumlar ve özet). Tutarlılık işlem sınırıyla sağlanır; `RatingSummary` imkânsız toplamları (ör. 2 yorum, 11 puan) reddeder.
+
+## K-11 — Ödeme yöntemine göre ilk sipariş durumu
+
+**Karar:** Kartla ödemede kart sipariş sırasında (simülasyon olarak) çekilir ve sipariş `PAID` olur. Havale ve kapıda ödemede sipariş `CREATED` kalır; ödemeyi yönetici kaydeder (`CREATED → PAID`). Kart reddedilirse sipariş hiç oluşmaz.
+
+**Neden:** Spesifikasyondaki durum makinesi (ORD-6) `CREATED → PAID` adımını içeriyor; bu adımın gerçek bir anlamı ancak ödemenin sonradan geldiği yöntemlerde var. Reddedilen kart için "iptal edilmiş sipariş" kaydı bırakmak müşterinin geçmişini gereksiz kalabalıklaştırır.
+
+**Göze alınan:** Kart çekildikten sonra kayıt başarısız olursa gerçek bir sistemde iade gerekir. Ödeme simülasyon olduğu için bu durum ele alınmadı.
+
+## K-12 — Sipariş öncesi sepet kontrolü ayrı işlemde
+
+**Karar:** Sipariş vermeden önce sepet ayrı bir işlemde güncel katalogla karşılaştırılır. Bir şey değiştiyse düzeltilmiş sepet kaydedilir ve sipariş durdurulur. Sipariş işleminde aynı kontrol bir kez daha yapılır.
+
+**Neden:** Müşteri, sepette görmediği bir fiyatı ödememeli (CRT-5). Düzeltmenin kalıcı olması için sipariş işleminden ayrı commit edilmesi gerekir; aynı işlemde yapılsaydı, hata fırlatınca düzeltme de geri alınırdı.
+
+**Göze alınan:** İki işlem arasında küçük bir pencere var; ikinci kontrol bu pencereyi kapatıyor.
+
+## K-13 — Servisler okuma modeli döner
+
+**Karar:** Application servisleri domain varlıklarını dışarı vermez; `record` kopyaları döner. Değişmez domain değer nesneleri (`Money`, `Address`, `OrderLine`) bu kopyaların içinde doğrudan kullanılabilir.
+
+**Neden:** Web katmanı bir `Book` nesnesini alıp `changePrice` çağıramamalı. Kopyalar ayrıca şablonların ve JSON'un ihtiyaç duyduğu biçimi tek yerde toplar.
+
+**Göze alınan:** Her ekran için küçük bir `record` sınıfı daha.

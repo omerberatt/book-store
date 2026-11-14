@@ -30,6 +30,13 @@ class CustomerTest {
     }
 
     @Test
+    void publicNameHidesMostOfTheLastName() {
+        assertThat(new PersonName("Ayşe", "Yılmaz").publicName()).isEqualTo("Ayşe Y.");
+        assertThat(new PersonName("Mehmet Ali", "Özdemir").publicName()).isEqualTo("Mehmet Ali Ö.");
+        assertThat(new PersonName("Jo", "Ü").publicName()).isEqualTo("Jo Ü.");
+    }
+
+    @Test
     void adminHasTheAdminRole() {
         Customer admin = Customer.createAdmin(Email.of("admin@bookstore.local"), new PersonName("Site", "Admin"),
                 "hash", CLOCK);

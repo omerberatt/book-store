@@ -17,4 +17,14 @@ public class AccessDeniedException extends BookstoreException {
     public AccessDeniedException(String message) {
         super(CODE, message);
     }
+
+    /**
+     * Creates an exception with a more specific error code.
+     *
+     * @param code    stable machine-readable code, for example {@code "review.not-eligible"}
+     * @param message what the user tried to do
+     */
+    public AccessDeniedException(String code, String message) {
+        super(code, message);
+    }
 }

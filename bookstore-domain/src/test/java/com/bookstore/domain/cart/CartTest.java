@@ -24,6 +24,9 @@ import org.junit.jupiter.api.Test;
 
 class CartTest {
 
+    private static final Money DUNE_PRICE = Money.of("100.00");
+    private static final Money MADONNA_PRICE = Money.of("45.50");
+
     private final Book dune = book(1, "Dune", "100.00", 20);
     private final Book madonna = book(2, "Kürk Mantolu Madonna", "45.50", 3);
     private final Cart cart = Cart.forCustomer(CUSTOMER_ID);
@@ -34,7 +37,7 @@ class CartTest {
         cart.add(dune, 3);
 
         assertThat(cart.quantityOf(1)).isEqualTo(5);
-        assertThat(cart.items()).containsExactly(new CartItem(1, 5));
+        assertThat(cart.items()).containsExactly(new CartItem(1, 5, DUNE_PRICE));
     }
 
     @Test
@@ -107,7 +110,7 @@ class CartTest {
 
         cart.mergeFrom(guest);
 
-        assertThat(cart.items()).containsExactly(new CartItem(1, 10), new CartItem(2, 1));
+        assertThat(cart.items()).containsExactly(new CartItem(1, 10, DUNE_PRICE), new CartItem(2, 1, MADONNA_PRICE));
         assertThat(guest.items()).hasSize(2);
         assertThat(cart.customerId()).contains(CUSTOMER_ID);
         assertThat(guest.customerId()).isEmpty();
@@ -138,15 +141,60 @@ class CartTest {
             copy = (Cart) in.readObject();
         }
 
-        assertThat(copy.items()).containsExactly(new CartItem(1, 2), new CartItem(2, 1));
+        assertThat(copy.items()).containsExactly(new CartItem(1, 2, DUNE_PRICE), new CartItem(2, 1, MADONNA_PRICE));
         assertThat(copy.customerId()).isEmpty();
     }
 
     @Test
+    void reconcileRemovesUnsellableBooksLowersQuantitiesAndNotesNewPrices() {
+        Book soonInactive = book(3, "Soon inactive", "10", 5);
+        Book soonGone = book(4, "Soon gone", "10", 5);
+        cart.add(dune, 5);
+        cart.add(madonna, 3);
+        cart.add(soonInactive, 1);
+        cart.add(soonGone, 1);
+
+        madonna.changeStock(1);
+        dune.changePrice(Money.of("90.00"));
+        soonInactive.deactivate();
+
+        List<CartAdjustment> adjustments = cart.reconcile(Map.of(1L, dune, 2L, madonna, 3L, soonInactive));
+
+        assertThat(adjustments).containsExactly(
+                new CartAdjustment.PriceChanged(1, "Dune", DUNE_PRICE, Money.of("90.00")),
+                new CartAdjustment.QuantityReduced(2, "Kürk Mantolu Madonna", 3, 1),
+                new CartAdjustment.Removed(3, "Soon inactive"),
+                new CartAdjustment.Removed(4, "#4"));
+        assertThat(cart.items()).containsExactly(
+                new CartItem(1, 5, Money.of("90.00")), new CartItem(2, 1, MADONNA_PRICE));
+    }
+
+    @Test
+    void reconcilingAnUpToDateCartChangesNothing() {
+        cart.add(dune, 2);
+
+        assertThat(cart.reconcile(Map.of(1L, dune))).isEmpty();
+        assertThat(cart.reconcile(Map.of(1L, dune))).isEmpty();
+        assertThat(cart.items()).containsExactly(new CartItem(1, 2, DUNE_PRICE));
+    }
+
+    @Test
+    void mergeKeepsThePriceTheCustomerSawFirst() {
+        cart.add(dune, 1);
+        dune.changePrice(Money.of("80.00"));
+        Cart guest = Cart.guest();
+        guest.add(dune, 1);
+
+        cart.mergeFrom(guest);
+
+        assertThat(cart.items()).containsExactly(new CartItem(1, 2, DUNE_PRICE));
+    }
+
+    @Test
     void restoreRebuildsTheLines() {
-        Cart restored = Cart.restore(CUSTOMER_ID, List.of(new CartItem(2, 1), new CartItem(1, 4)));
+        Cart restored = Cart.restore(CUSTOMER_ID, List.of(new CartItem(2, 1, MADONNA_PRICE), new CartItem(1, 4, DUNE_PRICE)));
 
         assertThat(restored.bookIds()).containsExactlyInAnyOrder(1L, 2L);
-        assertThat(restored.items()).first().isEqualTo(new CartItem(2, 1));
+        assertThat(restored.items()).first().isEqualTo(new CartItem(2, 1, MADONNA_PRICE));
     }
 }

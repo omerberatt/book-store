@@ -3,6 +3,7 @@ package com.bookstore.common.money;
 import com.bookstore.common.error.ValidationException;
 import com.bookstore.common.validation.Guard;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Currency;
@@ -17,10 +18,13 @@ import java.util.stream.Stream;
  * {@code double} and {@code float} are never used for money because they cannot represent most
  * decimal fractions exactly ({@code 0.1 + 0.2 != 0.3}).
  *
+ * <p>It is {@link Serializable} because guest carts, which remember the prices a visitor saw, are
+ * kept in the HTTP session.
+ *
  * @param amount   the amount, rounded to two decimal places
  * @param currency the currency
  */
-public record Money(BigDecimal amount, Currency currency) implements Comparable<Money> {
+public record Money(BigDecimal amount, Currency currency) implements Comparable<Money>, Serializable {
 
     /** Number of decimal places kept for every amount. */
     public static final int SCALE = 2;

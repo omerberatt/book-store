@@ -28,6 +28,17 @@ public record PersonName(String firstName, String lastName) {
         return firstName + " " + lastName;
     }
 
+    /**
+     * Returns the first name and the initial of the last name, shown next to public reviews so
+     * that customers' full names are not published.
+     *
+     * @return for example {@code "Ayşe Y."}
+     */
+    public String publicName() {
+        int initialEnd = lastName.offsetByCodePoints(0, 1);
+        return firstName + " " + lastName.substring(0, initialEnd) + ".";
+    }
+
     @Override
     public String toString() {
         return fullName();

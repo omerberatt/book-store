@@ -4,7 +4,7 @@ Java ile yazılmış, katmanlı ve çok modüllü bir çevrimiçi kitap mağazas
 
 Projenin iki amacı var: çalışan bir e-ticaret uygulaması ortaya koymak ve lisans seviyesi Java müfredatındaki konuların her birini gerçek bir kullanım yerinde uygulamak.
 
-> **Durum:** Faz 1 tamamlandı — domain modeli ve iş kuralları (`common`, `domain`) testleriyle hazır. Kullanım senaryoları, veritabanı ve web sayfaları henüz yok. Sıradaki adımlar için [yol haritasına](docs/ROADMAP.md) bakın.
+> **Durum:** Faz 2 tamamlandı — domain modeli ve kullanım senaryoları (katalog, sepet, hesap, sipariş, yorum) testleriyle hazır. Veritabanı ve web sayfaları henüz yok. Sıradaki adımlar için [yol haritasına](docs/ROADMAP.md) bakın.
 
 ## Dokümanlar
 

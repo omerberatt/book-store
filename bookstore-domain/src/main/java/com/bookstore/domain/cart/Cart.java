@@ -8,9 +8,11 @@ import com.bookstore.domain.catalog.InsufficientStockException;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
@@ -121,8 +123,8 @@ public final class Cart implements Iterable<CartItem>, Serializable {
     }
 
     /**
-     * Adds up the cart using prices supplied by the caller, because the cart itself does not store
-     * prices.
+     * Adds up the cart using prices supplied by the caller, because the cart always charges the
+     * books' current prices.
      *
      * @param unitPrice returns the current price of a book given its id
      * @return the sum of price times quantity over all lines
@@ -196,11 +198,52 @@ public final class Cart implements Iterable<CartItem>, Serializable {
      */
     public void mergeFrom(Cart other) {
         for (CartItem item : other) {
-            int merged = Math.min(MAX_QUANTITY_PER_LINE, quantityOf(item.bookId()) + item.quantity());
-            if (items.containsKey(item.bookId()) || items.size() < MAX_LINES) {
-                items.put(item.bookId(), new CartItem(item.bookId(), merged));
+            CartItem existing = items.get(item.bookId());
+            if (existing != null) {
+                int merged = Math.min(MAX_QUANTITY_PER_LINE, existing.quantity() + item.quantity());
+                items.put(item.bookId(), existing.withQuantity(merged));
+            } else if (items.size() < MAX_LINES) {
+                items.put(item.bookId(), item);
             }
         }
+    }
+
+    /**
+     * Brings the cart in line with the current catalog: removes books that are no longer sold or
+     * out of stock, lowers quantities to the available stock and records new prices.
+     *
+     * @param books the current state of the books in the cart, keyed by id; a missing book counts
+     *              as no longer sold
+     * @return what was changed, in cart order; empty if nothing changed
+     */
+    public List<CartAdjustment> reconcile(Map<Long, Book> books) {
+        List<CartAdjustment> adjustments = new ArrayList<>();
+        Iterator<Map.Entry<Long, CartItem>> entries = items.entrySet().iterator();
+        while (entries.hasNext()) {
+            Map.Entry<Long, CartItem> entry = entries.next();
+            CartItem item = entry.getValue();
+            Book book = books.get(item.bookId());
+
+            if (book == null || !book.isAvailableForSale()) {
+                entries.remove();
+                adjustments.add(new CartAdjustment.Removed(item.bookId(),
+                        book == null ? "#" + item.bookId() : book.title()));
+                continue;
+            }
+            int available = book.stock().quantity();
+            if (item.quantity() > available) {
+                adjustments.add(new CartAdjustment.QuantityReduced(item.bookId(), book.title(), item.quantity(),
+                        available));
+                item = item.withQuantity(available);
+            }
+            if (!item.priceWhenAdded().equals(book.price())) {
+                adjustments.add(new CartAdjustment.PriceChanged(item.bookId(), book.title(), item.priceWhenAdded(),
+                        book.price()));
+                item = item.withPrice(book.price());
+            }
+            entry.setValue(item);
+        }
+        return adjustments;
     }
 
     @Override
@@ -220,7 +263,7 @@ public final class Cart implements Iterable<CartItem>, Serializable {
         }
         Guard.require(items.containsKey(book.id()) || items.size() < MAX_LINES, "items",
                 "a cart can hold at most " + MAX_LINES + " different books");
-        items.put(book.id(), new CartItem(book.id(), newQuantity));
+        items.put(book.id(), new CartItem(book.id(), newQuantity, book.price()));
     }
 
     /**

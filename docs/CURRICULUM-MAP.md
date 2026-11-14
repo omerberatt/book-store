@@ -24,9 +24,10 @@ Lisans seviyesi Java müfredatındaki her konunun projede **nerede** ve **ne iç
 | Değişmezlik, `record` | `Money`, `Isbn`, `Email`, `Rating`, `Stock`, `Address`, `OrderLine`, `CartItem` | Kurucuda doğrulanan değer nesneleri | 1 ✅ |
 | `equals` / `hashCode` / `toString` | `domain.Entity` (kimliğe göre), `record`'lar (değere göre), `RatingDistribution` (dizi içeriğine göre) | Koleksiyonlarda doğru davranış | 1 ✅ |
 | Kalıtım, `abstract` sınıf | `common.error.BookstoreException` hiyerarşisi, `domain.Entity` | Ortak davranışı paylaşma | 1 ✅ |
-| Arayüz, çok biçimlilik | `BookRepository` ve diğer repository'ler, `ShippingPolicy`, `application.port.*` | Uygulamadan bağımsız sözleşme | 1 ✅ |
+| Arayüz, çok biçimlilik | `BookRepository` ve diğer repository'ler, `ShippingPolicy`, `application.port.*` (aynı arayüzün testte sahte, üretimde gerçek uygulaması) | Uygulamadan bağımsız sözleşme | 1 ✅, 2 ✅ |
+| `default` arayüz metotları | `TransactionRunner.run` | Arayüze, uygulayanları bozmadan davranış ekleme | 2 ✅ |
 | `enum` (alan ve davranışla) | `OrderStatus`, `BookSortField`, `Language`, `SortOrder`, `Role`, `PaymentMethod` | Durum makinesi, sabit kümeler, sabite bağlı davranış | 1 ✅ |
-| `sealed` tür ve örüntü eşleme (`switch`) | `domain.event.DomainEvent` (sealed interface + record'lar), `OrderStatus.allowedNext` (switch ifadesi) | Kapalı tür hiyerarşisinde eksiksiz `switch` | 1 ✅ |
+| `sealed` tür ve örüntü eşleme (`switch`) | `domain.event.DomainEvent`, `domain.cart.CartAdjustment`, `application.cart.CartRef`, `PaymentGateway.PaymentResult`; `CartService.load`, `CheckoutService` ödeme sonucu (`switch` ile tür eşleme) | Kapalı tür hiyerarşisinde eksiksiz `switch` | 1 ✅, 2 ✅ |
 | İç sınıf, iç içe `static` sınıf | `Cart.LineIterator` (iç sınıf), `Book.Builder`, `BookSearchCriteria.Builder` (`static`) | Kapsayan nesnenin durumuna erişim; kurucu yardımcısı | 1 ✅ |
 | `Comparable`, `Comparator` | `Money`, `Rating`, `BookSortField`, `BookSort` | Doğal sıralama, zincirlenmiş özel sıralama | 1 ✅ |
 
@@ -43,7 +44,7 @@ Lisans seviyesi Java müfredatındaki her konunun projede **nerede** ve **ne iç
 
 | Konu | Nerede | Ne için | Faz |
 |---|---|---|---|
-| Generic sınıf ve arayüz | `common.paging.Page<T>` ✅, `persistence.jdbc.RowMapper<T>`, `infrastructure.cache.ConcurrentCache<K,V>` | Türden bağımsız yeniden kullanım | 1, 3, 4 |
+| Generic sınıf ve arayüz | `common.paging.Page<T>` ✅, test çiftlerinde `InMemoryStore<T extends Entity>` ✅, `TransactionRunner.inTransaction(Supplier<T>)` ✅, `persistence.jdbc.RowMapper<T>`, `infrastructure.cache.ConcurrentCache<K,V>` | Türden bağımsız yeniden kullanım | 1, 2, 3, 4 |
 | Generic metot, sınırlı tür (`<T extends …>`) | `Guard.requireBetween(<T extends Comparable<? super T>>)`, `Guard.requireNotEmpty(<C extends Collection<?>>)`, `SortOrder.apply` | Tür güvenli, her türe uyan denetim | 1 ✅ |
 | Joker türler (`? extends`, `? super`) | `Page.map(Function<? super T, ? extends R>)`, `Page.fromList(List<? extends T>)` | PECS kuralı | 1 ✅ |
 
@@ -56,17 +57,18 @@ Lisans seviyesi Java müfredatındaki her konunun projede **nerede** ve **ne iç
 | Ağaç yapısı ve özyineleme | `domain.catalog.Category` (`depth`, `path`) | Üst kategori zincirini dolaşma | 1 ✅ |
 | `Iterable` / `Iterator` | `Cart` | `for-each` ile gezilebilir, silmeye kapalı sepet | 1 ✅ |
 | Sıralama ve arama | `BookSort.comparator()`, `BookSearchCriteria.asPredicate()` | Çok ölçütlü sıralama, kararlı sayfalama için eşitlik bozucu | 1 ✅ |
-| Karmaşıklık analizi (Big-O) | Bellek içi repository'lerde `Map` indeksleri, `ConcurrentCache` | Doğrusal tarama yerine sabit zamanlı erişim | 2 |
+| Karmaşıklık analizi (Big-O) | Bellek içi repository'lerde kimliğe, ISBN'e ve e-postaya göre `Map` indeksleri ✅; `ConcurrentCache` | Doğrusal tarama yerine sabit zamanlı erişim | 2 ✅, 4 |
 | Değiştirilemez koleksiyonlar | `List.copyOf`, `Collections.unmodifiableList/Set` (varlıkların dışarı verdiği koleksiyonlar) | İç durumu koruma | 1 ✅ |
 
 ## 6. Fonksiyonel programlama
 
 | Konu | Nerede | Ne için | Faz |
 |---|---|---|---|
-| Lambda, metot referansı | `Cart.subtotal(Function<Long, Money>)`, `BookSortField`, `ShippingPolicy.alwaysFree()`; ileride `TransactionRunner`, `RowMapper` | Davranışı parametre olarak verme | 1 ✅, 2, 3 |
+| Lambda, metot referansı | `Cart.subtotal(Function<Long, Money>)`, `BookSortField`, `ShippingPolicy.alwaysFree()` ✅; `TransactionRunner.inTransaction(() -> …)`, servislerde `Consumer<Cart>` / `Consumer<Customer>` ile ortak "yükle–değiştir–kaydet" akışı ✅; `RowMapper` | Davranışı parametre olarak verme | 1 ✅, 2 ✅, 3 |
 | Fonksiyonel arayüzler | `ShippingPolicy` (`@FunctionalInterface`), `Predicate<Book>` (`BookSearchCriteria`), `RowMapper<T>` | Tek metotlu sözleşmeler, `Predicate.and` ile birleştirme | 1 ✅, 3 |
 | Stream API | `Money.sum`, `Cart.subtotal`, `Order` toplamları, `Language.fromCode` | Bildirimsel veri işleme | 1 ✅ |
-| `Optional` | `Category.parent()`, `Book.publicationYear()`, `Customer.defaultAddress()`, tüm `findBy…` metotları | `null` yerine açık yokluk | 1 ✅ |
+| `Optional` | `Category.parent()`, `Book.publicationYear()`, `Customer.defaultAddress()`, tüm `findBy…` metotları; servislerde `filter` / `map` / `orElseThrow` zincirleri | `null` yerine açık yokluk | 1 ✅, 2 ✅ |
+| `Collectors.toMap`, gruplama | `CheckoutService`, `CartService`, `ReviewService` (kimliğe göre kitap ve müşteri haritaları) | Toplu yüklenen kayıtları kimliğe göre eşleme | 2 ✅ |
 | `Collectors` (gruplama, özetleme) | `RatingDistribution.of` (`groupingBy` + `counting`), `ValidationException` (`joining`), yönetim özeti | Gruplayarak sayma | 1 ✅, 7 |
 
 ## 7. Girdi / çıktı
@@ -125,7 +127,7 @@ Lisans seviyesi Java müfredatındaki her konunun projede **nerede** ve **ne iç
 | SOLID ilkeleri | Modül sınırları, port–adapter ayrımı | Bağımlılığın tersine çevrilmesi başta olmak üzere | hepsi |
 | Katmanlı mimari | Altı Maven modülü | Sorumlulukların ayrılması | 0 |
 | Tasarım kalıpları | Aşağıdaki tablo | — | hepsi |
-| Birim testi, test çiftleri | Her modülün `src/test` dizini; parametreli testler (`@CsvSource`, `@EnumSource`), sabit `Clock` | Davranışı doğrulama | hepsi |
+| Birim testi, test çiftleri | Her modülün `src/test` dizini; parametreli testler (`@CsvSource`, `@EnumSource`), sabit `Clock`; application'da tüm uygulamayı sahte portlarla kuran `Shop` test düzeneği | Davranışı doğrulama | hepsi |
 | Derleme otomasyonu | Maven çok modüllü yapı, Maven Wrapper | Tekrarlanabilir derleme | 0 |
 | Anotasyonlar ve yansıma (*reflection*) | Bean Validation, Spring `@Configuration`; `persistence.jdbc` içinde `record` bileşenlerinden satır eşleme | Üst veri ile davranış | 3, 5 |
 | Kayıt tutma | SLF4J + Logback | Çalışma zamanı gözlemi | hepsi |
@@ -140,10 +142,12 @@ Lisans seviyesi Java müfredatındaki her konunun projede **nerede** ve **ne iç
 | Observer | `Entity.raise` / `pullEvents` ile `DomainEvent` toplama; yayın ve `Notifier` Faz 2 ve 4'te |
 | Builder | `Book.Builder`, `BookSearchCriteria.Builder` |
 | Factory method | `Money.of`, `Order.place`, `OrderNumber.of`, `Customer.register`, `Cart.guest` |
-| Repository / DAO | `domain.*.…Repository`, `persistence.*.Jdbc…Repository` |
+| Repository / DAO | `domain.*.…Repository`; testte `InMemory…Repository` ✅, üretimde `persistence.*.Jdbc…Repository` |
 | Adapter | `infrastructure.*`, `web.security` |
-| Template method | `persistence.jdbc.JdbcExecutor` |
-| Facade | `application` servisleri |
+| Template method | `InMemoryStore.beforeSave` / `afterSave` kancaları (test) ✅, `persistence.jdbc.JdbcExecutor` |
+| Facade | `application` servisleri ✅ |
+| Command | `RegistrationCommand`, `PlaceOrderCommand`, `ReviewCommand` ✅ |
+| Test double (fake) | `application/src/test/.../fake`: bellek içi repository'ler, `RecordingNotifier`, `ScriptedPaymentGateway` ✅ |
 | Dependency injection | `web.config` içindeki `@Bean` tanımları |
 
 ## 12. Bilinçli olarak dışarıda bırakılanlar
