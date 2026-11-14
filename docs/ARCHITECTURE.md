@@ -76,15 +76,19 @@ bookstore-common          com.bookstore.common
   └─ text                 Türkçe duyarlı metin normalleştirme
 
 bookstore-domain          com.bookstore.domain
-  ├─ catalog              Book, Author, Category, Isbn, Stock, BookRepository …
+  ├─ (kök)                Entity — kimlik, sürüm ve olay toplama için ortak taban sınıf
+  ├─ catalog              Book, Author, Category, Isbn, Stock, Language, RatingSummary,
+  │                       BookSearchCriteria, BookSort, InsufficientStockException, …Repository
   ├─ cart                 Cart, CartItem, CartRepository
-  ├─ order                Order, OrderLine, OrderStatus, OrderNumber, ShippingPolicy, OrderRepository
-  ├─ customer             Customer, Address, Email, Role, CustomerRepository
-  ├─ review               Review, Rating, ReviewRepository
-  └─ event                DomainEvent, OrderPlaced, OrderStatusChanged
+  ├─ order                Order, OrderLine, OrderStatus, OrderNumber, PaymentMethod,
+  │                       ShippingPolicy, FreeShippingThreshold, OrderRepository
+  ├─ customer             Customer, SavedAddress, Address, Email, PersonName, Role,
+  │                       PasswordPolicy, CustomerRepository
+  ├─ review               Review, Rating, RatingDistribution, ReviewRepository
+  └─ event                DomainEvent (sealed), OrderPlaced, OrderStatusChanged
 
 bookstore-application     com.bookstore.application
-  ├─ catalog              CatalogService, BookSearchQuery
+  ├─ catalog              CatalogService
   ├─ cart                 CartService
   ├─ order                CheckoutService, OrderService
   ├─ account              AccountService
@@ -117,12 +121,14 @@ bookstore-web             com.bookstore.web
 
 ### 4.1 Domain
 
-- **Varlıklar** (`Book`, `Order` …) kimlikleri olan, durumu değişebilen sınıflardır. Kendi kurallarını kendileri korur: geçersiz bir `Order` nesnesi oluşturulamaz.
+- **Varlıklar** (`Book`, `Order` …) kimlikleri olan, durumu değişebilen sınıflardır ve `Entity` taban sınıfından türer. Kendi kurallarını kendileri korur: geçersiz bir `Order` nesnesi oluşturulamaz. Yeni bir varlığın kimliği yoktur; repository kaydettikten sonra `markPersisted(id, version)` ile atar. Depodan yüklenen varlıklar `restore(…)` fabrika metotlarıyla, doğrulamadan geçerek oluşturulur.
 - **Değer nesneleri** (`Money`, `Isbn`, `Email`, `Rating`, `Stock`) değişmezdir ve `record` olarak yazılır. Doğrulama kurucu içinde yapılır.
 - **Sipariş durumu** bir durum makinesidir. İzin verilen geçişler `OrderStatus` içinde tanımlıdır; geçersiz geçiş istisna fırlatır.
 - **Kargo ücreti** `ShippingPolicy` arayüzü ile hesaplanır (Strategy kalıbı).
 - **Repository arayüzleri** domain dilini konuşur (`findByIsbn`, `save`), SQL ya da tablo adı içermez.
-- **Domain olayları** (`OrderPlaced`, `OrderStatusChanged`) bir şey olduğunda üretilir; kimin dinlediğini domain bilmez (Observer kalıbı).
+- **Domain olayları** (`OrderPlaced`, `OrderStatusChanged`) bir şey olduğunda varlığın içinde `raise(…)` ile kaydedilir; application katmanı kayıttan sonra `pullEvents()` ile toplayıp yayınlar. Kimin dinlediğini domain bilmez (Observer kalıbı).
+- **Arama ölçütü** (`BookSearchCriteria`) ve **sıralama** (`BookSort`) domain'dedir, çünkü `BookRepository` arayüzü onları kullanır. Ölçüt, bellek içi repository'ler için `asPredicate()`, sıralama `comparator()` verir; JDBC repository aynı ölçütü SQL'e çevirir.
+- **Puan özeti** (`RatingSummary`: yorum sayısı ve toplam puan) kitabın üzerinde tutulur; listeler ve "puana göre sırala" yorum tablosunu her istekte saymaz.
 
 ### 4.2 Application
 
@@ -235,7 +241,7 @@ erDiagram
 
 ## 8. Hata yönetimi
 
-Tek bir hata hiyerarşisi vardır; kökü `common` modülündeki `BookstoreException` (denetlenmeyen istisna).
+Tek bir hata hiyerarşisi vardır; kökü `common` modülündeki soyut `BookstoreException` (denetlenmeyen istisna). Her istisna, web katmanının çeviri metnini ve HTTP durumunu seçmek için kullandığı sabit bir hata kodu (`code()`) taşır; örneğin `stock.insufficient`, `order.illegal-transition`, `cart.empty`. Genel türler `common.error` paketinde, bir alana özgü olanlar (`InsufficientStockException`) o alanın domain paketindedir.
 
 | İstisna | Anlamı | HTTP |
 |---|---|---|

@@ -63,3 +63,19 @@ Her karar kısa bir kayıt olarak tutulur: ne seçildi, neden, neyi göze aldık
 **Karar:** Sınıf, metot, değişken, tablo adları ve commit mesajları İngilizce. `docs/` altındaki dokümanlar ve README Türkçe.
 
 **Neden:** Java ekosisteminin dili İngilizce; dokümanların ana dilde olması okumayı ve öğrenmeyi kolaylaştırır.
+
+## K-09 — Kimliği repository atar
+
+**Karar:** Varlıkların kimliği veritabanının otomatik artan `id` değeridir. Yeni bir varlık kimliksiz oluşturulur; repository kaydettikten sonra `Entity.markPersisted(id, version)` çağırır. Kimlik bir kez atanınca değiştirilemez. `equals` kimliğe göre çalışır; `hashCode` sınıfa göre sabittir, böylece varlık kaydedilmeden önce bir `HashSet` içine konup kaydedildikten sonra da bulunabilir.
+
+**Neden:** MySQL'in `AUTO_INCREMENT` yapısıyla doğal uyum. Ayrı bir kimlik üreteci veya UUID gerektirmez.
+
+**Göze alınan:** Kaydedilmemiş bir varlığın `id()` metodu istisna fırlatır; kod, kimliğe ihtiyaç duymadan önce varlığın kaydedildiğinden emin olmalıdır. `markPersisted` herkese açıktır, çünkü repository'ler başka bir modüldedir; yalnızca repository'ler çağırmalıdır.
+
+## K-10 — Puan özeti kitapta tutulur
+
+**Karar:** Kitabın yorum sayısı ve toplam puanı `Book.ratings()` (`RatingSummary`) olarak kitapla birlikte saklanır. Yorum yazılınca, düzenlenince veya silinince application katmanı aynı işlem içinde kitabı da günceller.
+
+**Neden:** Katalog listesi ortalama puanı göstermek ve puana göre sıralamak zorunda (REV-5, SRC-3). Her listelemede yorum tablosunu gruplamak gereksiz yük olur.
+
+**Göze alınan:** Veri iki yerde durur (yorumlar ve özet). Tutarlılık işlem sınırıyla sağlanır; `RatingSummary` imkânsız toplamları (ör. 2 yorum, 11 puan) reddeder.
