@@ -27,7 +27,7 @@ Lisans seviyesi Java müfredatındaki her konunun projede **nerede** ve **ne iç
 | Arayüz, çok biçimlilik | `BookRepository` ve diğer repository'ler, `ShippingPolicy`, `application.port.*` (aynı arayüzün testte sahte, üretimde gerçek uygulaması) | Uygulamadan bağımsız sözleşme | 1 ✅, 2 ✅ |
 | `default` arayüz metotları | `TransactionRunner.run` | Arayüze, uygulayanları bozmadan davranış ekleme | 2 ✅ |
 | `enum` (alan ve davranışla) | `OrderStatus`, `BookSortField`, `Language`, `SortOrder`, `Role`, `PaymentMethod` | Durum makinesi, sabit kümeler, sabite bağlı davranış | 1 ✅ |
-| `sealed` tür ve örüntü eşleme (`switch`) | `domain.event.DomainEvent`, `domain.cart.CartAdjustment`, `application.cart.CartRef`, `PaymentGateway.PaymentResult`; `CartService.load`, `CheckoutService` ödeme sonucu (`switch` ile tür eşleme) | Kapalı tür hiyerarşisinde eksiksiz `switch` | 1 ✅, 2 ✅ |
+| `sealed` tür ve örüntü eşleme (`switch`) | `domain.event.DomainEvent`, `domain.cart.CartAdjustment`, `application.cart.CartRef`, `PaymentGateway.PaymentResult`; `CartService.load`, `CheckoutService` ödeme sonucu; `JdbcExecutor.toJdbc` (`case null` ve tür desenleriyle parametre dönüştürme) | Kapalı tür hiyerarşisinde eksiksiz `switch` | 1 ✅, 2 ✅, 3 ✅ |
 | İç sınıf, iç içe `static` sınıf | `Cart.LineIterator` (iç sınıf), `Book.Builder`, `BookSearchCriteria.Builder` (`static`) | Kapsayan nesnenin durumuna erişim; kurucu yardımcısı | 1 ✅ |
 | `Comparable`, `Comparator` | `Money`, `Rating`, `BookSortField`, `BookSort` | Doğal sıralama, zincirlenmiş özel sıralama | 1 ✅ |
 
@@ -36,15 +36,15 @@ Lisans seviyesi Java müfredatındaki her konunun projede **nerede** ve **ne iç
 | Konu | Nerede | Ne için | Faz |
 |---|---|---|---|
 | Özel istisna hiyerarşisi | `common.error.*`, `domain.catalog.InsufficientStockException` | İş hatalarını türle ve hata koduyla ayırma | 1 ✅ |
-| Denetlenen / denetlenmeyen istisna | `persistence` (`SQLException` sarma), `infrastructure.storage` (`IOException` sarma) | Teknik hatayı sınırda anlamlı hataya çevirme | 3 |
-| `try-with-resources`, `finally` | Tüm JDBC ve dosya kodu | Kaynakların kapatılması | 3 |
+| Denetlenen / denetlenmeyen istisna | `persistence.jdbc.DataAccessException` (`SQLException` sarma, SQLState ile kısıt ihlalini tanıma) ✅, `infrastructure.storage` (`IOException` sarma) | Teknik hatayı sınırda anlamlı hataya çevirme | 3 ✅, 4 |
+| `try-with-resources`, `finally` | `JdbcExecutor` (`PreparedStatement`, `ResultSet`), `JdbcTransactionRunner` (`finally` ile bağlantı kapatma) ✅; dosya kodu | Kaynakların kapatılması | 3 ✅, 4 |
 | Merkezi hata işleme | `web.api.v1.ApiExceptionHandler` | İstisnayı HTTP yanıtına eşleme | 5 |
 
 ## 4. Generics
 
 | Konu | Nerede | Ne için | Faz |
 |---|---|---|---|
-| Generic sınıf ve arayüz | `common.paging.Page<T>` ✅, test çiftlerinde `InMemoryStore<T extends Entity>` ✅, `TransactionRunner.inTransaction(Supplier<T>)` ✅, `persistence.jdbc.RowMapper<T>`, `infrastructure.cache.ConcurrentCache<K,V>` | Türden bağımsız yeniden kullanım | 1, 2, 3, 4 |
+| Generic sınıf ve arayüz | `common.paging.Page<T>` ✅, test çiftlerinde `InMemoryStore<T extends Entity>` ✅, `TransactionRunner.inTransaction(Supplier<T>)` ✅, `persistence.jdbc.RowMapper<T>` ve `RecordRowMapper<R extends Record>` ✅, `infrastructure.cache.ConcurrentCache<K,V>` | Türden bağımsız yeniden kullanım | 1 ✅, 2 ✅, 3 ✅, 4 |
 | Generic metot, sınırlı tür (`<T extends …>`) | `Guard.requireBetween(<T extends Comparable<? super T>>)`, `Guard.requireNotEmpty(<C extends Collection<?>>)`, `SortOrder.apply` | Tür güvenli, her türe uyan denetim | 1 ✅ |
 | Joker türler (`? extends`, `? super`) | `Page.map(Function<? super T, ? extends R>)`, `Page.fromList(List<? extends T>)` | PECS kuralı | 1 ✅ |
 
@@ -92,20 +92,20 @@ Lisans seviyesi Java müfredatındaki her konunun projede **nerede** ve **ne iç
 | Eşzamanlı koleksiyonlar, atomik türler | `ConcurrentCache` (`ConcurrentHashMap`), sipariş numarası sayacı (`AtomicLong`) | Kilitsiz thread güvenliği | 4 |
 | `CompletableFuture` | `application.admin` özet ekranı | Bağımsız sorguları paralel çalıştırma | 4 |
 | Sanal thread'ler (Java 21) | `bookstore-web` yapılandırması | İstek başına hafif thread | 5 |
-| `ThreadLocal` | `persistence.jdbc.JdbcTransactionRunner` | İşlem boyunca aynı bağlantıyı taşıma | 3 |
+| `ThreadLocal` | `persistence.jdbc.JdbcTransactionRunner` | İşlem boyunca aynı bağlantıyı taşıma | 3 ✅ |
 
 ## 9. Veritabanı ve JDBC
 
 | Konu | Nerede | Ne için | Faz |
 |---|---|---|---|
-| İlişkisel modelleme, normalizasyon | `db/migration/V1__…sql` | Şema tasarımı | 3 |
-| SQL (DDL, DML, JOIN, gruplama) | `persistence.*` | Arama, sayfalama, puan ortalaması | 3 |
-| JDBC: `Connection`, `PreparedStatement`, `ResultSet` | `persistence.jdbc.JdbcExecutor` | Sorgu çalıştırma ve satır eşleme | 3 |
-| DAO / Repository kalıbı | `persistence.*.Jdbc…Repository` | Veri erişimini soyutlama | 3 |
-| İşlemler (ACID, `commit`, `rollback`) | `JdbcTransactionRunner`, `CheckoutService` | Sipariş oluşturmanın bölünmezliği | 3 |
-| Bağlantı havuzu | HikariCP `DataSource` | Bağlantıları yeniden kullanma | 3 |
-| Eşzamanlılık denetimi | Koşullu `UPDATE`, `version` sütunu | Stok tutarlılığı | 3 |
-| Şema sürümleme | Flyway | Tekrarlanabilir veritabanı kurulumu | 3 |
+| İlişkisel modelleme, normalizasyon | `db/migration/V1__initial_schema.sql` (çoka-çok `book_authors`, sipariş anı kopyaları, yabancı anahtarlar, `CHECK` kısıtları) | Şema tasarımı | 3 ✅ |
+| SQL (DDL, DML, JOIN, `EXISTS`, `LIKE … ESCAPE`, `CASE`, `LIMIT/OFFSET`) | `persistence.*`, özellikle `catalog.BookSearchSql` | Arama, filtre, sıralama, sayfalama | 3 ✅ |
+| JDBC: `Connection`, `PreparedStatement`, `ResultSet`, üretilen anahtarlar, toplu (`batch`) yazma | `persistence.jdbc.JdbcExecutor` | Sorgu çalıştırma ve satır eşleme | 3 ✅ |
+| DAO / Repository kalıbı | `persistence.*.Jdbc…Repository` | Veri erişimini soyutlama | 3 ✅ |
+| İşlemler (ACID, `commit`, `rollback`) | `JdbcTransactionRunner`, `CheckoutService`; `CheckoutWithDatabaseTest` reddedilen ödemede her şeyin geri alındığını doğrular | Sipariş oluşturmanın bölünmezliği | 3 ✅ |
+| Bağlantı havuzu | `DataSource` arayüzü ✅; HikariCP yapılandırması web modülünde | Bağlantıları yeniden kullanma | 3 ✅, 5 |
+| Eşzamanlılık denetimi | `version` sütunu ile iyimser kilitleme (`JdbcExecutor.updateVersioned`), sipariş numarası satır kilidi, `CHECK (stock >= 0)`; son kopya için yarışan iki sipariş testi | Stok tutarlılığı | 3 ✅ |
+| Şema sürümleme | Flyway (`DatabaseMigrator`) | Tekrarlanabilir veritabanı kurulumu | 3 ✅ |
 
 ## 10. Web ve ağ programlama
 
@@ -129,7 +129,7 @@ Lisans seviyesi Java müfredatındaki her konunun projede **nerede** ve **ne iç
 | Tasarım kalıpları | Aşağıdaki tablo | — | hepsi |
 | Birim testi, test çiftleri | Her modülün `src/test` dizini; parametreli testler (`@CsvSource`, `@EnumSource`), sabit `Clock`; application'da tüm uygulamayı sahte portlarla kuran `Shop` test düzeneği | Davranışı doğrulama | hepsi |
 | Derleme otomasyonu | Maven çok modüllü yapı, Maven Wrapper | Tekrarlanabilir derleme | 0 |
-| Anotasyonlar ve yansıma (*reflection*) | Bean Validation, Spring `@Configuration`; `persistence.jdbc` içinde `record` bileşenlerinden satır eşleme | Üst veri ile davranış | 3, 5 |
+| Anotasyonlar ve yansıma (*reflection*) | `persistence.jdbc.RecordRowMapper` (`RecordComponent`, kurucuyu yansımayla çağırma) ✅; Bean Validation, Spring `@Configuration` | Üst veri ile davranış | 3 ✅, 5 |
 | Kayıt tutma | SLF4J + Logback | Çalışma zamanı gözlemi | hepsi |
 | Javadoc | Tüm `public` türler, `package-info.java` | Belgeleme | hepsi |
 
@@ -142,9 +142,9 @@ Lisans seviyesi Java müfredatındaki her konunun projede **nerede** ve **ne iç
 | Observer | `Entity.raise` / `pullEvents` ile `DomainEvent` toplama; yayın ve `Notifier` Faz 2 ve 4'te |
 | Builder | `Book.Builder`, `BookSearchCriteria.Builder` |
 | Factory method | `Money.of`, `Order.place`, `OrderNumber.of`, `Customer.register`, `Cart.guest` |
-| Repository / DAO | `domain.*.…Repository`; testte `InMemory…Repository` ✅, üretimde `persistence.*.Jdbc…Repository` |
-| Adapter | `infrastructure.*`, `web.security` |
-| Template method | `InMemoryStore.beforeSave` / `afterSave` kancaları (test) ✅, `persistence.jdbc.JdbcExecutor` |
+| Repository / DAO | `domain.*.…Repository`; testte `InMemory…Repository` ✅, üretimde `persistence.*.Jdbc…Repository` ✅ |
+| Adapter | `persistence.*` (domain arayüzlerini JDBC'ye uyarlama) ✅, `infrastructure.*`, `web.security` |
+| Template method | `InMemoryStore.beforeSave` / `afterSave` kancaları (test) ✅, `persistence.jdbc.JdbcExecutor` ✅ |
 | Facade | `application` servisleri ✅ |
 | Command | `RegistrationCommand`, `PlaceOrderCommand`, `ReviewCommand` ✅ |
 | Test double (fake) | `application/src/test/.../fake`: bellek içi repository'ler, `RecordingNotifier`, `ScriptedPaymentGateway` ✅ |

@@ -103,3 +103,19 @@ Her karar kısa bir kayıt olarak tutulur: ne seçildi, neden, neyi göze aldık
 **Neden:** Web katmanı bir `Book` nesnesini alıp `changePrice` çağıramamalı. Kopyalar ayrıca şablonların ve JSON'un ihtiyaç duyduğu biçimi tek yerde toplar.
 
 **Göze alınan:** Her ekran için küçük bir `record` sınıfı daha.
+
+## K-14 — Stok tutarlılığı iyimser kilitlemeyle
+
+**Karar:** Kitap, sipariş, müşteri ve yorum satırları `version` sütunu taşır. Kayıt `UPDATE … WHERE id = ? AND version = ?` ile yapılır; hiçbir satır değişmezse `ConflictException` (`concurrent-modification`) fırlar ve işlem geri alınır. Stok ayrıca `CHECK (stock >= 0)` ile korunur.
+
+**Neden:** Mimari taslağı stoğu `stock = stock - ?` biçiminde fark üzerinden düşmeyi öneriyordu. Bu, domain'in stok kuralını SQL'e taşımayı ve kitabın geri kalanını ayrı kaydetmeyi gerektirirdi. Sürüm kontrolü bütün varlıklar için tek ve genel bir mekanizma; son kopyayı aynı anda isteyen iki siparişten birinin reddedildiği test ile doğrulandı.
+
+**Göze alınan:** Aynı kitabı aynı anda alan iki müşteriden biri, stok yeterli olsa bile "kayıt değişti, tekrar deneyin" hatası alabilir. Yoğun bir mağazada fark üzerinden güncellemeye veya otomatik yeniden denemeye geçmek gerekebilir.
+
+## K-15 — Arama için normalleştirilmiş anahtar sütunları
+
+**Karar:** `books.title_key` ve `authors.name_key`, kaydedilirken `TextNormalizer.searchKey` ile üretilir. Arama metni de aynı şekilde normalleştirilip `LIKE` ile karşılaştırılır.
+
+**Neden:** MySQL ve H2'nin harf karşılaştırma kuralları (*collation*) Türkçe `ı/I` ve `i/İ` dönüşümlerini birbirinden farklı ele alır. Normalleştirmeyi Java'da tek yerde yapmak, iki veritabanında ve bellek içi testlerde aynı sonucu verir.
+
+**Göze alınan:** Veri iki kez durur (başlık ve anahtarı). `%kelime%` biçimindeki `LIKE` indeks kullanamaz; NFR-9'daki 10.000 kitaplık hedef için bu yeterli, çok daha büyük bir katalogda tam metin araması gerekir.

@@ -100,9 +100,14 @@ bookstore-application     com.bookstore.application
                           OrderNumberSequence; Faz 7'de FileStorage
 
 bookstore-persistence     com.bookstore.persistence
-  ├─ jdbc                 JdbcExecutor, RowMapper<T>, JdbcTransactionRunner
-  ├─ catalog | cart | order | customer | review     Jdbc…Repository sınıfları
-  └─ resources/db/migration                          V1__….sql (Flyway)
+  ├─ (kök)                DatabaseMigrator (Flyway)
+  ├─ jdbc                 JdbcTransactionRunner, JdbcExecutor, RowMapper<T>, RecordRowMapper<R>,
+  │                       Columns, DataAccessException
+  ├─ catalog              JdbcBookRepository, BookSearchSql, JdbcAuthorRepository,
+  │                       JdbcCategoryRepository
+  ├─ cart | customer | review                        Jdbc…Repository
+  ├─ order                JdbcOrderRepository, JdbcOrderNumberSequence
+  └─ resources/db/migration                          V1__initial_schema.sql
 
 bookstore-infrastructure  com.bookstore.infrastructure
   ├─ storage              LocalFileStorage (NIO.2)
@@ -155,10 +160,14 @@ Ek kurallar:
 ### 4.3 Persistence
 
 - Her repository arayüzü için bir `Jdbc…Repository` sınıfı vardır (DAO kalıbı).
-- Yalnızca `PreparedStatement` ve parametreli sorgu kullanılır.
-- `JdbcTransactionRunner`, bir işlem boyunca aynı `Connection` nesnesinin kullanılmasını, hata durumunda `rollback`, başarı durumunda `commit` yapılmasını sağlar.
-- Bağlantı havuzu (HikariCP) `DataSource` olarak dışarıdan verilir; modül Spring'e bağımlı değildir.
-- **Stok tutarlılığı** iki katmanla korunur: koşullu güncelleme (`UPDATE … SET stock = stock - ? WHERE id = ? AND stock >= ?`) ve varlıklardaki `version` sütunu ile iyimser kilitleme.
+- Yalnızca `PreparedStatement` ve parametreli sorgu kullanılır. `JdbcExecutor` bağlantı alma, bağlama, çalıştırma ve kapatma adımlarını tek yerde yapar (Template Method); repository'ler yalnızca SQL'i ve bir `RowMapper` verir.
+- `JdbcTransactionRunner`, işlemin bağlantısını bir `ThreadLocal` içinde taşır. Aynı thread'deki bütün repository çağrıları aynı `Connection`'ı kullanır; hata olursa `rollback`, başarıda `commit` yapılır. İç içe işlemler dıştakine katılır. İşlem dışındaki okumalar kısa ömürlü, otomatik commit'li bir bağlantı alır.
+- Bağlantı havuzu (HikariCP) `DataSource` olarak dışarıdan verilir (Faz 5'te web modülü kurar); modül Spring'e bağımlı değildir.
+- **Yükleme:** Bir sayfa kitap, kaç kitap olursa olsun üç sorguyla yüklenir: kitap satırları, tüm yazarları ve kategori ağacı. Kitap başına ayrı yazar sorgusu çalıştırılmaz (N+1 sorgu sorunu).
+- **Arama:** `BookSearchSql`, domain'deki `BookSearchCriteria` ile aynı kuralları SQL'e çevirir. Türkçe harf duyarsızlığı için `books.title_key` ve `authors.name_key` sütunları `TextNormalizer` ile üretilmiş anahtarları tutar; aranan metin de aynı şekilde normalleştirilir. Bir test, her sıralama seçeneğinde SQL'in ve bellek içi kuralların aynı sonucu verdiğini doğrular.
+- **Eşzamanlılık:** Değişen tablolarda `version` sütunu vardır. `UPDATE … WHERE id = ? AND version = ?` hiçbir satırı değiştirmezse kayıt arada başkası tarafından değiştirilmiş demektir ve `ConflictException` (`concurrent-modification`) fırlar. Aynı son kopyayı aynı anda alan iki siparişten biri bu yüzden geri alınır. Veritabanındaki `CHECK (stock >= 0)` ikinci savunma hattıdır.
+- **Hatalar:** `SQLException`, adapter sınırında denetlenmeyen `DataAccessException`'a sarılır. Bilinen kısıt ihlalleri (benzersiz e-posta, ISBN, yorum) repository'de anlamlı bir `ConflictException`'a çevrilir; geri kalan veritabanı hataları HTTP 500 olur.
+- **Satır kayıtları:** Düz tablolar (`users`, `orders`, `reviews` …) önce özel bir `record`'a okunur. `RecordRowMapper`, `record` bileşenlerini yansıma (*reflection*) ile `snake_case` sütunlara eşler; ardından kayıt, domain'in `restore(…)` metoduyla varlığa çevrilir.
 - Şema değişiklikleri yalnızca Flyway migration dosyalarıyla yapılır.
 
 ### 4.4 Infrastructure
@@ -235,11 +244,14 @@ erDiagram
     BOOKS ||--o{ REVIEWS : receives
 ```
 
-- Tablo ve sütun adları `snake_case`, İngilizce.
-- Her tabloda `id` (BIGINT, otomatik artan), `created_at`, `updated_at`; eşzamanlı güncellenen tablolarda `version`.
+- Tablo ve sütun adları `snake_case`, İngilizce; ayrılmış sözcükler sütun adı olarak kullanılmaz (`year` yerine `order_year`, `comment` yerine `comment_text`).
+- Varlık tablolarında `id` (BIGINT, otomatik artan) ve `version`. Zaman sütunları yalnızca domain'in tuttuğu zamanlar için vardır (`registered_at`, `placed_at`, `status_changed_at`, `created_at` / `updated_at` yorumlarda) ve UTC olarak `DATETIME(6)` tipindedir.
 - Tutarlar `DECIMAL(12,2)`.
-- `order_lines`, sipariş anındaki `unit_price` ve `book_title` değerlerini kopyalar.
-- `reviews` üzerinde `(user_id, book_id)` benzersiz kısıtı vardır.
+- `orders`, teslimat adresini kendi sütunlarına kopyalar; `order_lines`, sipariş anındaki `unit_price` ve `book_title` değerlerini kopyalar.
+- Varsayılan adres, `addresses.is_default` bayrağıyla tutulur (`users` → `addresses` döngüsel yabancı anahtarından kaçınmak için).
+- Sipariş numarası sayacı, yıl başına bir satır olarak `order_number_sequences` tablosundadır. Sayaç `UPDATE` ile artırıldığı için satır işlem sonuna kadar kilitli kalır; aynı anda iki sipariş aynı numarayı alamaz.
+- Domain kurallarının bir kısmı veritabanında da kısıt olarak vardır: benzersiz ISBN, e-posta ve `(user_id, book_id)` yorum anahtarı; `stock >= 0`, `price > 0`, puan 1–5, sepet adedi 1–10, geçerli rol ve sipariş durumu.
+- Migration'lar MySQL 8.4'te ve H2'nin MySQL modunda çalışan ortak SQL ile yazılır. H2'ye özgü bir kısıtlama: `CHECK` içinde `IN (…)` listesi kullanılmaz (bkz. V1 dosyasının başındaki not).
 
 ## 7. Güvenlik
 
@@ -265,6 +277,7 @@ Tek bir hata hiyerarşisi vardır; kökü `common` modülündeki soyut `Bookstor
 | `AccessDeniedException` | Kaydın sahibi değil | 403 |
 | `ConflictException` | Durum uyuşmazlığı (ör. e-posta kayıtlı, geçersiz durum geçişi) | 409 |
 | `InsufficientStockException` | Stok yetmiyor (`ConflictException` alt türü) | 409 |
+| `DataAccessException` | Beklenmeyen veritabanı hatası (`BookstoreException` değil; teknik hata) | 500 |
 
 Alt katmanlardaki teknik hatalar (`SQLException`, `IOException`) yakalandıkları adapter'da anlamlı bir istisnaya sarılır; application ve domain katmanına sızmaz.
 

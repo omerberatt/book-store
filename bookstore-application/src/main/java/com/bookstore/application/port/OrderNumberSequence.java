@@ -5,9 +5,9 @@ import com.bookstore.domain.order.OrderNumber;
 import java.time.Year;
 
 /**
- * Hands out order numbers. Numbers are unique and increase within a year; the sequence restarts at
- * 1 every year. A number taken by a transaction that later rolls back is not reused, so gaps are
- * possible.
+ * Hands out order numbers. Numbers increase within a year and the sequence restarts at 1 every
+ * year. Every stored order gets a different number; whether a number taken by a transaction that
+ * later rolls back is handed out again depends on the implementation.
  */
 public interface OrderNumberSequence {
 
