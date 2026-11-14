@@ -1,39 +1,51 @@
 # Book Store
 
-Layered, multi-module Java web application. Its second goal is to exercise the whole undergraduate Java curriculum, so fundamentals are hand-written on purpose.
+Online book store built as the "Lab project" of the **Java Patterns and Practices** course. The curriculum is the course notes at https://github.com/software-lecture-labs/java-study-notes (chapters 01–14, ADRs in `docs/adr`). When a design question comes up, check how the notes handle it first and follow them unless an ADR here says otherwise.
 
-Read before non-trivial work: `docs/SPEC.md` (what), `docs/ARCHITECTURE.md` (how), `docs/CURRICULUM-MAP.md` (which topic goes where), `docs/ROADMAP.md` (phase order).
+Read before non-trivial work: `docs/SPEC.md` (what), `docs/ARCHITECTURE.md` (target architecture), `docs/adr/` (decisions), `docs/CURRICULUM-MAP.md` (which chapter goes where), `docs/ROADMAP.md` (phase order).
+
+## Current state vs target
+
+Phases 0–3 were built before the course notes were adopted. The code still lives in layer-based modules (`bookstore-common`, `-domain`, `-application`, `-persistence`, `-infrastructure`, `-web`), has a Spring Boot skeleton in `bookstore-web` and is tested on H2 in MySQL mode. Phase 4 (`docs/ROADMAP.md`) moves it to the target below; `docs/ARCHITECTURE.md` section 9 lists every difference. Do not add new code to the old layout beyond what a Phase 4 step needs.
 
 ## Commands
 
-- Build and test everything: `./mvnw -B -ntp verify`
-- One module with its dependencies: `./mvnw -B -ntp -pl bookstore-domain -am verify`
-- Run the app: `./mvnw -pl bookstore-web -am install -DskipTests` then `./mvnw -pl bookstore-web spring-boot:run`
+- Build and test everything: `./mvnw -B -ntp verify` (Git Bash) or `mvnw.cmd -B -ntp verify` (cmd). Must pass without Docker.
+- One module with its dependencies: `./mvnw -B -ntp -pl <module> -am verify`
+- Requires JDK 21. On this machine: `C:\Program Files\Eclipse Adoptium\jdk-21.0.13.9-hotspot`. Maven comes from the wrapper.
 
-Requires JDK 21. Maven comes from the wrapper.
+## Workflow (ADR-0001)
 
-## Architecture rules
+- Gitflow: `main` (released), `develop` (next release). Work on `feature/<name>` branches cut from `develop`, merged back by Pull Request with `--no-ff`. No direct commits to `main` or `develop`. Release tags use CalVer: `v2026.11.1`.
+- Commit messages in English, imperative, one topic each.
+- A change that makes or changes an architectural decision adds or amends an ADR in `docs/adr/` in the same Pull Request. Accepted ADRs are never deleted; superseded points get a dated note.
+- If a curriculum topic moves or a planned class name changes, update `docs/CURRICULUM-MAP.md` in the same change.
 
-- Dependencies point inward: `web → application → domain → common`. `persistence` and `infrastructure` depend on `application` and never on each other.
-- `bookstore-common`, `bookstore-domain` and `bookstore-application` use the JDK only (plus the SLF4J API). No Spring, Servlet, JDBC or Jackson types there, and no Spring annotations. They are wired as `@Bean`s in `com.bookstore.web.config`.
-- Repository interfaces live in `domain`; outgoing ports that are not repositories live in `application.port`. Implementations go in `persistence` (JDBC) or `infrastructure`.
-- Data access is hand-written JDBC with `PreparedStatement`. Do not add JPA, Spring Data or `JdbcTemplate`.
-- Schema changes go through Flyway files in `bookstore-persistence/src/main/resources/db/migration`, written in SQL that runs on both MySQL and H2 (MySQL mode).
-- Packages are organised by feature (`catalog`, `cart`, `order`, `customer`, `review`), not by layer.
+## Target architecture
 
-## Code conventions
+- Modules by business area (ADR-0002): `shared-kernel`, `catalog`, `customer`, `sales`, `review`, `app` (WAR), `quality/architecture-tests`. No module is a layer.
+- Inside each business module, packages `api`, `application`, `domain`, `persistence`, `rest`. Allowed directions are the matrix in ADR-0003: domain sees only shared-kernel; api is a pure contract; application sees domain and api; persistence sees domain; rest sees api. A business module uses another module only through its `api` package. No cycles.
+- Platform (ADR-0010): Jakarta EE 11 Web Profile + MicroProfile 6.1 on Payara Micro 7. CDI with `annotated` discovery and constructor injection; JTA `@Transactional` on use cases; CDI events observed `AFTER_SUCCESS`; JAX-RS + JSON-B; MicroProfile Config and OpenAPI. Until Phase 6, wiring is a hand-written composition root and transactions go through the `TransactionRunner` port.
+- Database (ADR-0008): PostgreSQL 17. Fast tests on H2 in PostgreSQL mode; the same contract tests run on PostgreSQL via Testcontainers when Docker is available and are skipped otherwise. Hand-written JDBC with `PreparedStatement`; no JPA, Spring Data or `JdbcTemplate` (JPA is a Phase 9 option). Each module owns its Flyway migrations under `db/migration/<module>`. Never edit an applied migration. No `IN (...)` lists in `CHECK` constraints (H2 2.4 bug); use reference tables.
+- HTTP (ADR-0009): `/api/v1`, request records with Bean Validation for format only, RFC 9457 Problem Details, status from `DomainException.Kind` (NOT_FOUND 404, CONFLICT 409, RULE_VIOLATION 422, FORBIDDEN 403; format errors 400; unexpected 500 without internals).
+- UI (ADR-0011): plain HTML, CSS and JavaScript in `app/src/main/webapp` calling the REST API with `fetch`. No build step, no JS framework.
 
-- Code, identifiers, commit messages and table names in English. Documents under `docs/` and the README in Turkish.
-- Value objects are `record`s and validate in the constructor. Entities protect their own invariants.
-- Money is always `Money` (`BigDecimal`), never `double`. Time is always `java.time`, with an injected `Clock`.
-- Return `Optional` or an empty collection, never `null`.
-- Constructor injection only.
-- Business errors are subclasses of `BookstoreException`; wrap `SQLException` and `IOException` at the adapter boundary.
+## Code rules (ADR-0004, ADR-0005, ADR-0006)
+
+- Domain and shared-kernel depend on the JDK only: no `jakarta..`, `javax..`, `java.sql..`, no framework annotations.
+- No setters in the domain; state changes through intention-revealing methods.
+- `Optional` only as a return type, never as a field or record component.
+- Value objects are `record`s validated in the constructor. Aggregates use typed ids (`BookId`, `OrderId`, …) and refer to other aggregates by id only. Stored aggregates are rebuilt with `reconstitute(...)`, called only from persistence.
+- Domain exceptions extend `DomainException` and carry a `Kind` and a stable `code`.
+- Money is always `Money` (`BigDecimal`), never `double`. Time comes from an injected `Clock`; never call `Instant.now()`, `LocalDate.now()` or `System.currentTimeMillis()` directly.
+- Application classes take collaborators through the constructor into `private final` fields and know only interfaces, never `Jdbc…` or `InMemory…` classes.
+- Aggregates raise events; only application services pull and publish them, after saving.
+- No `System.out`, `System.err` or `printStackTrace()` in business modules; use `System.Logger`. No packages named `util`, `common`, `helper` or `misc`.
+- Code, identifiers, table names and commit messages in English; documents under `docs/` and the README in Turkish.
 - Every public type has Javadoc; every package has a `package-info.java`.
 
-## When implementing a feature
+## Tests
 
-- Work in roadmap phase order and keep `./mvnw verify` green without a running MySQL.
-- Each change comes with tests in the same module.
-- If a planned class name in `docs/CURRICULUM-MAP.md` changes, or a curriculum topic moves, update that table in the same change.
-- Record new architectural decisions in `docs/DECISIONS.md`.
+- Every change comes with tests in the same module. Keep `./mvnw verify` green without Docker.
+- Each repository interface has one contract test that the in-memory, H2 and PostgreSQL implementations all pass. In-memory repositories store and return copies.
+- Architecture rules live in `quality/architecture-tests` as ArchUnit tests and are named after the ADRs that require them.

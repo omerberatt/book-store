@@ -1,161 +1,228 @@
 # Müfredat Eşlemesi
 
-Lisans seviyesi Java müfredatındaki her konunun projede **nerede** ve **ne için** uygulanacağını gösterir. Amaç, konuların yapay örneklerle değil gerçek bir ihtiyaç üzerinden kullanılmasıdır.
+Projenin izlediği müfredat, **Java Patterns and Practices** ders notlarıdır: [software-lecture-labs/java-study-notes](https://github.com/software-lecture-labs/java-study-notes), Bölüm 01–14. Bu doküman, her bölümde anlatılan konunun kitap mağazasında **nerede** ve **hangi durumda** olduğunu gösterir.
 
-"Faz" sütunu [ROADMAP.md](ROADMAP.md) içindeki aşamayı gösterir; ✅ işareti o fazda kodu ve testi yazılmış demektir. İşaretsiz sınıf adları plandır; uygulama sırasında değişirse bu tablo güncellenir.
+Ders notları, konuları Northwind veritabanı üzerinde bir `sales` modülüyle anlatıyor ve bunların "Lab projesi"nde uygulanacağını söylüyor. Kitap mağazası bu Lab projesinin yerine geçer: aynı kavramlar katalog, müşteri, satış ve yorum modüllerinde uygulanır.
 
-## 1. Dil temelleri
+**Durum işaretleri**
 
-| Konu | Nerede | Ne için | Faz |
-|---|---|---|---|
-| İlkel türler, operatörler, kontrol yapıları | `common.validation.Guard`, `domain.catalog.Isbn` | Ön koşul denetimleri, ISBN-10 ve ISBN-13 kontrol basamağı hesabı | 1 ✅ |
-| `String`, `StringBuilder`, metin işlemleri | `common.text.TextNormalizer`, `domain.order.OrderNumber` | Türkçe duyarlı arama anahtarı, `String.format` ile sipariş numarası | 1 ✅ |
-| Diziler | `domain.catalog.Isbn`, `domain.review.RatingDistribution` | Basamak dizisi, 1–5 puan sayaçları | 1 ✅ |
-| Düzenli ifadeler (`regex`) | `domain.customer.Email`, `PasswordPolicy`, `Address`, `OrderNumber` (yakalama grupları) | Biçim doğrulama ve ayrıştırma | 1 ✅ |
-| `BigDecimal`, sayısal hassasiyet | `common.money.Money`, `catalog.RatingSummary` | Para hesabı, yuvarlama, ortalama puan | 1 ✅ |
-| Tarih-saat API'si (`java.time`) | `domain.order.Order`, `domain.review.Review`, `Book` (`Year`) | Sipariş ve yorum zamanı, `Clock` ile test edilebilir zaman | 1 ✅ |
+| İşaret | Anlamı |
+| --- | --- |
+| ✅ | Uygulandı ve testi var. |
+| 🔁 | Uygulandı ama ders notlarındaki biçimden farklı; belirtilen fazda dersle uyumlu hale getirilecek. |
+| ⏳ | Henüz yok; belirtilen fazda yapılacak. |
+| — | Projede kod gerektirmeyen ya da bilinçli olarak uygulanmayan konu. |
 
-## 2. Nesne yönelimli programlama
+Faz numaraları [ROADMAP.md](ROADMAP.md) içindeki aşamalardır; ADR'ler [docs/adr](adr/README.md) klasöründedir.
 
-| Konu | Nerede | Ne için | Faz |
-|---|---|---|---|
-| Sınıf, nesne, kapsülleme | `domain.catalog.Book`, `domain.cart.Cart`, `domain.customer.Customer` | Durumu yalnızca kendi metotlarıyla değişen varlıklar | 1 ✅ |
-| Kurucular, `static` fabrika metotları | `Money.of(…)`, `Order.place(…)`, `Customer.register(…)`, `…restore(…)` | Geçersiz nesne oluşturmayı engelleme; yeni nesne ile depodan yüklenen nesneyi ayırma | 1 ✅ |
-| Değişmezlik, `record` | `Money`, `Isbn`, `Email`, `Rating`, `Stock`, `Address`, `OrderLine`, `CartItem` | Kurucuda doğrulanan değer nesneleri | 1 ✅ |
-| `equals` / `hashCode` / `toString` | `domain.Entity` (kimliğe göre), `record`'lar (değere göre), `RatingDistribution` (dizi içeriğine göre) | Koleksiyonlarda doğru davranış | 1 ✅ |
-| Kalıtım, `abstract` sınıf | `common.error.BookstoreException` hiyerarşisi, `domain.Entity` | Ortak davranışı paylaşma | 1 ✅ |
-| Arayüz, çok biçimlilik | `BookRepository` ve diğer repository'ler, `ShippingPolicy`, `application.port.*` (aynı arayüzün testte sahte, üretimde gerçek uygulaması) | Uygulamadan bağımsız sözleşme | 1 ✅, 2 ✅ |
-| `default` arayüz metotları | `TransactionRunner.run` | Arayüze, uygulayanları bozmadan davranış ekleme | 2 ✅ |
-| `enum` (alan ve davranışla) | `OrderStatus`, `BookSortField`, `Language`, `SortOrder`, `Role`, `PaymentMethod` | Durum makinesi, sabit kümeler, sabite bağlı davranış | 1 ✅ |
-| `sealed` tür ve örüntü eşleme (`switch`) | `domain.event.DomainEvent`, `domain.cart.CartAdjustment`, `application.cart.CartRef`, `PaymentGateway.PaymentResult`; `CartService.load`, `CheckoutService` ödeme sonucu; `JdbcExecutor.toJdbc` (`case null` ve tür desenleriyle parametre dönüştürme) | Kapalı tür hiyerarşisinde eksiksiz `switch` | 1 ✅, 2 ✅, 3 ✅ |
-| İç sınıf, iç içe `static` sınıf | `Cart.LineIterator` (iç sınıf), `Book.Builder`, `BookSearchCriteria.Builder` (`static`) | Kapsayan nesnenin durumuna erişim; kurucu yardımcısı | 1 ✅ |
-| `Comparable`, `Comparator` | `Money`, `Rating`, `BookSortField`, `BookSort` | Doğal sıralama, zincirlenmiş özel sıralama | 1 ✅ |
+---
 
-## 3. İstisna yönetimi
+## Bölüm 01 — Gitflow ve İlk İş Nesnesi
 
-| Konu | Nerede | Ne için | Faz |
-|---|---|---|---|
-| Özel istisna hiyerarşisi | `common.error.*`, `domain.catalog.InsufficientStockException` | İş hatalarını türle ve hata koduyla ayırma | 1 ✅ |
-| Denetlenen / denetlenmeyen istisna | `persistence.jdbc.DataAccessException` (`SQLException` sarma, SQLState ile kısıt ihlalini tanıma) ✅, `infrastructure.storage` (`IOException` sarma) | Teknik hatayı sınırda anlamlı hataya çevirme | 3 ✅, 4 |
-| `try-with-resources`, `finally` | `JdbcExecutor` (`PreparedStatement`, `ResultSet`), `JdbcTransactionRunner` (`finally` ile bağlantı kapatma) ✅; dosya kodu | Kaynakların kapatılması | 3 ✅, 4 |
-| Merkezi hata işleme | `web.api.v1.ApiExceptionHandler` | İstisnayı HTTP yanıtına eşleme | 5 |
+| Konu | Kitap mağazasında | Durum | Faz |
+| --- | --- | --- | --- |
+| Gitflow: `main`, `develop`, `feature/*`, `release/*`, `hotfix/*` | [ADR-0001](adr/ADR-0001.md). Faz 0–3 doğrudan `main`'e yapıldı. | ⏳ | 4 |
+| Sürüm etiketleri, CalVer | `v2026.11.1` biçimi *(ADR-0001)* | ⏳ | 4 |
+| POJO'dan değişmez *(immutable)* iş nesnesine | `Money`, `Isbn`, `Email`, `PersonName`, `Address`, `Stock`, `Rating` (`record`) | ✅ | 1 |
+| Kurucuda doğrulama, `final` sınıf | Değer nesnelerinin compact constructor'ları; `shared-kernel` `Guard` | ✅ | 1 |
+| Boş `catch` ile hatayı yutmamak | Exception'lar sarılıp yeniden fırlatılıyor *(`DataAccessException`)* | ✅ | 3 |
+| Notification pattern — tüm hataları birden bildirmek | `ValidationException` birden çok `Violation` taşır; `PasswordPolicy` tüm kuralları birlikte raporlar | ✅ | 1 |
 
-## 4. Generics
+## Bölüm 02 — Git Pratikleri, Anemik Model ve Record'lar
 
-| Konu | Nerede | Ne için | Faz |
-|---|---|---|---|
-| Generic sınıf ve arayüz | `common.paging.Page<T>` ✅, test çiftlerinde `InMemoryStore<T extends Entity>` ✅, `TransactionRunner.inTransaction(Supplier<T>)` ✅, `persistence.jdbc.RowMapper<T>` ve `RecordRowMapper<R extends Record>` ✅, `infrastructure.cache.ConcurrentCache<K,V>` | Türden bağımsız yeniden kullanım | 1 ✅, 2 ✅, 3 ✅, 4 |
-| Generic metot, sınırlı tür (`<T extends …>`) | `Guard.requireBetween(<T extends Comparable<? super T>>)`, `Guard.requireNotEmpty(<C extends Collection<?>>)`, `SortOrder.apply` | Tür güvenli, her türe uyan denetim | 1 ✅ |
-| Joker türler (`? extends`, `? super`) | `Page.map(Function<? super T, ? extends R>)`, `Page.fromList(List<? extends T>)` | PECS kuralı | 1 ✅ |
+| Konu | Kitap mağazasında | Durum | Faz |
+| --- | --- | --- | --- |
+| Feature dalı, `--no-ff` merge, Pull Request | [ADR-0001](adr/ADR-0001.md) | ⏳ | 4 |
+| Anemik model ve sorunları | Domain baştan zengin tasarlandı; anemik karşı örnek tutulmuyor | — | — |
+| Value object, `equals` / `hashCode` | `record`'lar değere göre; `Entity` kimliğe göre eşit *(`EntityTest`)* | ✅ | 1 |
+| Class ile record karşılaştırması | Değer nesneleri `record`; kimliği olan varlıklar sınıf | ✅ | 1 |
+| Record'ların sığ değişmezliği, `List.copyOf` | `Page`, `CartView`, `OrderDetails`, `BookDetails` kurucuları listeleri kopyalar | ✅ | 1, 2 |
+| `invokedynamic`, bytecode | Projede kod gerektirmez | — | — |
 
-## 5. Koleksiyonlar, veri yapıları ve algoritmalar
+## Bölüm 03 — Money Value Object ve Rich Entity Tasarımı
 
-| Konu | Nerede | Ne için | Faz |
-|---|---|---|---|
-| `List`, `Set`, `Map` ve uygulamaları | `Cart` (`LinkedHashMap`), `Book` (`LinkedHashSet<Author>`), `OrderStatus` (`EnumSet`), bellek içi repository'ler | Sırayı koruma, tekrarı önleme, enum kümeleri | 1 ✅, 2 |
-| `Queue`, `Deque` | `Category.selfAndDescendants` (`ArrayDeque` ile genişlik öncelikli gezinme) ✅, `infrastructure.notification` (bildirim kuyruğu) | FIFO işleme | 1 ✅, 4 |
-| Ağaç yapısı ve özyineleme | `domain.catalog.Category` (`depth`, `path`) | Üst kategori zincirini dolaşma | 1 ✅ |
-| `Iterable` / `Iterator` | `Cart` | `for-each` ile gezilebilir, silmeye kapalı sepet | 1 ✅ |
-| Sıralama ve arama | `BookSort.comparator()`, `BookSearchCriteria.asPredicate()` | Çok ölçütlü sıralama, kararlı sayfalama için eşitlik bozucu | 1 ✅ |
-| Karmaşıklık analizi (Big-O) | Bellek içi repository'lerde kimliğe, ISBN'e ve e-postaya göre `Map` indeksleri ✅; `ConcurrentCache` | Doğrusal tarama yerine sabit zamanlı erişim | 2 ✅, 4 |
-| Değiştirilemez koleksiyonlar | `List.copyOf`, `Collections.unmodifiableList/Set` (varlıkların dışarı verdiği koleksiyonlar) | İç durumu koruma | 1 ✅ |
+| Konu | Kitap mağazasında | Durum | Faz |
+| --- | --- | --- | --- |
+| `double` / `float` yuvarlama hataları | `MoneyTest.addsDecimalFractionsExactly` | ✅ | 1 |
+| `Money` record: `BigDecimal`, para birimi, `setScale`, `HALF_UP` | `shared-kernel` `Money` | ✅ | 1 |
+| Farklı para birimleriyle işlem yasağı | `Money.requireSameCurrency` | ✅ | 1 |
+| Zengin entity: `Order`, `OrderLine`, `OrderStatus` | `sales` `Order.place`, `markPaid`, `ship`, `deliver`, `cancel` | ✅ | 1 |
+| Sipariş anındaki fiyatın kopyalanması | `OrderLine` başlık ve birim fiyatı kopyalar | ✅ | 1 |
+| Value object mi entity mi? | `Entity` taban sınıfı ile `record` değer nesneleri ayrımı | ✅ | 1 |
 
-## 6. Fonksiyonel programlama
+## Bölüm 04 — Aggregate Sınırları, State Machine ve Domain Exception'lar
 
-| Konu | Nerede | Ne için | Faz |
-|---|---|---|---|
-| Lambda, metot referansı | `Cart.subtotal(Function<Long, Money>)`, `BookSortField`, `ShippingPolicy.alwaysFree()` ✅; `TransactionRunner.inTransaction(() -> …)`, servislerde `Consumer<Cart>` / `Consumer<Customer>` ile ortak "yükle–değiştir–kaydet" akışı ✅; `RowMapper` | Davranışı parametre olarak verme | 1 ✅, 2 ✅, 3 |
-| Fonksiyonel arayüzler | `ShippingPolicy` (`@FunctionalInterface`), `Predicate<Book>` (`BookSearchCriteria`), `RowMapper<T>` | Tek metotlu sözleşmeler, `Predicate.and` ile birleştirme | 1 ✅, 3 |
-| Stream API | `Money.sum`, `Cart.subtotal`, `Order` toplamları, `Language.fromCode` | Bildirimsel veri işleme | 1 ✅ |
-| `Optional` | `Category.parent()`, `Book.publicationYear()`, `Customer.defaultAddress()`, tüm `findBy…` metotları; servislerde `filter` / `map` / `orElseThrow` zincirleri | `null` yerine açık yokluk | 1 ✅, 2 ✅ |
-| `Collectors.toMap`, gruplama | `CheckoutService`, `CartService`, `ReviewService` (kimliğe göre kitap ve müşteri haritaları) | Toplu yüklenen kayıtları kimliğe göre eşleme | 2 ✅ |
-| `Collectors` (gruplama, özetleme) | `RatingDistribution.of` (`groupingBy` + `counting`), `ValidationException` (`joining`), yönetim özeti | Gruplayarak sayma | 1 ✅, 7 |
+| Konu | Kitap mağazasında | Durum | Faz |
+| --- | --- | --- | --- |
+| Niyet bildiren metotlar *(setter yerine)* | `Customer.rename`, `changeEmail`; `Book.reserve`, `changePrice` | ✅ | 1 |
+| Aggregate kökü ve parçaları | `Order` → `OrderLine`, `Customer` → `SavedAddress`, `Cart` → `CartItem` | ✅ | 1 |
+| Aggregate'ler arası kimlikle referans | `Order` ve `Review` müşteriye `long` kimlikle bağlı. Ancak `Order.place` ve `Cart.add` başka bir aggregate'in nesnesini *(`Book`)* alıyor. Modüller ayrılınca `sales` kendi `ProductSnapshot` değerini kullanacak *(ADR-0002)*. | 🔁 | 4 |
+| `OrderStatus` state machine, `EnumSet`, final durumlar | `OrderStatus.allowedNext`, `canMoveTo`, `isFinal` | ✅ | 1 |
+| Domain exception hiyerarşisi | Bugün `BookstoreException` alt türleri; `DomainException` + `Kind` + `code` yapısına dönüştürülecek *(ADR-0004)* | 🔁 | 4 |
+| JUnit ve AssertJ ile birim testler | Tüm modüllerde; parametreli testler *(`@CsvSource`, `@EnumSource`)* | ✅ | 1 |
+| "Turkish I problem", `Locale.ROOT` | `Email`, `Isbn`, `TextNormalizer` | ✅ | 1 |
 
-## 7. Girdi / çıktı
+## Bölüm 05 — Optional, Stream API ve Sorgu Tasarımı
 
-| Konu | Nerede | Ne için | Faz |
-|---|---|---|---|
-| NIO.2 (`Path`, `Files`) | `infrastructure.storage.LocalFileStorage` | Kapak görsellerini kaydetme ve okuma | 4 |
-| Bayt ve karakter akışları, kodlama | `LocalFileStorage`, `infrastructure.seed.DemoDataLoader` | Görsel (bayt) ve CSV (UTF-8 metin) okuma | 4 |
-| Metin ayrıştırma | `DemoDataLoader` | CSV satırlarından örnek katalog üretme | 4 |
-| Nesne serileştirme (`Serializable`) | `domain.cart.Cart` (`serialVersionUID`, `CartTest` içinde gidiş-dönüş testi) | Ziyaretçi sepetinin HTTP oturumunda saklanması | 1 ✅, 5 |
-| Sınıf yolu kaynakları, `Properties` | `messages_*.properties`, örnek veri dosyaları | Yapılandırma ve çeviri metinleri | 5 |
+| Konu | Kitap mağazasında | Durum | Faz |
+| --- | --- | --- | --- |
+| `Optional` dönüş tipi sözleşmesi | `findBy…` metotları, `Book.publicationYear()`, `Customer.defaultAddress()` | ✅ | 1 |
+| `Optional` alan olarak kullanılmaz | `BookSearchCriteria` ve `BookSearchQuery` record bileşenleri `Optional`; kural ihlali *(ADR-0004)* | 🔁 | 4 |
+| Stream API, `reduce(Money::plus)` | `Money.sum`, `Cart.subtotal`, `Order` toplamları | ✅ | 1 |
+| `Collectors.groupingBy`, `toMap`, `mapping` | `RatingDistribution`, repository'lerde kimliğe göre gruplama | ✅ | 1, 3 |
+| Bellek içi sorgu nesnesi *(OrderBook)* | Test çiftleri: `InMemoryBookRepository` … `InMemoryStore<T>` | ✅ | 2 |
+| Big-O: liste yerine `Map` indeksi | `InMemoryStore` kimliğe, ISBN'e ve e-postaya göre `Map` | ✅ | 2 |
+| Deterministik sıralama | `BookSort` eşitlikte başlık ve ISBN'e göre sıralar | ✅ | 1 |
 
-## 8. Eşzamanlılık
+## Bölüm 06 — Yazılım Mimarileri
 
-| Konu | Nerede | Ne için | Faz |
-|---|---|---|---|
-| `Thread`, `Runnable`, yaşam döngüsü | `infrastructure.notification.AsyncLogNotifier` | İşçi thread'ler ve düzgün kapanış | 4 |
-| `ExecutorService`, thread havuzu | `AsyncLogNotifier` | Bildirimleri isteği bekletmeden işleme | 4 |
-| Üretici–tüketici, `BlockingQueue` | `AsyncLogNotifier` | Olay kuyruğu | 4 |
-| `synchronized`, kilitler, yarış durumu | Bellek içi repository'lerde stok düşme | Aynı anda gelen siparişlerde tutarlılık | 4 |
-| Eşzamanlı koleksiyonlar, atomik türler | `ConcurrentCache` (`ConcurrentHashMap`), sipariş numarası sayacı (`AtomicLong`) | Kilitsiz thread güvenliği | 4 |
-| `CompletableFuture` | `application.admin` özet ekranı | Bağımsız sorguları paralel çalıştırma | 4 |
-| Sanal thread'ler (Java 21) | `bookstore-web` yapılandırması | İstek başına hafif thread | 5 |
-| `ThreadLocal` | `persistence.jdbc.JdbcTransactionRunner` | İşlem boyunca aynı bağlantıyı taşıma | 3 ✅ |
+| Konu | Kitap mağazasında | Durum | Faz |
+| --- | --- | --- | --- |
+| Coupling, cohesion, test edilebilirlik, bilişsel yük | ADR-0002'nin gerekçeleri | ✅ | — |
+| Katmanlı, hexagonal *(ports & adapters)*, onion/clean | Her iş modülünün içi hexagonal: `domain` merkezde, repository'ler ve portlar arayüz, `persistence` ve `rest` adaptör | 🔁 | 4 |
+| Modüler monolit | İş alanına göre Maven modülleri *(ADR-0002)*; bugün modüller katmana göre | 🔁 | 4 |
+| Mikroservis, SOA | Bilinçli olarak seçilmedi *(ADR-0002)* | — | — |
 
-## 9. Veritabanı ve JDBC
+## Bölüm 07 — Typed Identity, Static Factory, Factory ve Builder
 
-| Konu | Nerede | Ne için | Faz |
-|---|---|---|---|
-| İlişkisel modelleme, normalizasyon | `db/migration/V1__initial_schema.sql` (çoka-çok `book_authors`, sipariş anı kopyaları, yabancı anahtarlar, `CHECK` kısıtları) | Şema tasarımı | 3 ✅ |
-| SQL (DDL, DML, JOIN, `EXISTS`, `LIKE … ESCAPE`, `CASE`, `LIMIT/OFFSET`) | `persistence.*`, özellikle `catalog.BookSearchSql` | Arama, filtre, sıralama, sayfalama | 3 ✅ |
-| JDBC: `Connection`, `PreparedStatement`, `ResultSet`, üretilen anahtarlar, toplu (`batch`) yazma | `persistence.jdbc.JdbcExecutor` | Sorgu çalıştırma ve satır eşleme | 3 ✅ |
-| DAO / Repository kalıbı | `persistence.*.Jdbc…Repository` | Veri erişimini soyutlama | 3 ✅ |
-| İşlemler (ACID, `commit`, `rollback`) | `JdbcTransactionRunner`, `CheckoutService`; `CheckoutWithDatabaseTest` reddedilen ödemede her şeyin geri alındığını doğrular | Sipariş oluşturmanın bölünmezliği | 3 ✅ |
-| Bağlantı havuzu | `DataSource` arayüzü ✅; HikariCP yapılandırması web modülünde | Bağlantıları yeniden kullanma | 3 ✅, 5 |
-| Eşzamanlılık denetimi | `version` sütunu ile iyimser kilitleme (`JdbcExecutor.updateVersioned`), sipariş numarası satır kilidi, `CHECK (stock >= 0)`; son kopya için yarışan iki sipariş testi | Stok tutarlılığı | 3 ✅ |
-| Şema sürümleme | Flyway (`DatabaseMigrator`) | Tekrarlanabilir veritabanı kurulumu | 3 ✅ |
+| Konu | Kitap mağazasında | Durum | Faz |
+| --- | --- | --- | --- |
+| Tipli kimlikler *(`CustomerId`, `OrderId`)* | `BookId`, `AuthorId`, `CategoryId`, `CustomerId`, `OrderId`, `ReviewId` *(ADR-0004)*; bugün `long` | ⏳ | 4 |
+| Static factory metotları | `Money.of`, `Customer.register`, `Cart.guest`, `OrderNumber.of`, `Rating.of` | ✅ | 1 |
+| Factory ve kimlik üreteci arayüzü | `Order.place` + `OrderNumberSequence` portu *(bellek içi ve JDBC uygulamaları)* | ✅ | 1, 3 |
+| Builder | `Book.Builder`, `BookSearchCriteria.Builder` | ✅ | 1 |
 
-## 10. Web ve ağ programlama
+## Bölüm 08 — Strategy, Specification, Repository ve Mapper
 
-| Konu | Nerede | Ne için | Faz |
-|---|---|---|---|
-| HTTP (metotlar, durum kodları, başlıklar) | `web.mvc`, `web.api.v1` | İstek–yanıt modeli | 5 |
-| Servlet modeli, filtreler | Spring MVC `DispatcherServlet`, güvenlik filtre zinciri | İsteğin işlenme hattı | 5 |
-| MVC kalıbı | `web.mvc` + Thymeleaf şablonları | Sunum ile iş mantığını ayırma | 5 |
-| Oturum ve çerez | Giriş oturumu, ziyaretçi sepeti | Durumsuz protokolde durum | 5 |
-| REST, JSON | `web.api.v1` | Makineler için arayüz | 6 |
-| HTTP istemcisi (`java.net.http`) | `bookstore-web` uçtan uca testleri | API'yi gerçek HTTP ile çağırma | 6 |
-| Kimlik doğrulama ve yetkilendirme | `web.security`, `web.config.SecurityConfig` | Rol tabanlı erişim | 5 |
-| Uluslararasılaştırma (`Locale`, `ResourceBundle`) | `messages_tr.properties`, `messages_en.properties` | İki dilli arayüz | 5 |
+| Konu | Kitap mağazasında | Durum | Faz |
+| --- | --- | --- | --- |
+| Strategy | `ShippingPolicy` / `FreeShippingThreshold`, `BookSortField` | ✅ | 1 |
+| Strategy için lambda | `ShippingPolicy.alwaysFree()`, testte `subtotal -> …` | ✅ | 1 |
+| Specification *(kuralı veri haline getirmek)* | Bugün `BookSearchCriteria.asPredicate()` birleşik bir `Predicate`. `shared-kernel`'e `Specification<T>` *(and / or / not)* ve `BookSpecifications` eklenecek. | 🔁 | 4 |
+| Specification'ı SQL'e çevirmek | `BookSearchSql` *(ders bunu "bir sonraki adım" olarak bırakıyor)* | ✅ | 3 |
+| Repository deseni, arayüzün yeri | Arayüzler domain'de *(ders ADR-0003'ün risk notu baştan önlendi)* | ✅ | 1 |
+| Mapper *(domain ↔ DTO)* | Bugün okuma modeli `record`'larının `of(...)` metotları. `api` paketindeki DTO'lar ve `application` paketindeki mapper'lar olacak *(ADR-0003)*. | 🔁 | 4 |
+| Paket düzeni: `api`, `application`, `domain`, `persistence` | Her iş modülünde *(ADR-0002)* | ⏳ | 4 |
 
-## 11. Yazılım mühendisliği
+## Bölüm 09 — Maven Modülleri ve ArchUnit
 
-| Konu | Nerede | Ne için | Faz |
-|---|---|---|---|
-| SOLID ilkeleri | Modül sınırları, port–adapter ayrımı | Bağımlılığın tersine çevrilmesi başta olmak üzere | hepsi |
-| Katmanlı mimari | Altı Maven modülü | Sorumlulukların ayrılması | 0 |
-| Tasarım kalıpları | Aşağıdaki tablo | — | hepsi |
-| Birim testi, test çiftleri | Her modülün `src/test` dizini; parametreli testler (`@CsvSource`, `@EnumSource`), sabit `Clock`; application'da tüm uygulamayı sahte portlarla kuran `Shop` test düzeneği | Davranışı doğrulama | hepsi |
-| Derleme otomasyonu | Maven çok modüllü yapı, Maven Wrapper | Tekrarlanabilir derleme | 0 |
-| Anotasyonlar ve yansıma (*reflection*) | `persistence.jdbc.RecordRowMapper` (`RecordComponent`, kurucuyu yansımayla çağırma) ✅; Bean Validation, Spring `@Configuration` | Üst veri ile davranış | 3 ✅, 5 |
-| Kayıt tutma | SLF4J + Logback | Çalışma zamanı gözlemi | hepsi |
-| Javadoc | Tüm `public` türler, `package-info.java` | Belgeleme | hepsi |
+| Konu | Kitap mağazasında | Durum | Faz |
+| --- | --- | --- | --- |
+| Çok modüllü Maven, `pom` / `jar` paketleme | Altı modül var ama katmana göre ayrılmış | 🔁 | 4 |
+| İş alanına göre modüller *(package-by-feature)* | `shared-kernel`, `catalog`, `customer`, `sales`, `review`, `app` *(ADR-0002)* | ⏳ | 4 |
+| `shared-kernel` | Bugünkü `bookstore-common` yeniden adlandırılacak *(ADR-0005)* | 🔁 | 4 |
+| Test fixture'ını `test-jar` ile paylaşmak | `TestData` ve `Shop` düzenekleri | ⏳ | 4 |
+| Uçtan uca smoke test | `app` modülünde tüm modülleri kuran bir test | ⏳ | 4 |
+| ArchUnit ile mimari testler | `quality/architecture-tests`; ADR-0003–0008 kuralları | ⏳ | 4 |
+| `no_standard_streams`, `no_dumping_ground_packages` | [ADR-0005](adr/ADR-0005.md) | ⏳ | 4 |
 
-### Tasarım kalıpları
+## Bölüm 10 — Uygulama Servisleri ve Manuel Dependency Injection
 
-| Kalıp | Nerede |
-|---|---|
-| Strategy | `ShippingPolicy` / `FreeShippingThreshold`, `BookSortField` |
-| State | `OrderStatus` geçiş kuralları |
-| Observer | `Entity.raise` / `pullEvents` ile `DomainEvent` toplama; yayın ve `Notifier` Faz 2 ve 4'te |
-| Builder | `Book.Builder`, `BookSearchCriteria.Builder` |
-| Factory method | `Money.of`, `Order.place`, `OrderNumber.of`, `Customer.register`, `Cart.guest` |
-| Repository / DAO | `domain.*.…Repository`; testte `InMemory…Repository` ✅, üretimde `persistence.*.Jdbc…Repository` ✅ |
-| Adapter | `persistence.*` (domain arayüzlerini JDBC'ye uyarlama) ✅, `infrastructure.*`, `web.security` |
-| Template method | `InMemoryStore.beforeSave` / `afterSave` kancaları (test) ✅, `persistence.jdbc.JdbcExecutor` ✅ |
-| Facade | `application` servisleri ✅ |
-| Command | `RegistrationCommand`, `PlaceOrderCommand`, `ReviewCommand` ✅ |
-| Test double (fake) | `application/src/test/.../fake`: bellek içi repository'ler, `RecordingNotifier`, `ScriptedPaymentGateway` ✅ |
-| Dependency injection | `web.config` içindeki `@Bean` tanımları |
+| Konu | Kitap mağazasında | Durum | Faz |
+| --- | --- | --- | --- |
+| Kullanım senaryosu servisleri | `CatalogService`, `CartService`, `AccountService`, `CheckoutService`, `OrderService`, `OrderAdminService`, `ReviewService` | ✅ | 2 |
+| Komut nesneleri *(commands)* | `RegistrationCommand`, `PlaceOrderCommand`, `ReviewCommand` | ✅ | 2 |
+| `api` paketi ve façade arayüzleri | Komutlar ve görünümler `api` paketine taşınacak; façade arayüzleri eklenecek | 🔁 | 4 |
+| Constructor injection, `private final` işbirlikçiler | Tüm servisler | ✅ | 2 |
+| `Clock` enjeksiyonu, `SteppingClock` | `Clock.fixed` ve `Clock.offset` ile testler | ✅ | 1, 2 |
+| Composition root | Testlerde `Shop`; üretimde `app` modülünde `BookstoreModule` | 🔁 | 4 |
+| Fake, stub, mock | `application` testlerinde `FakePorts` *(fake)* | ✅ | 2 |
 
-## 12. Bilinçli olarak dışarıda bırakılanlar
+## Bölüm 11 — Domain Events ve Observer Deseni
 
-| Konu | Neden |
-|---|---|
-| Masaüstü arayüz (Swing / JavaFX) | Proje bir web uygulaması; arayüz Thymeleaf ile yapılıyor. |
-| Ham soket programlama (`ServerSocket`) | Ayrı bildirim sunucusu kapsam dışı bırakıldı. Ağ programlama HTTP katmanı ve `java.net.http` istemcisi ile karşılanıyor. |
-| Büyük dosya içe/dışa aktarım, raporlama | Kapsam dışı bırakıldı. Dosya G/Ç, kapak görseli depolama ve örnek veri yükleme ile karşılanıyor. |
-| JPA / Hibernate | İlk sürümde veri erişimi elle JDBC. Aynı repository arayüzlerine ikinci bir uygulama olarak eklenmesi yol haritasında isteğe bağlı. |
-| Java modül sistemi (`module-info.java`) | Yol haritasında isteğe bağlı. |
+| Konu | Kitap mağazasında | Durum | Faz |
+| --- | --- | --- | --- |
+| Olaylar `sealed` arayüz + `record` | `DomainEvent`, `OrderPlaced`, `OrderStatusChanged`; modül başına olay arayüzüne bölünecek | 🔁 | 4 |
+| Aggregate olayı biriktirir, servis toplar *(`pullEvents`)* | `Entity.raise` / `pullEvents` | ✅ | 1 |
+| Önce kayıt, sonra yayın | `CheckoutService`, `OrderAdminService` | ✅ | 2 |
+| Yayıncı portu ve gözlemciler | Bugün tek bir `Notifier` portu; `DomainEventPublisher` + `InProcessEventPublisher` + gözlemciler olacak *(ADR-0007)* | 🔁 | 4 |
+| Dual-write problemi | Bilinçli olarak belgeleyen bir test | ⏳ | 4 |
+| `switch` ile tür eşleme *(exhaustiveness)* | `OrderTest.target`, `CartService.load`, `CheckoutService` ödeme sonucu | ✅ | 1, 2 |
+
+## Bölüm 12 — Persistence Boundary, JDBC ve Flyway
+
+| Konu | Kitap mağazasında | Durum | Faz |
+| --- | --- | --- | --- |
+| Flyway ile şema yönetimi | `V1__initial_schema.sql`, `DatabaseMigrator` | ✅ | 3 |
+| Migration'ların sahibi olan modül | Bugün tek dosya; modül başına `db/migration/<modül>` olacak *(ADR-0008)* | 🔁 | 4 |
+| JDBC repository, aggregate = depolama birimi | `JdbcBookRepository`, `JdbcOrderRepository` … | ✅ | 3 |
+| Alt satırları silip yeniden yazmak | `cart_items`, `book_authors` | ✅ | 3 |
+| Veritabanından yeniden oluşturma *(reconstitute)* | Bugün adı `restore(...)`; `reconstitute` olacak | 🔁 | 4 |
+| N+1 sorgu problemi | Bir sayfa kitap üç sorguyla yüklenir | ✅ | 3 |
+| Specification sorgularının bedeli | `BookSearchSql` tüm filtreyi SQL'de yapar | ✅ | 3 |
+| `BigDecimal` ölçek problemi | `Money` her zaman 2 basamağa yuvarlar | ✅ | 1 |
+| `CHECK (... IN ...)` ve H2 2.4.240 hatası | Faz 3'te bulundu, `CASE` ile aşıldı; referans tablolarla değiştirilecek *(ADR-0008)* | 🔁 | 4 |
+| `SQLException`'ı sarmalamak | `DataAccessException`; kısıt ihlalleri `ConflictException`'a çevrilir | ✅ | 3 |
+| Sipariş numarası veritabanından | `order_number_sequences` + `JdbcOrderNumberSequence` | ✅ | 3 |
+| Transaction sınırı kullanım senaryosunda | `TransactionRunner` portu + `JdbcTransactionRunner` *(`ThreadLocal` ile bağlantı)* | ✅ | 2, 3 |
+| Sözleşme testleri *(contract tests)* | Her repository için tek sözleşme; bellek içi, H2 ve PostgreSQL implementasyonlarının hepsi geçecek | ⏳ | 4 |
+| Bellek içi repository'nin kopya saklaması | Bugün referans saklıyor *(ders Bölüm 12'deki açığın aynısı)* | 🔁 | 4 |
+| PostgreSQL ve Testcontainers | Bugün H2 MySQL modu; PostgreSQL 17, H2 PostgreSQL modu ve Testcontainers olacak *(ADR-0008)* | 🔁 | 4 |
+| Atomik kayıt, geri alma | `CheckoutWithDatabaseTest.declinedPaymentRollsBack…` | ✅ | 3 |
+| JPA'nın neleri ortadan kaldırdığı | Ayrı persistence modeliyle ikinci uygulama | ⏳ | 9 |
+
+## Bölüm 13 — HTTP Boundary, DTO, Validasyon ve Hata Sözleşmeleri
+
+| Konu | Kitap mağazasında | Durum | Faz |
+| --- | --- | --- | --- |
+| `rest` paketi, façade üzerinden erişim | Her iş modülünde *(ADR-0009)* | ⏳ | 5 |
+| Request DTO ve Bean Validation *(biçimsel doğrulama)* | `AddToCartRequest`, `PlaceOrderRequest`, `RegistrationRequest` … | ⏳ | 5 |
+| Doğrulamanın yeri: sınır mı domain mi? | Biçim sınırda, kural domain'de *(ADR-0009)* | ⏳ | 5 |
+| `DomainException.Kind` → durum kodu | 404 / 409 / 422 / 403, biçim hatası 400 | ⏳ | 4, 5 |
+| RFC 9457 Problem Details | `ProblemMapper`, `application/problem+json` | ⏳ | 5 |
+| JSON dönüşümleri | Faz 5'te Jackson, Faz 6'da JSON-B | ⏳ | 5, 6 |
+| JDK HTTP sunucusu *(`com.sun.net.httpserver`)* | Elle yönlendirme ve hata eşleme | ⏳ | 5 |
+| HTTP testleri | `java.net.http.HttpClient` ile uçtan uca | ⏳ | 5 |
+
+## Bölüm 14 — Uygulama Sunucusu: CDI, JTA, JAX-RS ve Payara Micro
+
+| Konu | Kitap mağazasında | Durum | Faz |
+| --- | --- | --- | --- |
+| WAR paketleme, Payara Micro 7 | `app` modülü → `bookstore.war` *(ADR-0010)* | ⏳ | 6 |
+| CDI: `beans.xml`, `annotated` keşif, kapsamlar, proxy | Servisler ve repository'ler `@ApplicationScoped` | ⏳ | 6 |
+| Producer'lar *(container'ın kuramadığı nesneler)* | `BookstoreWiring`: `Clock`, `DataSource`, kargo kuralı | ⏳ | 6 |
+| `@DataSourceDefinition` ve MicroProfile Config | Bağlantı bilgisi ortamdan, WAR'da parola yok | ⏳ | 6 |
+| Açılışta migration ve demo verisi | `BookstoreStartup` *(`bookstore.demo-data`)* | ⏳ | 6 |
+| JTA `@Transactional`, repository'ler commit etmez | `JdbcTransactionRunner`'ın yerini alır | ⏳ | 6 |
+| CDI olayları, `@Observes(during = AFTER_SUCCESS)` | `CdiDomainEventPublisher`, bildirim gözlemcisi | ⏳ | 6 |
+| JAX-RS kaynakları, JSON-B, `ExceptionMapper` | Faz 5'teki HTTP katmanının taşınması | ⏳ | 6 |
+| JerseyTest | Faz 5'teki HTTP beklentileri aynen geçer | ⏳ | 6 |
+| MicroProfile OpenAPI | `/openapi` *(API-4)* | ⏳ | 6 |
+
+---
+
+## Ders notlarının soru bölümlerinden alınanlar
+
+Ders, bazı konuları sorularda bırakıp Lab projesine erteliyor. Kitap mağazasında bunlardan uygulananlar ve planlananlar:
+
+| Soru *(bölüm)* | Kitap mağazasında | Durum | Faz |
+| --- | --- | --- | --- |
+| İyimser kilitleme, `version` kolonu *(12, 14)* | Tüm aggregate tabloları; [ADR-0015](adr/ADR-0015.md) | ✅ | 3 |
+| Aynı anda son kopyayı alan iki istemci *(14)* | `CheckoutWithDatabaseTest.twoCustomersRacingForTheLastCopyCannotBothGetIt` | ✅ | 3 |
+| Sipariş numarasında boşluk ve geri alma *(12)* | Geri alınan numara yeniden verilir; testle belgelendi | ✅ | 3 |
+| Transactional Outbox *(11, 12, 14)* | — | ⏳ | 9 |
+| `ETag` / `If-Match` *(13)* | — | ⏳ | 9 |
+| `Idempotency-Key` *(13)* | — | ⏳ | 9 |
+| Hata yanıtına korelasyon kimliği *(13)* | — | ⏳ | 9 |
+| MicroProfile Health readiness *(14)* | — | ⏳ | 9 |
+| PostgreSQL ile entegrasyon testi CI'da *(14)* | GitHub Actions | ⏳ | 9 |
+
+## Dersin dışında kalan, projede uygulanan konular
+
+Bunlar ders notlarında yok; kitap mağazasının ihtiyacından doğdu ya da Faz 0–3'te genel Java müfredatı varsayılarak eklendi. Korunuyorlar ama müfredatın parçası sayılmıyorlar.
+
+| Konu | Nerede |
+| --- | --- |
+| `ThreadLocal` | `JdbcTransactionRunner` *(Faz 6'da JTA'ya bırakılınca kalkar)* |
+| Yansıma *(reflection)*, `RecordComponent` | `RecordRowMapper` |
+| İç sınıf, `Iterator` | `Cart.LineIterator` |
+| `ArrayDeque` ile genişlik öncelikli gezinme | `Category.selfAndDescendants` |
+| Diziler ve kontrol basamağı hesabı | `Isbn` *(ISBN-10 → ISBN-13)* |
+| Java serileştirmesi | `Cart` *(misafir sepeti oturumda; ADR-0011 ile yeniden değerlendirilecek)* |
+| Eşzamanlılık testleri *(`ExecutorService`, `CountDownLatch`)* | `JdbcRepositoriesTest.OrderNumbers`, `CheckoutWithDatabaseTest` |
+| Kimlik doğrulama, BCrypt | Faz 7 *(ADR-0011)* |
+| HTML / JavaScript arayüz | Faz 7 *(ADR-0011)* |
+
+## Plandan çıkarılanlar
+
+Önceki planda, ders notları görülmeden önce eklenmiş ama müfredatla ilgisi olmayan konular: thread havuzuyla arka plan bildirimleri, `ConcurrentCache`, NIO.2 ile dosya işleme ve CSV'den örnek veri yükleme. Bildirimler ADR-0007'deki gözlemcilere, örnek veri yükleme ADR-0010'daki açılış adımına taşındı. Kapak görseli depolama yönetim paneliyle birlikte Faz 8'de yapılacak.

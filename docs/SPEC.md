@@ -7,7 +7,7 @@ Bu doküman sistemin **ne yaptığını** tanımlar. **Nasıl** yapıldığı [A
 Book Store, kitap satışı yapan bir web uygulamasıdır. İki hedefi vardır:
 
 1. Çalışan, uçtan uca bir e-ticaret uygulaması olmak (katalog → sepet → sipariş).
-2. Lisans seviyesi Java müfredatındaki konuların her birini gerçek bir kullanım yerinde uygulamak. Konu–kod eşlemesi [CURRICULUM-MAP.md](CURRICULUM-MAP.md) içindedir.
+2. **Java Patterns and Practices** ders notlarındaki *([java-study-notes](https://github.com/software-lecture-labs/java-study-notes), Bölüm 01–14)* konuların her birini gerçek bir kullanım yerinde uygulamak; ders notlarının sözünü ettiği "Lab projesi"nin yerine geçmek. Konu–kod eşlemesi [CURRICULUM-MAP.md](CURRICULUM-MAP.md) içindedir.
 
 ## 2. Aktörler
 
@@ -108,24 +108,25 @@ Book Store, kitap satışı yapan bir web uygulamasıdır. İki hedefi vardır:
 
 | No | Gereksinim | Öncelik |
 |---|---|---|
-| API-1 | Web arayüzündeki tüm işlemler `/api/v1` altında JSON REST API olarak da sunulur. | M |
+| API-1 | Tüm işlemler `/api/v1` altında JSON REST API olarak sunulur. Web arayüzü bu API'nin bir istemcisidir; API'de olmayan bir işlemi yapamaz. | M |
 | API-2 | Katalog ve arama uçları herkese açıktır; sepet, sipariş, hesap ve yorum uçları kimlik doğrulama ister; `/api/v1/admin/**` `ADMIN` rolü ister. | M |
-| API-3 | Hatalar tek biçimde döner (RFC 9457 *Problem Details*): durum kodu, hata kodu, mesaj, alan hataları. | M |
-| API-4 | API, OpenAPI şeması ve Swagger UI ile belgelenir. | S |
+| API-3 | Hatalar tek biçimde döner (RFC 9457 *Problem Details*, `application/problem+json`): durum kodu, kararlı hata kodu (`code`), mesaj, alan hataları. Durum kodları: biçim hatası 400, yetkisiz erişim 403, bulunamayan kayıt 404, durum çatışması 409, iş kuralı ihlali 422, beklenmeyen hata 500 (iç ayrıntı içermez). | M |
+| API-4 | API, MicroProfile OpenAPI ile `/openapi` adresinde belgelenir. | S |
 
 ## 4. Fonksiyonel olmayan gereksinimler
 
 | No | Gereksinim |
 |---|---|
 | NFR-1 | **Para**: tüm tutarlar `BigDecimal` tabanlı bir değer nesnesidir; para birimi TRY, 2 ondalık, yuvarlama `HALF_UP`. `double`/`float` kullanılmaz. |
-| NFR-2 | **Doğrulama**: her girdi hem sunucuda iş kuralı seviyesinde hem web katmanında doğrulanır. |
-| NFR-3 | **Güvenlik**: BCrypt parola, rol tabanlı yetki, formlarda CSRF koruması, SQL'de yalnızca parametreli sorgu, şablonlarda otomatik HTML kaçışı. |
-| NFR-4 | **Dil**: arayüz Türkçe ve İngilizce (`messages_tr`, `messages_en`); varsayılan Türkçe. |
+| NFR-2 | **Doğrulama**: girdinin biçimi HTTP sınırında (Bean Validation) doğrulanır ve tüm hatalı alanlar tek yanıtta döner; iş kuralları domain'de doğrulanır ve sınırda tekrar yazılmaz. |
+| NFR-3 | **Güvenlik**: BCrypt parola, rol tabanlı yetki, tarayıcı oturumunda CSRF koruması, SQL'de yalnızca parametreli sorgu, arayüzde kullanıcı verisinin HTML olarak değil metin olarak yazılması; parola ve bağlantı bilgisi uygulama arşivinde tutulmaz. |
+| NFR-4 | **Dil**: arayüz Türkçe ve İngilizce (iki metin sözlüğü); varsayılan Türkçe. Hata mesajları API'nin döndürdüğü `code` değerine göre seçilir. |
 | NFR-5 | **Tutarlılık**: sipariş oluşturma (stok düşme + sipariş kaydı + sepet boşaltma) tek bir veritabanı işlemidir. |
-| NFR-6 | **Test**: domain ve application katmanlarında birim testi; persistence katmanında veritabanı testi; web katmanında uçtan uca test. Hedef satır kapsamı: domain + application için %80. |
-| NFR-7 | **Kayıt**: SLF4J ile yapılandırılmış log; parola ve kişisel veri log'a yazılmaz. |
-| NFR-8 | **Taşınabilirlik**: `./mvnw verify` komutu, JDK 21 dışında hiçbir ön kurulum olmadan (MySQL dahil) geçer. |
+| NFR-6 | **Test**: domain ve application paketlerinde birim testi; her repository arayüzü için bellek içi ve veritabanı implementasyonlarının birlikte geçtiği sözleşme testi; HTTP katmanında uçtan uca test. Hedef satır kapsamı: domain + application için %80. |
+| NFR-7 | **Kayıt**: `System.Logger` ile kayıt; iş kodu konsola yazmaz; parola ve kişisel veri log'a yazılmaz. |
+| NFR-8 | **Taşınabilirlik**: `./mvnw verify` komutu, JDK 21 dışında hiçbir ön kurulum olmadan (PostgreSQL ve Docker dahil) geçer. Docker varsa aynı testler gerçek PostgreSQL 17 üzerinde de çalışır. |
 | NFR-9 | **Performans**: katalog listesi ve arama, 10.000 kitaplık veri setinde tek istekte 300 ms altında yanıt verir (yerel makine). |
+| NFR-10 | **Mimari kurallar**: modül ve paket bağımlılık yönleri ile domain kuralları ([docs/adr](adr/README.md)) ArchUnit testleriyle her derlemede doğrulanır; ihlal derlemeyi kırar. |
 
 ## 5. Kapsam dışı
 

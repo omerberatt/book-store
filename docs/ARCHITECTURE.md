@@ -1,231 +1,179 @@
 # Book Store — Mimari
 
-Bu doküman sistemin **nasıl** kurulduğunu tanımlar. **Ne** yaptığı [SPEC.md](SPEC.md) içinde, kararların gerekçeleri [DECISIONS.md](DECISIONS.md) içindedir.
+Bu doküman sistemin **nasıl** kurulduğunu anlatır. **Ne** yaptığı [SPEC.md](SPEC.md), kararların gerekçeleri [docs/adr](adr/README.md), müfredatla ilişkisi [CURRICULUM-MAP.md](CURRICULUM-MAP.md) içindedir.
+
+> **Mevcut durum ve hedef.** Bu doküman **hedef mimariyi** anlatır. Faz 0–3'te yazılan kod henüz katmana göre ayrılmış modüllerde *(`bookstore-common`, `-domain`, `-application`, `-persistence`, `-infrastructure`, `-web`)* duruyor ve H2'nin MySQL modunda test ediliyor. Kod, Faz 4'te *([ROADMAP.md](ROADMAP.md))* aşağıdaki yapıya taşınacak. Bölüm 9, iki yapı arasındaki farkları listeler.
 
 ## 1. Genel bakış
 
-Book Store, tek bir süreç olarak çalışan (**monolit**), Maven ile **çok modüllü** ve **katmanlı** bir web uygulamasıdır.
+Book Store, tek bir uygulama olarak dağıtılan, içi iş alanlarına göre modüllere ayrılmış bir **modüler monolittir** *(ADR-0002)*. Her iş modülünün içi **hexagonal** düzendedir: iş kuralları merkezdeki `domain` paketindedir ve hiçbir framework'e bağlı değildir; veritabanı ve HTTP, domain'in tanımladığı arayüzleri uygulayan adaptörlerdir.
 
-Temel fikir: iş kuralları **saf Java** ile yazılır ve hiçbir framework'e bağlı değildir. Veritabanı, dosya sistemi ve web gibi dış dünya ayrıntıları, iş kurallarının tanımladığı arayüzleri (*port*) uygulayan ayrı modüllerdedir (*adapter*). Spring Boot yalnızca en dış modülde yer alır ve parçaları birbirine bağlar.
-
-Bu yapı iki işe yarar:
-
-- Müfredatın temel konuları (OOP, koleksiyonlar, generics, JDBC, thread, I/O) framework'ün arkasına saklanmadan, elle yazılmış kodda görünür.
-- Modern framework kullanımı (Spring MVC, Security, Thymeleaf) aynı projede, doğru yerde durur.
-
-| Konu | Seçim |
-|---|---|
-| Dil | Java 21 (LTS) |
-| Derleme | Maven 3.9, Maven Wrapper (`mvnw`) |
-| Web framework | Spring Boot 4.1 (Spring MVC, Spring Security) |
-| Arayüz | Thymeleaf (sunucu tarafı HTML) + JSON REST API |
-| Veritabanı | MySQL 8.4; testlerde H2 (MySQL uyumluluk modu) |
-| Şema yönetimi | Flyway |
-| Veri erişimi | Elle yazılmış JDBC (DAO kalıbı) |
-| Test | JUnit 5, AssertJ, Mockito |
-| Kayıt | SLF4J + Logback |
+| Konu | Seçim | ADR |
+| --- | --- | --- |
+| Dil | Java 21 | — |
+| Derleme | Maven, Maven Wrapper | 0002 |
+| Platform | Jakarta EE 11 Web Profile, MicroProfile 6.1, Payara Micro 7 | 0010 |
+| Bağımlılık enjeksiyonu | CDI *(Faz 4–5'te elle yazılmış composition root)* | 0006, 0010 |
+| HTTP | Jakarta REST *(JAX-RS)*, JSON-B, Bean Validation *(Faz 5'te JDK HTTP sunucusu ve Jackson)* | 0009, 0010 |
+| Hata biçimi | RFC 9457 Problem Details | 0009 |
+| Veritabanı | PostgreSQL 17; testlerde H2 *(PostgreSQL modu)* ve Testcontainers | 0008 |
+| Veri erişimi | Elle yazılmış JDBC | 0008 |
+| Şema | Flyway | 0008 |
+| Transaction | JTA `@Transactional` *(Faz 4–5'te `TransactionRunner` portu)* | 0008, 0010 |
+| Arayüz | WAR içinde HTML, CSS, JavaScript; REST API'nin istemcisi | 0011 |
+| Test | JUnit, AssertJ, ArchUnit, Testcontainers, JerseyTest | 0003, 0008, 0010 |
+| Dal stratejisi | Gitflow, CalVer etiketleri | 0001 |
 
 ## 2. Modüller
 
 ```mermaid
 graph TD
-    web["<b>bookstore-web</b><br/>Spring Boot, MVC, REST, Security, Thymeleaf"]
-    persistence["<b>bookstore-persistence</b><br/>JDBC, Flyway, MySQL"]
-    infrastructure["<b>bookstore-infrastructure</b><br/>dosya, thread, önbellek, BCrypt"]
-    application["<b>bookstore-application</b><br/>kullanım senaryoları, portlar"]
-    domain["<b>bookstore-domain</b><br/>varlıklar, iş kuralları, repository arayüzleri"]
-    common["<b>bookstore-common</b><br/>değer nesneleri, hatalar, sayfalama"]
+    app["<b>app</b> (WAR)<br/>CDI bağlama, açılış, yapılandırma, statik arayüz"]
+    review["<b>review</b><br/>yorum ve puanlama"]
+    sales["<b>sales</b><br/>sepet, sipariş, ödeme"]
+    catalog["<b>catalog</b><br/>kitap, yazar, kategori, stok"]
+    customer["<b>customer</b><br/>hesap, rol, adres"]
+    kernel["<b>shared-kernel</b><br/>Money, Specification, DomainException"]
+    arch["<b>quality/architecture-tests</b><br/>ArchUnit"]
 
-    web --> application
-    web --> persistence
-    web --> infrastructure
-    persistence --> application
-    infrastructure --> application
-    application --> domain
-    domain --> common
+    app --> review
+    app --> sales
+    app --> catalog
+    app --> customer
+    review --> sales
+    review --> catalog
+    review --> customer
+    sales --> catalog
+    sales --> customer
+    catalog --> kernel
+    customer --> kernel
+    sales --> kernel
+    review --> kernel
+    arch -. inceler .-> app
 ```
 
-| Modül | Sorumluluk | Bağımlı olabildiği |
-|---|---|---|
-| `bookstore-common` | Her katmanın kullandığı küçük, genel yapı taşları: `Money`, hata hiyerarşisi, `Page<T>`, doğrulama yardımcıları. | Yalnızca JDK |
-| `bookstore-domain` | İş modeli ve iş kuralları: `Book`, `Cart`, `Order` … Repository **arayüzleri** burada tanımlanır. | `common` |
-| `bookstore-application` | Kullanım senaryoları (*use case*): "sepete ekle", "sipariş ver". Domain nesnelerini orkestre eder, işlem (*transaction*) sınırını belirler. Dış dünyaya ihtiyaç duyduğu şeyleri **port** arayüzü olarak tanımlar. | `domain` |
-| `bookstore-persistence` | Repository arayüzlerinin JDBC ile uygulanması, SQL, şema migration'ları. | `application` |
-| `bookstore-infrastructure` | Veritabanı dışındaki port uygulamaları: dosya depolama, arka plan bildirimleri, önbellek, parola özetleme, ödeme simülasyonu, demo verisi yükleme. | `application` |
-| `bookstore-web` | HTTP katmanı: controller'lar, şablonlar, REST API, güvenlik, yapılandırma ve tüm parçaların birbirine bağlanması. Çalıştırılabilir uygulama burasıdır. | hepsi |
+| Modül | Sorumluluk | Örnek tipler |
+| --- | --- | --- |
+| `shared-kernel` | Hiçbir iş modülüne ait olmayan genel tipler | `Money`, `Specification<T>`, `DomainException`, `Page<T>`, `TextNormalizer`, `Guard` |
+| `catalog` | Satılan kitaplar ve stokları | `Book`, `Author`, `Category`, `Isbn`, `Stock`, `RatingSummary`, `CatalogFacade` |
+| `customer` | Kayıtlı kullanıcılar, roller, adres defteri | `Customer`, `Email`, `PersonName`, `Address`, `PasswordPolicy`, `AccountFacade` |
+| `sales` | Sepet, sipariş verme, ödeme, sipariş durumları | `Cart`, `Order`, `OrderStatus`, `OrderNumber`, `ShippingPolicy`, `CheckoutFacade` |
+| `review` | Yorum ve puanlama | `Review`, `Rating`, `RatingDistribution`, `ReviewFacade` |
+| `app` | Giriş noktası: nesneleri bağlar, migration'ları çalıştırır, arayüzü sunar | `BookstoreWiring`, `BookstoreStartup` |
+| `quality/architecture-tests` | Mimari kuralların ArchUnit testleri | `PackageDependencyRules`, `DomainModelRules` … |
 
-### Bağımlılık kuralı
+İş modülleri arasındaki bağımlılıklar döngüsüzdür ve bir modül diğerinin yalnızca `api` paketini kullanır *(ADR-0002, ADR-0003)*.
 
-> Bağımlılıklar her zaman **içe doğru** akar: `web → application → domain → common`.
+## 3. Bir iş modülünün içi
 
-- `common`, `domain` ve `application` modüllerinde **Spring, Servlet, JDBC veya herhangi bir framework sınıfı kullanılmaz.** Yalnızca JDK ve SLF4J API'si.
-- `domain`, veritabanının ya da web'in varlığından habersizdir.
-- `persistence` ve `infrastructure` birbirini görmez.
-- Kural Maven tarafından zorlanır: bir modülün `pom.xml` dosyasında olmayan bağımlılık derlenmez.
-
-## 3. Paket yapısı
-
-Kök paket `com.bookstore`. Her modülün içi **özelliğe göre** paketlenir (katmana göre değil): `catalog`, `cart`, `order`, `customer`, `review`.
+Her iş modülü aynı beş paketi taşır; örnek `sales` için:
 
 ```
-bookstore-common          com.bookstore.common
-  ├─ money                Money, Currency işlemleri
-  ├─ error                BookstoreException ve alt türleri
-  ├─ paging               Page<T>, PageRequest, SortOrder
-  ├─ validation           Guard (ön koşul denetimleri)
-  └─ text                 Türkçe duyarlı metin normalleştirme
-
-bookstore-domain          com.bookstore.domain
-  ├─ (kök)                Entity — kimlik, sürüm ve olay toplama için ortak taban sınıf
-  ├─ catalog              Book, Author, Category, Isbn, Stock, Language, RatingSummary,
-  │                       BookSearchCriteria, BookSort, InsufficientStockException, …Repository
-  ├─ cart                 Cart, CartItem, CartRepository
-  ├─ order                Order, OrderLine, OrderStatus, OrderNumber, PaymentMethod,
-  │                       ShippingPolicy, FreeShippingThreshold, OrderRepository
-  ├─ customer             Customer, SavedAddress, Address, Email, PersonName, Role,
-  │                       PasswordPolicy, CustomerRepository
-  ├─ review               Review, Rating, RatingDistribution, ReviewRepository
-  └─ event                DomainEvent (sealed), OrderPlaced, OrderStatusChanged
-
-bookstore-application     com.bookstore.application
-  ├─ catalog              CatalogService, BookSearchQuery, BookSummary, BookDetails, CategoryNode
-  ├─ cart                 CartService, CartRef (sealed), CartView, CartChangedException
-  ├─ order                CheckoutService, OrderService, PlaceOrderCommand, OrderSummary,
-  │                       OrderDetails, PaymentDeclinedException
-  ├─ account              AccountService, RegistrationCommand, CustomerView, LoginAccount
-  ├─ review               ReviewService, ReviewCommand, ReviewView
-  ├─ admin                OrderAdminService; Faz 7'de CatalogAdminService, UserAdminService,
-  │                       ReviewAdminService
-  └─ port                 TransactionRunner, PasswordHasher, Notifier, PaymentGateway,
-                          OrderNumberSequence; Faz 7'de FileStorage
-
-bookstore-persistence     com.bookstore.persistence
-  ├─ (kök)                DatabaseMigrator (Flyway)
-  ├─ jdbc                 JdbcTransactionRunner, JdbcExecutor, RowMapper<T>, RecordRowMapper<R>,
-  │                       Columns, DataAccessException
-  ├─ catalog              JdbcBookRepository, BookSearchSql, JdbcAuthorRepository,
-  │                       JdbcCategoryRepository
-  ├─ cart | customer | review                        Jdbc…Repository
-  ├─ order                JdbcOrderRepository, JdbcOrderNumberSequence
-  └─ resources/db/migration                          V1__initial_schema.sql
-
-bookstore-infrastructure  com.bookstore.infrastructure
-  ├─ storage              LocalFileStorage (NIO.2)
-  ├─ notification         AsyncLogNotifier (ExecutorService)
-  ├─ cache                ConcurrentCache<K,V>
-  ├─ security             BCryptPasswordHasher
-  ├─ payment              SimulatedPaymentGateway
-  └─ seed                 DemoDataLoader (CSV)
-
-bookstore-web             com.bookstore.web
-  ├─ config               Bean tanımları, güvenlik, i18n
-  ├─ mvc                  Thymeleaf controller'ları ve form nesneleri
-  ├─ api.v1               REST controller'ları, DTO'lar, hata eşleme
-  ├─ security             Spring Security ↔ Customer uyarlaması
-  └─ resources            templates/, static/, messages_*.properties, application.yml
+com.bookstore.sales
+  ├─ api            komutlar, DTO'lar, façade arayüzleri         PlaceOrderCommand, OrderView, CheckoutFacade
+  ├─ application    kullanım senaryoları, mapper'lar             CheckoutService, OrderMapper
+  ├─ domain         aggregate'ler, değer nesneleri, olaylar,     Order, Cart, OrderStatus, OrderPlaced,
+  │                 repository arayüzleri ve diğer portlar       OrderRepository, PaymentGateway
+  ├─ persistence    JDBC repository'leri                         JdbcOrderRepository, JdbcCartRepository
+  └─ rest           JAX-RS kaynakları, istek record'ları         OrderResource, PlaceOrderRequest
+resources/db/migration/sales                                     V1__sales.sql
 ```
 
-## 4. Katmanların ayrıntısı
+Paketler arasındaki izinli yönler *(ADR-0003)*:
 
-### 4.1 Domain
+| **Kimden/Kime (->)** | **domain** | **api** | **application** | **persistence** | **rest** | **shared-kernel** |
+| --- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **domain** | - | X | X | X | X | Ok |
+| **api** | X | - | X | X | X | Ok |
+| **application** | Ok | Ok | - | X | X | Ok |
+| **persistence** | Ok | X | X | - | X | Ok |
+| **rest** | X | Ok | X | X | - | Ok |
+| **shared-kernel** | X | X | X | X | X | - |
 
-- **Varlıklar** (`Book`, `Order` …) kimlikleri olan, durumu değişebilen sınıflardır ve `Entity` taban sınıfından türer. Kendi kurallarını kendileri korur: geçersiz bir `Order` nesnesi oluşturulamaz. Yeni bir varlığın kimliği yoktur; repository kaydettikten sonra `markPersisted(id, version)` ile atar. Depodan yüklenen varlıklar `restore(…)` fabrika metotlarıyla, doğrulamadan geçerek oluşturulur.
-- **Değer nesneleri** (`Money`, `Isbn`, `Email`, `Rating`, `Stock`) değişmezdir ve `record` olarak yazılır. Doğrulama kurucu içinde yapılır.
-- **Sipariş durumu** bir durum makinesidir. İzin verilen geçişler `OrderStatus` içinde tanımlıdır; geçersiz geçiş istisna fırlatır.
-- **Kargo ücreti** `ShippingPolicy` arayüzü ile hesaplanır (Strategy kalıbı).
-- **Repository arayüzleri** domain dilini konuşur (`findByIsbn`, `save`), SQL ya da tablo adı içermez.
-- **Domain olayları** (`OrderPlaced`, `OrderStatusChanged`) bir şey olduğunda varlığın içinde `raise(…)` ile kaydedilir; application katmanı kayıttan sonra `pullEvents()` ile toplayıp yayınlar. Kimin dinlediğini domain bilmez (Observer kalıbı).
-- **Arama ölçütü** (`BookSearchCriteria`) ve **sıralama** (`BookSort`) domain'dedir, çünkü `BookRepository` arayüzü onları kullanır. Ölçüt, bellek içi repository'ler için `asPredicate()`, sıralama `comparator()` verir; JDBC repository aynı ölçütü SQL'e çevirir.
-- **Puan özeti** (`RatingSummary`: yorum sayısı ve toplam puan) kitabın üzerinde tutulur; listeler ve "puana göre sırala" yorum tablosunu her istekte saymaz.
+### Domain
 
-### 4.2 Application
+- **Değer nesneleri** `record`'dur ve kurucuda doğrulanır: `Money`, `Isbn`, `Email`, `Address`, `Rating`, `Stock`, `OrderNumber`.
+- **Aggregate'ler** kimliği olan, kendi kurallarını koruyan sınıflardır. Kimlikler tiplidir *(`BookId`, `OrderId` …)* ve başka aggregate'lere yalnızca kimlikle referans verilir *(ADR-0004)*.
+- Durum değişiklikleri setter ile değil, niyet bildiren metotlarla yapılır: `book.reserve(2)`, `order.markPaid(clock)`.
+- **Sipariş durumu** bir state machine'dir: `CREATED → PAID → SHIPPED → DELIVERED`, ayrıca `CREATED` ve `PAID`'den `CANCELLED`.
+- **Kargo ücreti** `ShippingPolicy` stratejisidir; **arama** `Specification<Book>`'lardan kurulur.
+- **Olaylar** aggregate'te biriktirilir *(`raise`)*, servis kayıttan sonra toplar *(`pullEvents`)* *(ADR-0007)*.
+- **Hatalar** `DomainException`'dan türer ve bir `Kind` *(`NOT_FOUND`, `CONFLICT`, `RULE_VIOLATION`, `FORBIDDEN`)* ile kararlı bir `code` taşır.
+- Kayıtlı bir aggregate `reconstitute(...)` ile oluşturulur; bu metot olay üretmez ve durum kurallarını çalıştırmaz.
 
-Her kullanım senaryosu bir servis metodudur. Tipik bir metot:
+### Application
 
-1. Girdiyi bir **komut** nesnesi (`record`) olarak alır.
-2. Bir işlem başlatır (`TransactionRunner`).
-3. Repository'lerden domain nesnelerini yükler.
-4. İş kuralını **domain nesnesine** yaptırır.
-5. Sonucu kaydeder, olayları yayınlar, bir **sonuç** nesnesi döner.
+Her kullanım senaryosu, `api` paketindeki bir façade arayüzünün metodudur. Tipik bir metot:
 
-Application servisleri HTTP, HTML, JSON ya da SQL bilmez. Bu yüzden veritabanı olmadan, sahte (*in-memory*) repository'lerle test edilebilir.
+1. Bir **komut** `record`'u alır ve değer nesnelerine çevirerek doğrular; geçersiz istek transaction açmaz.
+2. Bir transaction içinde *(`@Transactional`)* aggregate'leri repository'lerden yükler; başka modüllerden ihtiyaç duyduğu bilgiyi onların façade'larından ister.
+3. İş kuralını aggregate'e yaptırır, sonucu kaydeder.
+4. Olayları toplayıp `DomainEventPublisher`'a verir *(önce kayıt, sonra yayın)*.
+5. Sonucu mapper ile bir **DTO**'ya çevirip döner; domain nesnesi dışarı çıkmaz.
 
-Ek kurallar:
-
-- **Okuma modelleri:** Servisler web katmanına domain varlıklarını değil, değiştirilemez `record` kopyalarını döner (`BookSummary`, `CartView`, `OrderDetails` …). Böylece web katmanı bir varlığı yanlışlıkla değiştiremez.
-- **Önce doğrulama:** Girdi, işlem başlamadan önce değer nesnelerine çevrilerek doğrulanır (`Email.of`, `Rating.of`, `PasswordPolicy.check`). Geçersiz bir istek hiçbir işlem açmaz.
-- **Olaylar commit'ten sonra:** Domain olayları işlem içinde toplanır, `Notifier`'a işlem başarıyla bittikten sonra verilir. Geri alınan bir işlem için müşteriye bildirim gitmez.
-- **Sepet referansı:** Sepet işlemleri `CartRef` alır: `Guest` (HTTP oturumundaki sepet, yerinde değiştirilir) ya da `Customer` (veritabanındaki sepet, yüklenip kaydedilir). Servis ikisini bir `switch` ile ayırır.
-
-### 4.3 Persistence
-
-- Her repository arayüzü için bir `Jdbc…Repository` sınıfı vardır (DAO kalıbı).
-- Yalnızca `PreparedStatement` ve parametreli sorgu kullanılır. `JdbcExecutor` bağlantı alma, bağlama, çalıştırma ve kapatma adımlarını tek yerde yapar (Template Method); repository'ler yalnızca SQL'i ve bir `RowMapper` verir.
-- `JdbcTransactionRunner`, işlemin bağlantısını bir `ThreadLocal` içinde taşır. Aynı thread'deki bütün repository çağrıları aynı `Connection`'ı kullanır; hata olursa `rollback`, başarıda `commit` yapılır. İç içe işlemler dıştakine katılır. İşlem dışındaki okumalar kısa ömürlü, otomatik commit'li bir bağlantı alır.
-- Bağlantı havuzu (HikariCP) `DataSource` olarak dışarıdan verilir (Faz 5'te web modülü kurar); modül Spring'e bağımlı değildir.
-- **Yükleme:** Bir sayfa kitap, kaç kitap olursa olsun üç sorguyla yüklenir: kitap satırları, tüm yazarları ve kategori ağacı. Kitap başına ayrı yazar sorgusu çalıştırılmaz (N+1 sorgu sorunu).
-- **Arama:** `BookSearchSql`, domain'deki `BookSearchCriteria` ile aynı kuralları SQL'e çevirir. Türkçe harf duyarsızlığı için `books.title_key` ve `authors.name_key` sütunları `TextNormalizer` ile üretilmiş anahtarları tutar; aranan metin de aynı şekilde normalleştirilir. Bir test, her sıralama seçeneğinde SQL'in ve bellek içi kuralların aynı sonucu verdiğini doğrular.
-- **Eşzamanlılık:** Değişen tablolarda `version` sütunu vardır. `UPDATE … WHERE id = ? AND version = ?` hiçbir satırı değiştirmezse kayıt arada başkası tarafından değiştirilmiş demektir ve `ConflictException` (`concurrent-modification`) fırlar. Aynı son kopyayı aynı anda alan iki siparişten biri bu yüzden geri alınır. Veritabanındaki `CHECK (stock >= 0)` ikinci savunma hattıdır.
-- **Hatalar:** `SQLException`, adapter sınırında denetlenmeyen `DataAccessException`'a sarılır. Bilinen kısıt ihlalleri (benzersiz e-posta, ISBN, yorum) repository'de anlamlı bir `ConflictException`'a çevrilir; geri kalan veritabanı hataları HTTP 500 olur.
-- **Satır kayıtları:** Düz tablolar (`users`, `orders`, `reviews` …) önce özel bir `record`'a okunur. `RecordRowMapper`, `record` bileşenlerini yansıma (*reflection*) ile `snake_case` sütunlara eşler; ardından kayıt, domain'in `restore(…)` metoduyla varlığa çevrilir.
-- Şema değişiklikleri yalnızca Flyway migration dosyalarıyla yapılır.
-
-### 4.4 Infrastructure
-
-Veritabanı dışındaki her "dış dünya" ayrıntısı burada, birer port uygulaması olarak durur:
-
-| Port (application) | Uygulama (infrastructure) | Açıklama |
-|---|---|---|
-| `FileStorage` | `LocalFileStorage` | Kapak görsellerini diske yazar ve okur. |
-| `Notifier` | `AsyncLogNotifier` | Bildirimleri bir kuyruk ve işçi thread havuzuyla arka planda işler; e-posta yerine log'a yazar. |
-| `PasswordHasher` | `BCryptPasswordHasher` | Parolayı özetler ve doğrular. |
-| `PaymentGateway` | `SimulatedPaymentGateway` | Ödemeyi her zaman kurala göre onaylar ya da reddeder; dış servis çağırmaz. |
-
-Ayrıca kategori ağacı gibi sık okunan veriler için thread-güvenli `ConcurrentCache` ve ilk çalıştırmada örnek katalog yükleyen `DemoDataLoader` buradadır.
-
-### 4.5 Web
-
-- **MVC** (`/…`): Controller, application servisini çağırır, sonucu modele koyar, bir Thymeleaf şablonu döner. Form doğrulaması Bean Validation ile yapılır.
-- **REST** (`/api/v1/…`): Aynı application servislerini çağırır, DTO döner. Domain nesneleri doğrudan JSON'a çevrilmez.
-- **Hata eşleme**: `BookstoreException` alt türleri tek bir yerde HTTP durum koduna çevrilir (web'de hata sayfası, API'de *Problem Details*).
-- **Bağlama**: `common`, `domain`, `application` modüllerindeki sınıflar Spring anotasyonu taşımaz. `config` paketindeki `@Configuration` sınıfları bunları `@Bean` olarak oluşturur ve bağımlılıklarını kurucu üzerinden verir.
-- **Ziyaretçi sepeti** HTTP oturumunda tutulur; giriş sonrası `CartService` ile kalıcı sepete birleştirilir.
-
-## 5. Bir isteğin yolu: sipariş verme
+Modüller arası bir örnek, sipariş verme:
 
 ```mermaid
 sequenceDiagram
     actor M as Müşteri
-    participant C as CheckoutController<br/>(web)
-    participant S as CheckoutService<br/>(application)
-    participant D as Cart / Order<br/>(domain)
-    participant R as Jdbc…Repository<br/>(persistence)
-    participant N as AsyncLogNotifier<br/>(infrastructure)
+    participant R as OrderResource<br/>(sales.rest)
+    participant S as CheckoutService<br/>(sales.application)
+    participant C as CatalogFacade<br/>(catalog.api)
+    participant D as Order / Cart<br/>(sales.domain)
+    participant P as Jdbc…Repository<br/>(sales.persistence)
+    participant O as Gözlemciler
 
-    M->>C: POST /checkout
-    C->>S: placeOrder(command)
+    M->>R: POST /api/v1/orders
+    R->>S: placeOrder(command)
     activate S
-    Note over S: işlem başlar
-    S->>R: sepeti ve kitapları yükle
-    S->>D: Order.place(cart, address, shippingPolicy)
-    D-->>S: Order + OrderPlaced olayı
-    S->>R: stoğu düş (koşullu UPDATE)
-    S->>R: siparişi kaydet, sepeti boşalt
+    Note over S: @Transactional başlar
+    S->>P: müşteri ve sepeti yükle
+    S->>C: sepetteki kitapların güncel fiyat ve stoğu
+    C-->>S: ProductSnapshot listesi
+    S->>D: Order.place(...)
+    S->>C: stok ayır (aynı transaction)
+    S->>P: siparişi kaydet, sepeti boşalt
     Note over S: commit
-    S-)N: OrderPlaced (arka planda)
+    S-)O: OrderPlaced (AFTER_SUCCESS)
     deactivate S
-    S-->>C: OrderResult
-    C-->>M: 302 → /orders/{no}
+    S-->>R: OrderView
+    R-->>M: 201 Created
 ```
 
-Stok yetersizse `InsufficientStockException` fırlar, işlem geri alınır ve müşteri sepet sayfasına uyarıyla döner.
+Sipariş öncesinde sepet ayrı bir transaction'da güncel katalogla karşılaştırılır; fiyat ya da stok değiştiyse sipariş verilmez *(ADR-0014)*. Kartla ödemede ödeme bu akışın içinde alınır ve sipariş `PAID` olur; reddedilirse transaction geri alınır *(ADR-0013)*.
 
-Diyagram ana yolu gösterir. `CheckoutService` aslında iki işlem açar:
+### Persistence
 
-1. **Sepet kontrolü:** Sepet güncel katalogla karşılaştırılır (`Cart.reconcile`). Fiyat, stok veya satış durumu değiştiyse düzeltilmiş sepet kaydedilir ve `CartChangedException` fırlatılır. Müşteri, görmediği bir tutarı ödemez.
-2. **Sipariş:** Kontrol bir kez daha yapılır (iki işlem arasında bir şey değişmiş olabilir), sipariş oluşturulur, kartla ödemede `PaymentGateway` çağrılır. Ödeme reddedilirse `PaymentDeclinedException` fırlar ve hiçbir şey kaydedilmez. Ödeme onaylanırsa sipariş `PAID` olur; havale ve kapıda ödemede `CREATED` kalır.
+- Domain'deki her repository arayüzü için bir `Jdbc…Repository` vardır. Yalnızca `PreparedStatement` ve parametreli sorgu kullanılır.
+- `JdbcExecutor`, bağlantı alma, bağlama, çalıştırma ve kapatma adımlarını tek yerde yapar *(Template Method)*; repository'ler SQL'i ve bir `RowMapper` verir. Düz satırlar `RecordRowMapper` ile `record`'lara okunur.
+- Repository'ler transaction yönetmez *(commit, rollback yok)*; transaction kullanım senaryosuna aittir.
+- Toplu okumalar sabit sayıda sorgu kullanır *(N+1 yok)*. Kitap araması `Specification`'lardan SQL üretir; Türkçe duyarsızlık için normalleştirilmiş anahtar sütunları kullanılır *(ADR-0016)*.
+- Değişen tablolar `version` sütunu taşır; eski bir kopya yeni kopyanın üzerine yazamaz *(ADR-0015)*.
+- `SQLException` teknik hataya sarılır; bilinen kısıt ihlalleri *(benzersiz e-posta, ISBN, yorum)* `DomainException`'a çevrilir.
+- Her repository arayüzünün bir sözleşme testi vardır; bellek içi, H2 ve PostgreSQL implementasyonları aynı testten geçer *(ADR-0008)*.
 
-## 6. Veritabanı
+### Rest
+
+- İstek gövdeleri `rest` paketindeki `record`'lara okunur ve Bean Validation ile biçimsel olarak doğrulanır.
+- Kaynaklar yalnızca `api` paketindeki façade'ları çağırır.
+- Hatalar `Kind`'a göre eşlenir: `NOT_FOUND` 404, `CONFLICT` 409, `RULE_VIOLATION` 422, `FORBIDDEN` 403; biçim hataları 400; beklenmeyen hatalar opak 500. Gövde RFC 9457 biçimindedir *(ADR-0009)*.
+
+## 4. Uygulama sunucusu
+
+`app` modülü `bookstore.war` olarak paketlenir ve Payara Micro 7 üzerinde çalışır *(ADR-0010)*.
+
+| İş | Nasıl |
+| --- | --- |
+| Nesneleri bağlamak | CDI, `annotated` keşif; servisler ve repository'ler `@ApplicationScoped`. Container'ın kuramadığı `Clock`, `DataSource`, `ShippingPolicy` `BookstoreWiring`'de producer. |
+| Veri kaynağı | `@DataSourceDefinition`; bağlantı bilgisi MicroProfile Config ile ortamdan. |
+| Açılış | `BookstoreStartup`, CDI `Startup` olayında Flyway migration'larını çalıştırır; `bookstore.demo-data=true` ise örnek katalog yükler. |
+| Transaction | Façade uygulamaları `@Transactional`; modüller arası çağrılar aynı JTA transaction'ına katılır. |
+| Olaylar | `CdiDomainEventPublisher`; gözlemciler `@Observes(during = AFTER_SUCCESS)`. |
+| HTTP | JAX-RS kaynakları `/api/v1`, JSON-B, `ExceptionMapper`. OpenAPI `/openapi`. |
+| Arayüz | `src/main/webapp` altındaki HTML, CSS ve JavaScript; API'yi `fetch` ile çağırır *(ADR-0011)*. |
+| Güvenlik | Jakarta Security: tarayıcı için form, API için HTTP Basic; roller `CUSTOMER`, `ADMIN` *(Faz 7)*. |
+
+## 5. Veritabanı
 
 ```mermaid
 erDiagram
@@ -240,74 +188,64 @@ erDiagram
     CARTS ||--o{ CART_ITEMS : contains
     BOOKS ||--o{ CART_ITEMS : ""
     ORDERS ||--|{ ORDER_LINES : contains
+    ORDER_STATUSES ||--o{ ORDERS : ""
     BOOKS ||--o{ ORDER_LINES : ""
     BOOKS ||--o{ REVIEWS : receives
 ```
 
-- Tablo ve sütun adları `snake_case`, İngilizce; ayrılmış sözcükler sütun adı olarak kullanılmaz (`year` yerine `order_year`, `comment` yerine `comment_text`).
-- Varlık tablolarında `id` (BIGINT, otomatik artan) ve `version`. Zaman sütunları yalnızca domain'in tuttuğu zamanlar için vardır (`registered_at`, `placed_at`, `status_changed_at`, `created_at` / `updated_at` yorumlarda) ve UTC olarak `DATETIME(6)` tipindedir.
-- Tutarlar `DECIMAL(12,2)`.
-- `orders`, teslimat adresini kendi sütunlarına kopyalar; `order_lines`, sipariş anındaki `unit_price` ve `book_title` değerlerini kopyalar.
-- Varsayılan adres, `addresses.is_default` bayrağıyla tutulur (`users` → `addresses` döngüsel yabancı anahtarından kaçınmak için).
-- Sipariş numarası sayacı, yıl başına bir satır olarak `order_number_sequences` tablosundadır. Sayaç `UPDATE` ile artırıldığı için satır işlem sonuna kadar kilitli kalır; aynı anda iki sipariş aynı numarayı alamaz.
-- Domain kurallarının bir kısmı veritabanında da kısıt olarak vardır: benzersiz ISBN, e-posta ve `(user_id, book_id)` yorum anahtarı; `stock >= 0`, `price > 0`, puan 1–5, sepet adedi 1–10, geçerli rol ve sipariş durumu.
-- Migration'lar MySQL 8.4'te ve H2'nin MySQL modunda çalışan ortak SQL ile yazılır. H2'ye özgü bir kısıtlama: `CHECK` içinde `IN (…)` listesi kullanılmaz (bkz. V1 dosyasının başındaki not).
+- Her iş modülü kendi tablolarının ve migration'larının sahibidir: `catalog` *(categories, authors, books, book_authors)*, `customer` *(users, roles, addresses)*, `sales` *(carts, cart_items, orders, order_lines, order_statuses, order_number_sequences)*, `review` *(reviews)*.
+- Modüller arası yabancı anahtarlar *(örneğin `order_lines.book_id → books.id`)* veritabanı bütünlüğü için tutulur; kodda modüller birbirinin tablolarını okumaz.
+- Tablo ve sütun adları `snake_case`, İngilizce; ayrılmış sözcükler sütun adı olmaz.
+- Zamanlar UTC; tutarlar `NUMERIC(12,2)`.
+- Sabit değer kümeleri *(durum, rol)* referans tablo ve yabancı anahtarla kısıtlanır *(ADR-0008)*. Diğer kurallar `CHECK` ile: `stock >= 0`, `price > 0`, puan 1–5, sepet adedi 1–10, puan toplamı tutarlılığı.
+- `orders` teslimat adresini, `order_lines` sipariş anındaki başlık ve fiyatı kopyalar.
 
-## 7. Güvenlik
+## 6. Güvenlik
 
 | Konu | Yaklaşım |
-|---|---|
-| Kimlik doğrulama (web) | Form tabanlı giriş, sunucu tarafı oturum |
-| Kimlik doğrulama (API) | HTTP Basic, oturumsuz |
-| Yetkilendirme | URL kuralları (`/admin/**`, `/api/v1/admin/**` → `ADMIN`) ve servis seviyesinde sahiplik denetimi (müşteri yalnızca kendi siparişini görür) |
-| Parola | BCrypt |
-| CSRF | Web formlarında açık; oturumsuz API'de kapalı |
-| Girdi | Bean Validation + domain değer nesneleri |
-| SQL enjeksiyonu | Yalnızca `PreparedStatement` |
-| XSS | Thymeleaf'in varsayılan HTML kaçışı |
+| --- | --- |
+| Kimlik doğrulama | Jakarta Security; tarayıcıda form, API'de HTTP Basic |
+| Parola | `PasswordHasher` portu, BCrypt uygulaması; `PasswordPolicy` ile kural denetimi |
+| Yetkilendirme | Rol kuralları *(`/api/v1/admin/**` → `ADMIN`)* ve servis seviyesinde sahiplik denetimi *(müşteri yalnızca kendi siparişini görür)* |
+| SQL enjeksiyonu | Yalnızca `PreparedStatement` *(testle doğrulandı)* |
+| XSS | Arayüz, API'den gelen metni `textContent` ile yazar; `innerHTML` ile kullanıcı verisi basılmaz |
+| Gizli bilgiler | Bağlantı bilgisi ve parolalar WAR içinde değil, ortamda |
 
-## 8. Hata yönetimi
-
-Tek bir hata hiyerarşisi vardır; kökü `common` modülündeki soyut `BookstoreException` (denetlenmeyen istisna). Her istisna, web katmanının çeviri metnini ve HTTP durumunu seçmek için kullandığı sabit bir hata kodu (`code()`) taşır; örneğin `stock.insufficient`, `order.illegal-transition`, `cart.empty`. Genel türler `common.error` paketinde, bir alana özgü olanlar (`InsufficientStockException`) o alanın domain paketindedir.
-
-| İstisna | Anlamı | HTTP |
-|---|---|---|
-| `ValidationException` | Girdi iş kuralına uymuyor | 400 |
-| `NotFoundException` | İstenen kayıt yok | 404 |
-| `AccessDeniedException` | Kaydın sahibi değil | 403 |
-| `ConflictException` | Durum uyuşmazlığı (ör. e-posta kayıtlı, geçersiz durum geçişi) | 409 |
-| `InsufficientStockException` | Stok yetmiyor (`ConflictException` alt türü) | 409 |
-| `DataAccessException` | Beklenmeyen veritabanı hatası (`BookstoreException` değil; teknik hata) | 500 |
-
-Alt katmanlardaki teknik hatalar (`SQLException`, `IOException`) yakalandıkları adapter'da anlamlı bir istisnaya sarılır; application ve domain katmanına sızmaz.
-
-## 9. Yapılandırma ve çalışma profilleri
-
-| Profil | Veritabanı | Kullanım |
-|---|---|---|
-| *(varsayılan)* | MySQL (`localhost:3306/bookstore`) | Normal çalışma. Bağlantı bilgisi ortam değişkenlerinden okunur. |
-| `h2` | Bellek içi H2 (MySQL modu) | MySQL kurmadan hızlı deneme. Veri kalıcı değildir. |
-| `test` | Bellek içi H2 (MySQL modu) | Otomatik testler. |
-
-Parola, bağlantı bilgisi gibi gizli değerler repoya yazılmaz; ortam değişkeni ile verilir.
-
-## 10. Test stratejisi
+## 7. Test stratejisi
 
 | Katman | Test türü | Araç |
-|---|---|---|
-| `common`, `domain` | Birim testi; dış bağımlılık yok | JUnit 5, AssertJ |
-| `application` | Birim testi; bellek içi sahte repository'ler | JUnit 5, Mockito |
-| `persistence` | Gerçek SQL ile veritabanı testi | H2 (MySQL modu), Flyway |
-| `infrastructure` | Birim testi; geçici dizin, eşzamanlılık testleri | JUnit 5 (`@TempDir`) |
-| `web` | Controller testi ve uçtan uca test | MockMvc, `java.net.http.HttpClient` |
+| --- | --- | --- |
+| `shared-kernel`, `domain` | Birim testi; dış bağımlılık yok | JUnit, AssertJ |
+| `application` | Birim testi; bellek içi repository'ler ve sahte portlar | JUnit, test fixture'ları *(`test-jar`)* |
+| `persistence` | Sözleşme testi ve entegrasyon testi | H2 *(her zaman)*, Testcontainers + PostgreSQL 17 *(Docker varsa)* |
+| `rest` | HTTP testi | Faz 5: `HttpClient`; Faz 6: JerseyTest |
+| Mimari | Paket ve modül kuralları | ArchUnit *(`quality/architecture-tests`)* |
+| `app` | Smoke test; sunucu üzerinde uçtan uca deneme | JUnit; Payara Micro |
 
-`./mvnw verify` tüm testleri çalıştırır ve yalnızca JDK 21 gerektirir.
+`./mvnw verify` Docker olmadan geçer; Testcontainers testleri Docker yoksa atlanır ve CI'da çalışır.
 
-## 11. Kod kuralları
+## 8. Kod kuralları
 
-- Kod, commit mesajları ve tablo adları **İngilizce**; dokümanlar **Türkçe**.
-- Değişmezlik varsayılandır: değer nesneleri `record`, alanlar `final`.
-- `null` dönülmez: tek değer için `Optional<T>`, çoklu değer için boş koleksiyon.
-- Para için yalnızca `Money`; tarih-saat için yalnızca `java.time`.
-- Bağımlılıklar kurucu üzerinden verilir; `static` durum ve alan enjeksiyonu yoktur.
-- Her `public` tür için Javadoc; her paket için `package-info.java`.
+Ayrıntıları ve ArchUnit karşılıkları ADR-0004 ve ADR-0005'tedir:
+
+- Domain ve `shared-kernel` yalnızca JDK'ya bağımlıdır; framework anotasyonu taşımaz.
+- Domain'de setter yok; `Optional` yalnızca dönüş tipi; para yalnızca `Money`; zaman yalnızca enjekte edilen `Clock`.
+- `System.out`, `printStackTrace()` ve `util` / `common` / `helper` paketleri yok.
+- Kod İngilizce, dokümanlar Türkçe; her `public` tipte Javadoc, her pakette `package-info.java`.
+
+## 9. Bugünkü kodla hedef arasındaki farklar
+
+| Konu | Bugün *(Faz 3 sonu)* | Hedef | Adım |
+| --- | --- | --- | --- |
+| Modüller | Katmana göre altı modül | İş alanına göre beş modül + `app` + mimari testler | 4.2 |
+| Ortak modül | `bookstore-common` | `shared-kernel` | 4.2 |
+| Web | Spring Boot iskeleti, Thymeleaf ana sayfası | Payara Micro, JAX-RS, statik arayüz | 4.2, 5, 6, 7 |
+| Mimari kurallar | Maven bağımlılıkları ve elle `grep` | ArchUnit | 4.3 |
+| Kimlikler | `long` | Tipli kimlikler | 4.4 |
+| Hatalar | `BookstoreException` alt türleri | `DomainException` + `Kind` + `code` | 4.4 |
+| Arama ölçütü | `Optional` bileşenli `BookSearchCriteria` | `Specification<Book>` | 4.3, 4.4 |
+| Servis sonuçları | Application paketinde okuma modeli `record`'ları | `api` paketinde DTO'lar, façade'lar, mapper'lar | 4.5 |
+| Bildirim | `Notifier` portu | `DomainEventPublisher` + gözlemciler | 4.6 |
+| Veritabanı | H2 MySQL modu, tek migration dosyası, `CHECK` içinde `CASE` | PostgreSQL 17, modül başına migration, referans tablolar | 4.7 |
+| Repository testleri | Implementasyon başına ayrı testler | Ortak sözleşme testleri | 4.7 |
+| Transaction | `TransactionRunner` portu, `JdbcTransactionRunner` | JTA `@Transactional` | 6 |

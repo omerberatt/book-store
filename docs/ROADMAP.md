@@ -1,41 +1,103 @@
 # Yol Haritası
 
-Fazlar müfredatın doğal sırasını izler: önce saf Java, sonra veritabanı, sonra web. Her faz sonunda `./mvnw verify` geçer ve uygulama çalışır durumdadır.
+Fazlar, ders notlarının *([java-study-notes](https://github.com/software-lecture-labs/java-study-notes), Bölüm 01–14)* sırasını izler: önce iş nesneleri ve kurallar, sonra modül sınırları, servisler, olaylar, kalıcılık, HTTP sınırı ve en son uygulama sunucusu. Her faz `develop` dalından açılan bir ya da birkaç `feature/*` dalında yapılır *(ADR-0001)*. Her fazın sonunda `./mvnw verify` Docker olmadan geçer.
 
-| Faz | Durum | Başlık | Çıktı | Ana müfredat konuları |
-|---|---|---|---|---|
-| **0** | ✅ | İskelet | Altı modül, derleme hattı, dokümanlar, açılan boş web uygulaması | Maven, katmanlı mimari |
-| **1** | ✅ | Domain modeli | `common` ve `domain`: değer nesneleri, varlıklar, sipariş durum makinesi, kargo kuralı, arama ölçütü, repository arayüzleri; 139 birim testi | OOP, `record`, `enum`, `sealed`, istisnalar, generics, koleksiyonlar |
-| **2** | ✅ | Kullanım senaryoları | `application`: katalog, sepet, hesap, sipariş verme, sipariş geçmişi, sipariş durum yönetimi ve yorum servisleri; beş port; bellek içi repository'lerle 54 iş akışı testi | Lambda, Stream, `Optional`, sealed + `switch`, test çiftleri |
-| **3** | ✅ | Kalıcılık | `persistence`: Flyway şeması, JDBC araç seti, yedi repository ve sipariş numarası sayacı, işlem yönetimi; H2 üzerinde 59 veritabanı testi (geri alma ve eşzamanlılık dahil) | SQL, JDBC, işlemler, DAO, `ThreadLocal`, yansıma |
-| **4** | | Altyapı | `infrastructure`: dosya depolama, arka plan bildirimleri, önbellek, parola özetleme, örnek veri yükleme | G/Ç, NIO.2, thread'ler, eşzamanlı koleksiyonlar |
-| **5** | | Web arayüzü | `web`: Thymeleaf sayfaları (katalog, arama, sepet, sipariş, hesap, yorum), giriş/kayıt, iki dilli arayüz | HTTP, MVC, oturum, güvenlik, i18n |
-| **6** | | REST API | `/api/v1` uçları, Problem Details hata biçimi, OpenAPI belgesi, `HttpClient` ile uçtan uca testler | REST, JSON, HTTP istemcisi |
-| **7** | | Yönetim paneli | `CatalogAdminService`, `UserAdminService`, `ReviewAdminService` ve `FileStorage` portu; kitap/yazar/kategori yönetimi, kapak yükleme, sipariş ve kullanıcı yönetimi, yorum denetimi ekranları | Yetkilendirme, dosya yükleme |
-| **8** | | Sağlamlaştırma | MySQL üzerinde doğrulama, performans hedefi (NFR-9), kapsam hedefi (NFR-6), CI | Profil oluşturma, test kapsamı |
+Hangi konunun hangi fazda işlendiği [CURRICULUM-MAP.md](CURRICULUM-MAP.md) içindedir.
 
-### Faz 2 notları
+| Faz | Durum | Başlık | Ders bölümleri | Çıktı |
+| --- | --- | --- | --- | --- |
+| **0** | ✅ | İskelet | 9 | Maven çok modüllü yapı, Maven Wrapper, dokümanlar |
+| **1** | ✅ | Domain modeli | 1–5, 7, 8 | Değer nesneleri, varlıklar, sipariş durum makinesi, kargo kuralı, arama ölçütü, repository arayüzleri; 144 birim testi |
+| **2** | ✅ | Kullanım senaryoları | 10, 11 | Katalog, sepet, hesap, sipariş verme, sipariş geçmişi, sipariş durum yönetimi ve yorum servisleri; beş port; bellek içi repository'lerle 54 test |
+| **3** | ✅ | Kalıcılık | 12 | Flyway şeması, JDBC araç seti, yedi repository, sipariş numarası sayacı, işlem yönetimi; H2 üzerinde 59 test |
+| **4** | | Dersle hizalama | 1, 2, 4–12 | İş alanına göre modüller, ArchUnit, tipli kimlikler, `api` sözleşmesi, olay yayıncısı, PostgreSQL ve sözleşme testleri |
+| **5** | | HTTP sınırı *(elle)* | 13 | JDK HTTP sunucusu, DTO'lar, Bean Validation, RFC 9457 |
+| **6** | | Uygulama sunucusu | 14 | Payara Micro 7 üzerinde WAR: CDI, JTA, CDI olayları, JAX-RS, JSON-B, MicroProfile Config ve OpenAPI |
+| **7** | | Güvenlik ve arayüz | — | Jakarta Security, BCrypt, HTML ve JavaScript sayfaları, iki dilli arayüz |
+| **8** | | Yönetim paneli | — | Kitap/yazar/kategori, kapak görseli, sipariş, kullanıcı ve yorum yönetimi |
+| **9** | | Lab ilerisi ve sağlamlaştırma | 11–14 soruları | CI, Transactional Outbox, ETag, Idempotency-Key, sağlık kontrolü, performans hedefi, JPA |
 
-Faz 1'den devredilen dört madde Faz 2'de tamamlandı:
+---
 
-- **CRT-5:** `Cart.reconcile` ve `CartService`; fiyat değişikliği, düşen stok ve satıştan kalkan kitap için uyarı.
-- **REV-2 / REV-3:** `ReviewService`; teslim şartı, tek yorum, puan özetinin yorumla aynı işlemde güncellenmesi.
-- **ACC-1:** `AccountService`; e-posta benzersizliği büyük/küçük harf duyarsız.
-- **ORD-10:** `OrderNumberSequence` portu; üretim uygulaması Faz 3'te veritabanında.
+## Faz 4 — Dersle hizalama
 
-Bilinen sınır: bellek içi test çiftleri işlemi geri alamaz. "Hata olunca hiçbir şey kaydedilmez" davranışının veritabanında gerçekten sağlandığı Faz 3'te JDBC testleriyle doğrulanacak.
+Faz 0–3, ders notları görülmeden önce genel bir Java müfredatı varsayılarak yapıldı. Kodun büyük kısmı dersle örtüşüyor; farklar [CURRICULUM-MAP.md](CURRICULUM-MAP.md) içinde 🔁 ile işaretli. Bu faz o farkları kapatır. Her adım ayrı bir `feature/*` dalıdır ve kendinden önceki adımın üzerine kurulur.
 
-### Faz 3 notları
+| Adım | Dal | İş | ADR |
+| --- | --- | --- | --- |
+| 4.1 | — | `develop` dalını Faz 3'ün son commit'inden aç; GitHub'da `main` ve `develop` için dal koruması | 0001 |
+| 4.2 | `feature/module-restructure` | Modülleri iş alanına göre yeniden kur: `shared-kernel`, `catalog`, `customer`, `sales`, `review`, `app`, `quality/architecture-tests`. Her modülde `api`, `application`, `domain`, `persistence` paketleri. Spring Boot'u kaldır. `Order.place` ve `Cart.add` için `ProductSnapshot`; stok ayırma `catalog.api` üzerinden. | 0002, 0003 |
+| 4.3 | `feature/architecture-rules` | ArchUnit modülü ve ADR-0003–0008'deki kurallar. Kuralların yakaladığı ihlalleri düzelt: `Optional` bileşenli record'lar, `common` adı, eksik `private final`. | 0003–0008 |
+| 4.4 | `feature/domain-model-alignment` | Tipli kimlikler; `DomainException` + `Kind` + `code`; `restore` → `reconstitute`; `shared-kernel`'de `Specification<T>` ve `BookSpecifications`. | 0004 |
+| 4.5 | `feature/api-contract` | Her modülde `api` paketi: komutlar, DTO'lar, façade arayüzleri; `application` paketinde mapper'lar. `app` modülünde elle yazılmış composition root *(`BookstoreModule`)* ve smoke test. | 0003, 0006 |
+| 4.6 | `feature/domain-events` | `DomainEventPublisher` portu, `InProcessEventPublisher`, bildirim gözlemcisi; dual-write problemini belgeleyen test. | 0007 |
+| 4.7 | `feature/postgresql` | Modül başına migration'lar, referans tablolar, PostgreSQL 17 lehçesi; `docker-compose.yml`; H2 PostgreSQL modu; repository sözleşme testleri *(bellek içi, H2, Testcontainers)*; bellek içi repository'ler kopya saklar. | 0008 |
 
-- Faz 2'deki sınır kapandı: `CheckoutWithDatabaseTest`, reddedilen ödemede stok, sipariş, sepet ve sipariş numarasının geri alındığını ve son kopyayı aynı anda isteyen iki müşteriden yalnızca birinin aldığını gerçek işlemlerle doğruluyor.
-- Testler yalnızca H2'nin MySQL modunda çalıştı. Şemanın gerçek MySQL 8.4 üzerinde doğrulanması Faz 8'de (makinede MySQL ve Docker kurulu değil).
-- HikariCP bağlantı havuzu ve Flyway'in uygulama açılışında çalıştırılması Faz 5'te web modülünde kurulacak.
+**Faz 4 sonunda:** Faz 1–3'ün bütün davranışı ve testleri yeni yapıda çalışır; ArchUnit kuralları geçer; Spring bağımlılığı kalmaz.
 
-## İsteğe bağlı ekler
+## Faz 5 — HTTP sınırı *(elle)*
 
-Çekirdek tamamlandıktan sonra, aynı mimariye dokunmadan eklenebilecekler:
+Ders Bölüm 13'ü izler: JAX-RS'e geçmeden önce bir runtime'ın yaptığı işler bir kez elle yazılır.
 
-- JPA / Hibernate ile ikinci bir `persistence` uygulaması (aynı repository arayüzleri, profil ile seçim)
-- Java modül sistemi (`module-info.java`) ile `common` ve `domain` sınırlarını JVM seviyesinde zorlama
-- Satış raporları ve CSV/JSON içe-dışa aktarım
-- TCP soket tabanlı canlı bildirim servisi
+- Her iş modülünde `rest` paketi; JDK HTTP sunucusu *(`com.sun.net.httpserver`)* üzerinde yönlendirme.
+- İstek `record`'ları ve Bean Validation ile biçimsel doğrulama; tüm alan hataları tek yanıtta.
+- `ProblemMapper`: `Kind` → durum kodu, RFC 9457 gövdesi, beklenmeyen hatalar için opak 500.
+- Jackson ile JSON; `java.net.http.HttpClient` ile uçtan uca HTTP testleri.
+- Uçlar: katalog ve arama, sepet, hesap ve adresler, sipariş verme ve geçmişi, yorumlar, sipariş durum yönetimi.
+
+## Faz 6 — Uygulama sunucusu
+
+Ders Bölüm 14'ü izler *(ADR-0010)*.
+
+- `app` modülü WAR olur ve Payara Micro 7 üzerinde çalışır.
+- CDI ile bağlama; `BookstoreWiring` yalnızca `Clock`, `DataSource` ve kargo kuralını üretir.
+- `@DataSourceDefinition` ve MicroProfile Config; parolalar ortamdan.
+- `BookstoreStartup`: açılışta migration ve isteğe bağlı demo verisi.
+- `@Transactional` kullanım senaryoları; `JdbcTransactionRunner` kalkar.
+- CDI olayları ve `AFTER_SUCCESS` gözlemcileri.
+- HTTP katmanı JAX-RS, JSON-B ve `ExceptionMapper`'a taşınır; Faz 5'in HTTP testleri JerseyTest ile aynen geçer.
+- MicroProfile OpenAPI ile `/openapi`.
+
+## Faz 7 — Güvenlik ve arayüz
+
+Ders kapsamı dışındadır *(ADR-0011)*.
+
+- Jakarta Security: form ile giriş, API için HTTP Basic, `ADMIN` ve `CUSTOMER` rolleri *(ACC-3, ACC-6, ACC-7)*.
+- `PasswordHasher` portunun BCrypt uygulaması.
+- `app/src/main/webapp` altında HTML, CSS ve JavaScript sayfaları: katalog ve arama, kitap detayı ve yorumlar, sepet, sipariş verme ve geçmişi, hesap ve adresler.
+- Türkçe ve İngilizce metin sözlükleri *(NFR-4)*.
+- Misafir sepetinin nerede tutulacağı *(sunucu oturumu ya da tarayıcı)* bu fazın ADR'siyle kararlaştırılır.
+
+## Faz 8 — Yönetim paneli
+
+- `catalog`, `customer` ve `review` modüllerinde yönetim façade'ları *(ADM-1 – ADM-8)*.
+- Kapak görseli yükleme için `FileStorage` portu ve dosya sistemi uygulaması *(ADM-4)*.
+- Yönetim sayfaları.
+
+## Faz 9 — Lab ilerisi ve sağlamlaştırma
+
+Ders notlarının soru bölümlerinde Lab projesine bırakılan konular ve son kontroller:
+
+- GitHub Actions: `./mvnw verify` ve Testcontainers ile PostgreSQL testleri.
+- Transactional Outbox: olayların siparişle aynı transaction'da bir tabloya yazılması.
+- `ETag` / `If-Match` ile kayıp güncellemenin HTTP seviyesinde önlenmesi.
+- Sipariş verme için `Idempotency-Key`.
+- Hata yanıtlarına korelasyon kimliği.
+- MicroProfile Health readiness kontrolü.
+- Performans hedefi *(NFR-9)* ve test kapsamı hedefi *(NFR-6)*.
+- JPA ile ikinci bir persistence uygulaması; aynı sözleşme testlerinden geçer *(ADR-0008)*.
+
+---
+
+## Tamamlanan fazların notları
+
+### Faz 1–2
+
+- Domain kuralları ve kullanım senaryoları yazıldı. Faz 1'den Faz 2'ye devredilen dört madde *(CRT-5, REV-2/REV-3, ACC-1, ORD-10)* Faz 2'de tamamlandı.
+- Bellek içi test çiftleri işlemi geri alamıyordu; bu sınır Faz 3'te kapandı.
+
+### Faz 3
+
+- `CheckoutWithDatabaseTest`, reddedilen ödemede stok, sipariş, sepet ve sipariş numarasının geri alındığını ve son kopyayı aynı anda isteyen iki müşteriden yalnızca birinin aldığını gerçek işlemlerle doğruluyor.
+- H2 2.4.240'ın `CHECK (… IN …)` hatası bulundu; ders notlarının ADR-0008'i aynı hatayı belgeliyor.
+- Testler yalnızca H2'nin MySQL modunda çalıştı. Faz 4.7'de PostgreSQL'e geçilir.
