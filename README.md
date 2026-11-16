@@ -4,7 +4,7 @@ Java ile yazılmış, modüler bir çevrimiçi kitap mağazası.
 
 Projenin amacı: çalışan bir e-ticaret uygulaması ortaya koymak.
 
-> **Durum:** Faz 0–3 ve Faz 4.1–4.2 tamamlandı. Kod iş alanına göre modüllerde *(katalog, müşteri, satış, yorum)*; modüller birbirini yalnızca `api` paketleriyle kullanıyor. Bu kural ve mimari kararların diğer kuralları ArchUnit testleriyle korunuyor. Jakarta EE, PostgreSQL, HTTP katmanı ve web sayfaları henüz yok. Ayrıntılar [yol haritasında](docs/ROADMAP.md).
+> **Durum:** Faz 0–3 ve Faz 4.1–4.3 tamamlandı. Kod iş alanına göre modüllerde *(katalog, müşteri, satış, yorum)*; modüller birbirini yalnızca `api` paketleriyle kullanıyor. Bu kural ve mimari kararların diğer kuralları ArchUnit testleriyle korunuyor. Jakarta EE, PostgreSQL, HTTP katmanı ve web sayfaları henüz yok. Ayrıntılar [yol haritasında](docs/ROADMAP.md).
 
 ## Dokümanlar
 

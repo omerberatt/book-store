@@ -1,15 +1,16 @@
 package com.bookstore.catalog.application;
 
-import com.bookstore.catalog.domain.CategoryId;
-import com.bookstore.shared.kernel.identity.BookId;
-import com.bookstore.shared.kernel.error.NotFoundException;
-import com.bookstore.shared.kernel.paging.Page;
-import com.bookstore.shared.kernel.paging.PageRequest;
 import com.bookstore.catalog.domain.Book;
 import com.bookstore.catalog.domain.BookRepository;
-import com.bookstore.catalog.domain.BookSearchCriteria;
+import com.bookstore.catalog.domain.BookSpecifications;
 import com.bookstore.catalog.domain.Category;
+import com.bookstore.catalog.domain.CategoryId;
 import com.bookstore.catalog.domain.CategoryRepository;
+import com.bookstore.shared.kernel.error.NotFoundException;
+import com.bookstore.shared.kernel.identity.BookId;
+import com.bookstore.shared.kernel.paging.Page;
+import com.bookstore.shared.kernel.paging.PageRequest;
+import com.bookstore.shared.kernel.specification.Specification;
 
 import java.util.List;
 import java.util.Set;
@@ -43,18 +44,26 @@ public class CatalogService {
      * @throws NotFoundException if the query names a category that does not exist
      */
     public Page<BookSummary> search(BookSearchQuery query, PageRequest page) {
-        BookSearchCriteria.Builder criteria = BookSearchCriteria.builder()
-                .inStockOnly(query.inStockOnly())
-                .sort(query.sort());
-        criteria.text(query.text()).minPrice(query.minPrice()).maxPrice(query.maxPrice()).language(query.language());
+        Specification<Book> rule = BookSpecifications.active().and(BookSpecifications.matchingText(query.text()));
+        if (query.inStockOnly()) {
+            rule = rule.and(BookSpecifications.inStock());
+        }
         if (query.categoryId() != null) {
-            criteria.categoryIds(categoryAndDescendantIds(query.categoryId()));
+            rule = rule.and(BookSpecifications.inCategories(categoryAndDescendantIds(query.categoryId())));
         }
         if (query.authorId() != null) {
-            criteria.authorId(query.authorId());
+            rule = rule.and(BookSpecifications.byAuthor(query.authorId()));
         }
-
-        return books.search(criteria.build(), page).map(BookSummary::of);
+        if (query.minPrice() != null) {
+            rule = rule.and(BookSpecifications.pricedFrom(query.minPrice()));
+        }
+        if (query.maxPrice() != null) {
+            rule = rule.and(BookSpecifications.pricedUpTo(query.maxPrice()));
+        }
+        if (query.language() != null) {
+            rule = rule.and(BookSpecifications.inLanguage(query.language()));
+        }
+        return books.search(rule, query.sort(), page).map(BookSummary::of);
     }
 
     /**

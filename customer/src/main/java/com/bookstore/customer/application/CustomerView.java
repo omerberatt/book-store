@@ -1,11 +1,11 @@
 package com.bookstore.customer.application;
 
 import com.bookstore.customer.domain.AddressId;
-import com.bookstore.shared.kernel.identity.CustomerId;
-import com.bookstore.shared.kernel.address.Address;
 import com.bookstore.customer.domain.Customer;
 import com.bookstore.customer.domain.Role;
 import com.bookstore.customer.domain.SavedAddress;
+import com.bookstore.shared.kernel.address.Address;
+import com.bookstore.shared.kernel.identity.CustomerId;
 
 import java.time.Instant;
 import java.util.List;

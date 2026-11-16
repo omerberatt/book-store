@@ -1,18 +1,12 @@
 package com.bookstore.catalog.persistence;
 
-import com.bookstore.catalog.domain.CategoryId;
-import com.bookstore.catalog.domain.AuthorId;
-import com.bookstore.shared.kernel.identity.BookId;
-import com.bookstore.shared.kernel.error.ConflictException;
-import com.bookstore.shared.kernel.money.Money;
-import com.bookstore.shared.kernel.paging.Page;
-import com.bookstore.shared.kernel.paging.PageRequest;
-import com.bookstore.shared.kernel.text.TextNormalizer;
 import com.bookstore.catalog.domain.Author;
+import com.bookstore.catalog.domain.AuthorId;
 import com.bookstore.catalog.domain.Book;
 import com.bookstore.catalog.domain.BookRepository;
-import com.bookstore.catalog.domain.BookSearchCriteria;
+import com.bookstore.catalog.domain.BookSort;
 import com.bookstore.catalog.domain.Category;
+import com.bookstore.catalog.domain.CategoryId;
 import com.bookstore.catalog.domain.Isbn;
 import com.bookstore.catalog.domain.Language;
 import com.bookstore.catalog.domain.RatingSummary;
@@ -20,6 +14,13 @@ import com.bookstore.catalog.domain.Stock;
 import com.bookstore.shared.jdbc.Columns;
 import com.bookstore.shared.jdbc.DataAccessException;
 import com.bookstore.shared.jdbc.JdbcExecutor;
+import com.bookstore.shared.kernel.error.ConflictException;
+import com.bookstore.shared.kernel.identity.BookId;
+import com.bookstore.shared.kernel.money.Money;
+import com.bookstore.shared.kernel.paging.Page;
+import com.bookstore.shared.kernel.paging.PageRequest;
+import com.bookstore.shared.kernel.specification.Specification;
+import com.bookstore.shared.kernel.text.TextNormalizer;
 
 import java.math.BigDecimal;
 import java.sql.ResultSet;
@@ -83,8 +84,8 @@ public class JdbcBookRepository implements BookRepository {
     }
 
     @Override
-    public Page<Book> search(BookSearchCriteria criteria, PageRequest page) {
-        BookSearchSql sql = new BookSearchSql(criteria);
+    public Page<Book> search(Specification<Book> specification, BookSort sort, PageRequest page) {
+        BookSearchSql sql = new BookSearchSql(specification, sort);
         Object[] whereParams = sql.params().toArray();
 
         long total = jdbc.queryForLong("SELECT COUNT(*) FROM books b" + sql.where(), whereParams);

@@ -1,7 +1,7 @@
 package com.bookstore.catalog.persistence;
 
-import com.bookstore.catalog.domain.CategoryId;
 import com.bookstore.catalog.domain.Category;
+import com.bookstore.catalog.domain.CategoryId;
 import com.bookstore.catalog.domain.CategoryRepository;
 
 import java.util.ArrayList;

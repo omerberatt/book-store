@@ -1,7 +1,7 @@
 package com.bookstore.sales.domain;
 
-import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.kernel.event.DomainEvent;
+import com.bookstore.shared.kernel.identity.CustomerId;
 
 /**
  * Everything that can happen to an order (ADR-0007). The interface is {@code sealed}, so a

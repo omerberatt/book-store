@@ -1,16 +1,16 @@
 package com.bookstore.customer.application;
 
-import com.bookstore.customer.domain.AddressId;
-import com.bookstore.shared.kernel.identity.CustomerId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.bookstore.customer.domain.AddressId;
+import com.bookstore.customer.domain.Email;
+import com.bookstore.customer.domain.Role;
+import com.bookstore.shared.kernel.address.Address;
 import com.bookstore.shared.kernel.error.ConflictException;
 import com.bookstore.shared.kernel.error.NotFoundException;
 import com.bookstore.shared.kernel.error.ValidationException;
-import com.bookstore.shared.kernel.address.Address;
-import com.bookstore.customer.domain.Email;
-import com.bookstore.customer.domain.Role;
+import com.bookstore.shared.kernel.identity.CustomerId;
 
 import org.junit.jupiter.api.Test;
 

@@ -1,12 +1,12 @@
 package com.bookstore.customer.application;
 
-import com.bookstore.customer.domain.AddressId;
-import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.customer.api.CustomerDirectory;
+import com.bookstore.customer.domain.AddressId;
 import com.bookstore.customer.domain.Customer;
 import com.bookstore.customer.domain.CustomerRepository;
 import com.bookstore.shared.kernel.address.Address;
 import com.bookstore.shared.kernel.error.NotFoundException;
+import com.bookstore.shared.kernel.identity.CustomerId;
 
 import java.util.Collection;
 import java.util.Map;

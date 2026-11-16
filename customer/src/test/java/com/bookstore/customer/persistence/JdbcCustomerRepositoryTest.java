@@ -1,10 +1,9 @@
 package com.bookstore.customer.persistence;
 
-import com.bookstore.customer.domain.AddressId;
-import com.bookstore.shared.kernel.identity.CustomerId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.bookstore.customer.domain.AddressId;
 import com.bookstore.customer.domain.Customer;
 import com.bookstore.customer.domain.Email;
 import com.bookstore.customer.domain.PersonName;
@@ -12,6 +11,7 @@ import com.bookstore.customer.domain.Role;
 import com.bookstore.customer.domain.SavedAddress;
 import com.bookstore.shared.jdbc.DataAccessException;
 import com.bookstore.shared.kernel.error.ConflictException;
+import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.kernel.paging.Page;
 import com.bookstore.shared.kernel.paging.PageRequest;
 import com.bookstore.shared.kernel.testing.TestAddresses;

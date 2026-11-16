@@ -2,6 +2,7 @@ package com.bookstore.review.application;
 
 import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.identity.CustomerId;
+
 /**
  * The review form, used both for writing and for editing a review.
  *

@@ -1,13 +1,7 @@
 package com.bookstore.sales.persistence;
 
-import com.bookstore.sales.domain.OrderId;
-import com.bookstore.shared.kernel.identity.BookId;
-import com.bookstore.shared.kernel.identity.CustomerId;
-import com.bookstore.shared.kernel.money.Money;
-import com.bookstore.shared.kernel.paging.Page;
-import com.bookstore.shared.kernel.paging.PageRequest;
-import com.bookstore.shared.kernel.address.Address;
 import com.bookstore.sales.domain.Order;
+import com.bookstore.sales.domain.OrderId;
 import com.bookstore.sales.domain.OrderLine;
 import com.bookstore.sales.domain.OrderNumber;
 import com.bookstore.sales.domain.OrderRepository;
@@ -15,6 +9,12 @@ import com.bookstore.sales.domain.OrderStatus;
 import com.bookstore.sales.domain.PaymentMethod;
 import com.bookstore.shared.jdbc.JdbcExecutor;
 import com.bookstore.shared.jdbc.RecordRowMapper;
+import com.bookstore.shared.kernel.address.Address;
+import com.bookstore.shared.kernel.identity.BookId;
+import com.bookstore.shared.kernel.identity.CustomerId;
+import com.bookstore.shared.kernel.money.Money;
+import com.bookstore.shared.kernel.paging.Page;
+import com.bookstore.shared.kernel.paging.PageRequest;
 
 import java.time.Instant;
 import java.util.ArrayList;

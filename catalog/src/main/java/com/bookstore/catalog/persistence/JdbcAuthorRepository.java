@@ -1,11 +1,11 @@
 package com.bookstore.catalog.persistence;
 
-import com.bookstore.catalog.domain.AuthorId;
-import com.bookstore.shared.kernel.text.TextNormalizer;
 import com.bookstore.catalog.domain.Author;
+import com.bookstore.catalog.domain.AuthorId;
 import com.bookstore.catalog.domain.AuthorRepository;
 import com.bookstore.shared.jdbc.JdbcExecutor;
 import com.bookstore.shared.jdbc.RowMapper;
+import com.bookstore.shared.kernel.text.TextNormalizer;
 
 import java.util.Collection;
 import java.util.List;

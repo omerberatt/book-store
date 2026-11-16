@@ -3,16 +3,16 @@ package com.bookstore.app;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.bookstore.catalog.domain.Book;
+import com.bookstore.customer.domain.Customer;
 import com.bookstore.sales.application.CartRef;
 import com.bookstore.sales.application.OrderDetails;
 import com.bookstore.sales.application.PaymentDeclinedException;
 import com.bookstore.sales.application.PlaceOrderCommand;
-import com.bookstore.shared.kernel.error.ConflictException;
-import com.bookstore.catalog.domain.Book;
-import com.bookstore.customer.domain.Customer;
 import com.bookstore.sales.domain.OrderNumber;
 import com.bookstore.sales.domain.OrderStatus;
 import com.bookstore.sales.domain.PaymentMethod;
+import com.bookstore.shared.kernel.error.ConflictException;
 
 import java.util.ArrayList;
 import java.util.List;

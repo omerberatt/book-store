@@ -1,15 +1,15 @@
 package com.bookstore.sales.persistence;
 
-import com.bookstore.shared.kernel.identity.CustomerId;
-import com.bookstore.shared.kernel.identity.BookId;
-import com.bookstore.sales.domain.OrderId;
-import com.bookstore.shared.kernel.testing.InMemoryStore;
-import com.bookstore.shared.kernel.paging.Page;
-import com.bookstore.shared.kernel.paging.PageRequest;
 import com.bookstore.sales.domain.Order;
+import com.bookstore.sales.domain.OrderId;
 import com.bookstore.sales.domain.OrderNumber;
 import com.bookstore.sales.domain.OrderRepository;
 import com.bookstore.sales.domain.OrderStatus;
+import com.bookstore.shared.kernel.identity.BookId;
+import com.bookstore.shared.kernel.identity.CustomerId;
+import com.bookstore.shared.kernel.paging.Page;
+import com.bookstore.shared.kernel.paging.PageRequest;
+import com.bookstore.shared.kernel.testing.InMemoryStore;
 
 import java.util.Comparator;
 import java.util.List;

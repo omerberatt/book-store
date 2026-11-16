@@ -1,15 +1,15 @@
 package com.bookstore.review.persistence;
 
-import com.bookstore.review.domain.ReviewId;
-import com.bookstore.shared.kernel.identity.CustomerId;
-import com.bookstore.shared.kernel.identity.BookId;
-import com.bookstore.shared.kernel.testing.InMemoryStore;
-import com.bookstore.shared.kernel.error.ConflictException;
-import com.bookstore.shared.kernel.paging.Page;
-import com.bookstore.shared.kernel.paging.PageRequest;
 import com.bookstore.review.domain.Rating;
 import com.bookstore.review.domain.Review;
+import com.bookstore.review.domain.ReviewId;
 import com.bookstore.review.domain.ReviewRepository;
+import com.bookstore.shared.kernel.error.ConflictException;
+import com.bookstore.shared.kernel.identity.BookId;
+import com.bookstore.shared.kernel.identity.CustomerId;
+import com.bookstore.shared.kernel.paging.Page;
+import com.bookstore.shared.kernel.paging.PageRequest;
+import com.bookstore.shared.kernel.testing.InMemoryStore;
 
 import java.util.Comparator;
 import java.util.List;

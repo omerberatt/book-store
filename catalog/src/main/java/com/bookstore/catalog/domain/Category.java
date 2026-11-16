@@ -1,8 +1,8 @@
 package com.bookstore.catalog.domain;
 
+import com.bookstore.shared.kernel.domain.Entity;
 import com.bookstore.shared.kernel.error.ValidationException;
 import com.bookstore.shared.kernel.validation.Guard;
-import com.bookstore.shared.kernel.domain.Entity;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;

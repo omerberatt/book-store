@@ -1,7 +1,5 @@
 package com.bookstore.review.application;
 
-import com.bookstore.shared.kernel.identity.BookId;
-import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.catalog.api.RatingFacade;
 import com.bookstore.customer.api.CustomerDirectory;
 import com.bookstore.review.domain.Rating;
@@ -12,6 +10,8 @@ import com.bookstore.sales.api.PurchaseHistory;
 import com.bookstore.shared.kernel.error.AccessDeniedException;
 import com.bookstore.shared.kernel.error.ConflictException;
 import com.bookstore.shared.kernel.error.NotFoundException;
+import com.bookstore.shared.kernel.identity.BookId;
+import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.kernel.paging.Page;
 import com.bookstore.shared.kernel.paging.PageRequest;
 import com.bookstore.shared.kernel.transaction.TransactionRunner;

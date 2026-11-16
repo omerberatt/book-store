@@ -4,7 +4,6 @@ import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.money.Money;
 import com.bookstore.shared.kernel.validation.Guard;
 
-
 /**
  * One line of an order. The book's title and price are copied when the order is placed, so the
  * order keeps showing what the customer actually bought and paid, whatever happens to the book

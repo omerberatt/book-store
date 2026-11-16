@@ -1,12 +1,12 @@
 package com.bookstore.catalog.application;
 
-import com.bookstore.catalog.domain.CategoryId;
+import com.bookstore.catalog.domain.Author;
 import com.bookstore.catalog.domain.AuthorId;
+import com.bookstore.catalog.domain.Book;
+import com.bookstore.catalog.domain.CategoryId;
+import com.bookstore.catalog.domain.Language;
 import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.money.Money;
-import com.bookstore.catalog.domain.Author;
-import com.bookstore.catalog.domain.Book;
-import com.bookstore.catalog.domain.Language;
 
 import java.math.BigDecimal;
 import java.time.Year;

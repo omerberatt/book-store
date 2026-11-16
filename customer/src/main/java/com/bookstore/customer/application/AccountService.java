@@ -1,19 +1,19 @@
 package com.bookstore.customer.application;
 
 import com.bookstore.customer.domain.AddressId;
-import com.bookstore.shared.kernel.identity.CustomerId;
-import com.bookstore.customer.domain.PasswordHasher;
-import com.bookstore.shared.kernel.transaction.TransactionRunner;
-import com.bookstore.shared.kernel.error.ConflictException;
-import com.bookstore.shared.kernel.error.NotFoundException;
-import com.bookstore.shared.kernel.error.ValidationException;
-import com.bookstore.shared.kernel.address.Address;
 import com.bookstore.customer.domain.Customer;
 import com.bookstore.customer.domain.CustomerRepository;
 import com.bookstore.customer.domain.Email;
+import com.bookstore.customer.domain.PasswordHasher;
 import com.bookstore.customer.domain.PasswordPolicy;
 import com.bookstore.customer.domain.PersonName;
 import com.bookstore.customer.domain.SavedAddress;
+import com.bookstore.shared.kernel.address.Address;
+import com.bookstore.shared.kernel.error.ConflictException;
+import com.bookstore.shared.kernel.error.NotFoundException;
+import com.bookstore.shared.kernel.error.ValidationException;
+import com.bookstore.shared.kernel.identity.CustomerId;
+import com.bookstore.shared.kernel.transaction.TransactionRunner;
 
 import java.time.Clock;
 import java.util.Optional;

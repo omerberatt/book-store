@@ -1,6 +1,5 @@
 package com.bookstore.sales.persistence;
 
-import com.bookstore.shared.kernel.identity.BookId;
 import static com.bookstore.sales.persistence.SalesDb.snapshotOf;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -18,6 +17,7 @@ import com.bookstore.sales.domain.ShippingPolicy;
 import com.bookstore.shared.jdbc.DataAccessException;
 import com.bookstore.shared.jdbc.JdbcExecutor;
 import com.bookstore.shared.kernel.error.ConflictException;
+import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.money.Money;
 import com.bookstore.shared.kernel.paging.PageRequest;
 import com.bookstore.shared.kernel.testing.TestAddresses;

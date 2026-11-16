@@ -1,13 +1,13 @@
 package com.bookstore.sales.application;
 
-import com.bookstore.shared.kernel.identity.CustomerId;
-import com.bookstore.shared.kernel.error.AccessDeniedException;
-import com.bookstore.shared.kernel.error.NotFoundException;
-import com.bookstore.shared.kernel.paging.Page;
-import com.bookstore.shared.kernel.paging.PageRequest;
 import com.bookstore.sales.domain.Order;
 import com.bookstore.sales.domain.OrderNumber;
 import com.bookstore.sales.domain.OrderRepository;
+import com.bookstore.shared.kernel.error.AccessDeniedException;
+import com.bookstore.shared.kernel.error.NotFoundException;
+import com.bookstore.shared.kernel.identity.CustomerId;
+import com.bookstore.shared.kernel.paging.Page;
+import com.bookstore.shared.kernel.paging.PageRequest;
 
 /**
  * A customer's own orders (ORD-8).

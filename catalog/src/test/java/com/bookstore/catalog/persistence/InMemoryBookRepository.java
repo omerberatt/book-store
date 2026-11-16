@@ -1,16 +1,17 @@
 package com.bookstore.catalog.persistence;
 
-import com.bookstore.catalog.domain.CategoryId;
 import com.bookstore.catalog.domain.AuthorId;
-import com.bookstore.shared.kernel.identity.BookId;
-import com.bookstore.shared.kernel.testing.InMemoryStore;
-import com.bookstore.shared.kernel.error.ConflictException;
-import com.bookstore.shared.kernel.paging.Page;
-import com.bookstore.shared.kernel.paging.PageRequest;
 import com.bookstore.catalog.domain.Book;
 import com.bookstore.catalog.domain.BookRepository;
-import com.bookstore.catalog.domain.BookSearchCriteria;
+import com.bookstore.catalog.domain.BookSort;
+import com.bookstore.catalog.domain.CategoryId;
 import com.bookstore.catalog.domain.Isbn;
+import com.bookstore.shared.kernel.error.ConflictException;
+import com.bookstore.shared.kernel.identity.BookId;
+import com.bookstore.shared.kernel.paging.Page;
+import com.bookstore.shared.kernel.paging.PageRequest;
+import com.bookstore.shared.kernel.specification.Specification;
+import com.bookstore.shared.kernel.testing.InMemoryStore;
 
 import java.util.HashMap;
 import java.util.List;
@@ -33,10 +34,10 @@ public class InMemoryBookRepository extends InMemoryStore<BookId, Book> implemen
     }
 
     @Override
-    public Page<Book> search(BookSearchCriteria criteria, PageRequest page) {
+    public Page<Book> search(Specification<Book> specification, BookSort sort, PageRequest page) {
         List<Book> matches = all().stream()
-                .filter(criteria.asPredicate())
-                .sorted(criteria.sort().comparator())
+                .filter(specification::isSatisfiedBy)
+                .sorted(sort.comparator())
                 .toList();
         return Page.fromList(matches, page);
     }

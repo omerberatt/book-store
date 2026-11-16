@@ -1,16 +1,16 @@
 package com.bookstore.catalog.application;
 
 import com.bookstore.catalog.domain.AuthorId;
+import com.bookstore.catalog.domain.BookSort;
 import com.bookstore.catalog.domain.CategoryId;
+import com.bookstore.catalog.domain.Language;
 import com.bookstore.shared.kernel.money.Money;
 import com.bookstore.shared.kernel.validation.Guard;
-import com.bookstore.catalog.domain.BookSort;
-import com.bookstore.catalog.domain.Language;
 
 /**
- * A customer's catalog search as it comes from the search form. Unlike
- * {@link com.bookstore.catalog.domain.BookSearchCriteria}, it names one category; the service
- * widens it to the category and its subcategories (CAT-5).
+ * A customer's catalog search as it comes from the search form. It names one category; the
+ * service widens it to the category and its subcategories (CAT-5) and turns the query into a
+ * {@code Specification<Book>} built from {@link com.bookstore.catalog.domain.BookSpecifications}.
  *
  * <p>A part the customer left empty is {@code null}: {@code Optional} is only a return type
  * (ADR-0004).
@@ -27,9 +27,12 @@ import com.bookstore.catalog.domain.Language;
 public record BookSearchQuery(String text, CategoryId categoryId, AuthorId authorId, Money minPrice, Money maxPrice,
                               Language language, boolean inStockOnly, BookSort sort) {
 
-    /** Rejects a missing order. */
+    /** Rejects a missing order and an inverted price range. */
     public BookSearchQuery {
         Guard.requireNonNull(sort, "sort");
+        if (minPrice != null && maxPrice != null) {
+            Guard.require(maxPrice.isAtLeast(minPrice), "maxPrice", "must not be below the minimum price");
+        }
     }
 
     /**

@@ -1,15 +1,15 @@
 package com.bookstore.sales.domain;
 
-import com.bookstore.shared.kernel.identity.BookId;
-import com.bookstore.shared.kernel.identity.CustomerId;
+import com.bookstore.shared.kernel.address.Address;
+import com.bookstore.shared.kernel.domain.Entity;
 import com.bookstore.shared.kernel.error.AccessDeniedException;
 import com.bookstore.shared.kernel.error.ConflictException;
 import com.bookstore.shared.kernel.error.NotFoundException;
 import com.bookstore.shared.kernel.error.RuleViolationException;
+import com.bookstore.shared.kernel.identity.BookId;
+import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.kernel.money.Money;
 import com.bookstore.shared.kernel.validation.Guard;
-import com.bookstore.shared.kernel.domain.Entity;
-import com.bookstore.shared.kernel.address.Address;
 
 import java.time.Clock;
 import java.time.Instant;

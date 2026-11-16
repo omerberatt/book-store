@@ -1,6 +1,7 @@
 package com.bookstore.sales.domain;
 
 import com.bookstore.shared.kernel.identity.CustomerId;
+
 import java.util.Optional;
 
 /**

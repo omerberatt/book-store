@@ -1,6 +1,7 @@
 package com.bookstore.catalog.api;
 
 import com.bookstore.shared.kernel.identity.BookId;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;

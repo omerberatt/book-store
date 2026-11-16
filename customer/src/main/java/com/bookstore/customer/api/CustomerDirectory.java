@@ -1,7 +1,7 @@
 package com.bookstore.customer.api;
 
-import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.kernel.address.Address;
+import com.bookstore.shared.kernel.identity.CustomerId;
 
 import java.util.Collection;
 import java.util.Map;

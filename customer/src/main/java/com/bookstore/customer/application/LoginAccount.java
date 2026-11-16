@@ -1,8 +1,8 @@
 package com.bookstore.customer.application;
 
-import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.customer.domain.Customer;
 import com.bookstore.customer.domain.Role;
+import com.bookstore.shared.kernel.identity.CustomerId;
 
 /**
  * What the security layer needs to sign a customer in. The security layer checks the password

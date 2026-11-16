@@ -1,7 +1,5 @@
 package com.bookstore.sales.application;
 
-import com.bookstore.shared.kernel.identity.BookId;
-import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.catalog.api.StockFacade;
 import com.bookstore.customer.api.CustomerDirectory;
 import com.bookstore.sales.domain.Cart;
@@ -10,8 +8,8 @@ import com.bookstore.sales.domain.CartRepository;
 import com.bookstore.sales.domain.Order;
 import com.bookstore.sales.domain.OrderNumberSequence;
 import com.bookstore.sales.domain.OrderRepository;
-import com.bookstore.sales.domain.PaymentGateway;
 import com.bookstore.sales.domain.PaymentGateway.PaymentResult;
+import com.bookstore.sales.domain.PaymentGateway;
 import com.bookstore.sales.domain.PaymentMethod;
 import com.bookstore.sales.domain.ProductSnapshot;
 import com.bookstore.sales.domain.ShippingPolicy;
@@ -19,6 +17,8 @@ import com.bookstore.shared.kernel.address.Address;
 import com.bookstore.shared.kernel.error.ConflictException;
 import com.bookstore.shared.kernel.error.NotFoundException;
 import com.bookstore.shared.kernel.event.Notifier;
+import com.bookstore.shared.kernel.identity.BookId;
+import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.kernel.transaction.TransactionRunner;
 
 import java.time.Clock;

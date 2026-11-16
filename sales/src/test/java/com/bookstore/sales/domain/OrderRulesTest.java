@@ -1,10 +1,10 @@
 package com.bookstore.sales.domain;
 
-import com.bookstore.shared.kernel.identity.BookId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.bookstore.shared.kernel.error.ValidationException;
+import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.money.Money;
 
 import java.time.Year;

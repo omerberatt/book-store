@@ -1,12 +1,13 @@
 package com.bookstore.architecture;
 
 import com.bookstore.shared.kernel.domain.Entity;
-import com.tngtech.archunit.base.DescribedPredicate;
-import com.tngtech.archunit.core.domain.JavaMethodCall;
 
 import java.sql.Connection;
 import java.util.Set;
 import java.util.regex.Pattern;
+
+import com.tngtech.archunit.base.DescribedPredicate;
+import com.tngtech.archunit.core.domain.JavaMethodCall;
 
 /**
  * Package patterns and call predicates shared by the rule classes. A business module's layer is

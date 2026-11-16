@@ -1,9 +1,9 @@
 package com.bookstore.review.domain;
 
+import com.bookstore.shared.kernel.domain.Entity;
 import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.kernel.validation.Guard;
-import com.bookstore.shared.kernel.domain.Entity;
 
 import java.time.Clock;
 import java.time.Instant;

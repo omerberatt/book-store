@@ -1,10 +1,10 @@
 package com.bookstore.sales.application;
 
-import com.bookstore.shared.kernel.identity.CustomerId;
-import com.bookstore.shared.kernel.money.Money;
 import com.bookstore.sales.domain.Order;
 import com.bookstore.sales.domain.OrderStatus;
 import com.bookstore.sales.domain.PaymentMethod;
+import com.bookstore.shared.kernel.identity.CustomerId;
+import com.bookstore.shared.kernel.money.Money;
 
 import java.time.Instant;
 

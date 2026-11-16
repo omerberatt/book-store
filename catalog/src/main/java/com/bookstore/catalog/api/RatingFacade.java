@@ -1,6 +1,7 @@
 package com.bookstore.catalog.api;
 
 import com.bookstore.shared.kernel.identity.BookId;
+
 /**
  * The rating totals kept on each book (ADR-0012), as the review module updates them. Changes join
  * the caller's transaction, so the totals and the reviews always change together.

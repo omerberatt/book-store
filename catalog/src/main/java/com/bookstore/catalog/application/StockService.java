@@ -1,6 +1,5 @@
 package com.bookstore.catalog.application;
 
-import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.catalog.api.BookOffer;
 import com.bookstore.catalog.api.StockFacade;
 import com.bookstore.catalog.domain.Book;
@@ -8,6 +7,7 @@ import com.bookstore.catalog.domain.BookRepository;
 import com.bookstore.catalog.domain.InsufficientStockException;
 import com.bookstore.shared.kernel.error.ConflictException;
 import com.bookstore.shared.kernel.error.NotFoundException;
+import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.transaction.TransactionRunner;
 
 import java.util.Collection;

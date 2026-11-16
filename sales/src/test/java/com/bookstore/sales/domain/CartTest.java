@@ -1,6 +1,5 @@
 package com.bookstore.sales.domain;
 
-import com.bookstore.shared.kernel.identity.BookId;
 import static com.bookstore.sales.domain.SalesTestData.CUSTOMER_ID;
 import static com.bookstore.sales.domain.SalesTestData.priced;
 import static com.bookstore.sales.domain.SalesTestData.product;
@@ -11,6 +10,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.bookstore.shared.kernel.error.ConflictException;
 import com.bookstore.shared.kernel.error.ValidationException;
+import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.money.Money;
 
 import java.io.ByteArrayInputStream;

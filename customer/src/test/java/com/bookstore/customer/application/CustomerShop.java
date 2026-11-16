@@ -1,10 +1,10 @@
 package com.bookstore.customer.application;
 
 import com.bookstore.customer.domain.AddressId;
-import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.customer.domain.PasswordHasher;
 import com.bookstore.customer.persistence.InMemoryCustomerRepository;
 import com.bookstore.shared.kernel.address.Address;
+import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.kernel.testing.DirectTransactions;
 import com.bookstore.shared.kernel.testing.TestAddresses;
 import com.bookstore.shared.kernel.testing.TestClock;

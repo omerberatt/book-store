@@ -1,19 +1,19 @@
 package com.bookstore.catalog.application;
 
-import com.bookstore.catalog.domain.CategoryId;
-import com.bookstore.shared.kernel.identity.BookId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.bookstore.shared.kernel.error.NotFoundException;
-import com.bookstore.shared.kernel.money.Money;
-import com.bookstore.shared.kernel.paging.Page;
-import com.bookstore.shared.kernel.paging.PageRequest;
-import com.bookstore.shared.kernel.paging.SortOrder;
 import com.bookstore.catalog.domain.Author;
 import com.bookstore.catalog.domain.Book;
 import com.bookstore.catalog.domain.BookSort;
 import com.bookstore.catalog.domain.BookSortField;
+import com.bookstore.catalog.domain.CategoryId;
+import com.bookstore.shared.kernel.error.NotFoundException;
+import com.bookstore.shared.kernel.identity.BookId;
+import com.bookstore.shared.kernel.money.Money;
+import com.bookstore.shared.kernel.paging.Page;
+import com.bookstore.shared.kernel.paging.PageRequest;
+import com.bookstore.shared.kernel.paging.SortOrder;
 
 import java.math.BigDecimal;
 import java.util.List;

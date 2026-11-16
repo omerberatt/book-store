@@ -1,9 +1,9 @@
 package com.bookstore.sales.application;
 
-import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.customer.api.CustomerDirectory;
 import com.bookstore.shared.kernel.address.Address;
 import com.bookstore.shared.kernel.error.NotFoundException;
+import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.kernel.testing.TestAddresses;
 
 import java.util.Collection;

@@ -1,15 +1,15 @@
 package com.bookstore.customer.domain;
 
-import com.bookstore.shared.kernel.identity.CustomerId;
+import static com.bookstore.shared.kernel.testing.TestAddresses.home;
 import static com.bookstore.shared.kernel.testing.TestClock.CLOCK;
 import static com.bookstore.shared.kernel.testing.TestClock.NOW;
-import static com.bookstore.shared.kernel.testing.TestAddresses.home;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.bookstore.shared.kernel.address.Address;
 import com.bookstore.shared.kernel.error.NotFoundException;
 import com.bookstore.shared.kernel.error.ValidationException;
+import com.bookstore.shared.kernel.identity.CustomerId;
 
 import java.util.List;
 

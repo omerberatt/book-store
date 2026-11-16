@@ -1,10 +1,10 @@
 package com.bookstore.catalog.domain;
 
+import com.bookstore.shared.kernel.domain.Entity;
 import com.bookstore.shared.kernel.error.ConflictException;
+import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.money.Money;
 import com.bookstore.shared.kernel.validation.Guard;
-import com.bookstore.shared.kernel.domain.Entity;
-import com.bookstore.shared.kernel.identity.BookId;
 
 import java.time.Year;
 import java.util.Collection;

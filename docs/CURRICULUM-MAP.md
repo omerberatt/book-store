@@ -67,7 +67,7 @@ Faz numaraları [ROADMAP.md](ROADMAP.md) içindeki aşamalardır; ADR'ler [docs/
 | Konu | Kitap mağazasında | Durum | Faz |
 | --- | --- | --- | --- |
 | `Optional` dönüş tipi sözleşmesi | `findBy…` metotları, `Book.publicationYear()`, `Customer.defaultAddress()` | ✅ | 1 |
-| `Optional` alan ya da parametre olarak kullanılmaz | `BookSearchCriteria` boş olabilen alanlı `final` sınıf; `BookSearchQuery`, `BookSummary`, `BookDetails` boş olabilen bileşenli record'lar; `optional_is_not_a_field_type`, `optional_is_not_a_parameter_type` *(ADR-0004)* | ✅ | 4.2 |
+| `Optional` alan ya da parametre olarak kullanılmaz | `BookSearchQuery`, `BookSummary`, `BookDetails` boş olabilen bileşenli record'lar; `optional_is_not_a_field_type`, `optional_is_not_a_parameter_type` *(ADR-0004)* | ✅ | 4.2 |
 | Stream API, `reduce(Money::plus)` | `Money.sum`, `Cart.subtotal`, `Order` toplamları | ✅ | 1 |
 | `Collectors.groupingBy`, `toMap`, `mapping` | `RatingDistribution`, repository'lerde kimliğe göre gruplama | ✅ | 1, 3 |
 | Bellek içi sorgu nesnesi *(OrderBook)* | Test çiftleri: `InMemoryBookRepository` … `InMemoryStore<T>` | ✅ | 2 |
@@ -90,7 +90,7 @@ Faz numaraları [ROADMAP.md](ROADMAP.md) içindeki aşamalardır; ADR'ler [docs/
 | Tipli kimlikler *(`CustomerId`, `OrderId`)* | `shared-kernel`: `Identifier`, `BookId`, `CustomerId`; modüllerde `AuthorId`, `CategoryId`, `AddressId`, `OrderId`, `ReviewId`; `Entity<I extends Identifier>` *(ADR-0004)* | ✅ | 4.3 |
 | Static factory metotları | `Money.of`, `Customer.register`, `Cart.guest`, `OrderNumber.of`, `Rating.of` | ✅ | 1 |
 | Factory ve kimlik üreteci arayüzü | `Order.place` + `OrderNumberSequence` portu *(bellek içi ve JDBC uygulamaları)* | ✅ | 1, 3 |
-| Builder | `Book.Builder`, `BookSearchCriteria.Builder` | ✅ | 1 |
+| Builder | `Book.Builder` *(4.3'e kadar `BookSearchCriteria.Builder` de vardı; yerini `Specification` zinciri aldı)* | ✅ | 1 |
 
 ## Bölüm 08 — Strategy, Specification, Repository ve Mapper
 
@@ -98,8 +98,8 @@ Faz numaraları [ROADMAP.md](ROADMAP.md) içindeki aşamalardır; ADR'ler [docs/
 | --- | --- | --- | --- |
 | Strategy | `ShippingPolicy` / `FreeShippingThreshold`, `BookSortField` | ✅ | 1 |
 | Strategy için lambda | `ShippingPolicy.alwaysFree()`, testte `subtotal -> …` | ✅ | 1 |
-| Specification *(kuralı veri haline getirmek)* | Bugün `BookSearchCriteria.asPredicate()` birleşik bir `Predicate`. `shared-kernel`'e `Specification<T>` *(and / or / not)* ve `BookSpecifications` eklenecek. | 🔁 | 4 |
-| Specification'ı SQL'e çevirmek | `BookSearchSql` *(ders bunu "bir sonraki adım" olarak bırakıyor)* | ✅ | 3 |
+| Specification *(kuralı veri haline getirmek)* | `shared-kernel`: `Specification<T>` *(`and` / `or` / `not`, `all()`)*, `AndSpecification`, `OrSpecification`, `NotSpecification`, `MatchAll`; `catalog.domain.BookSpecifications`: `active`, `inStock`, `inCategories`, `byAuthor`, `pricedFrom`, `pricedUpTo`, `inLanguage`, `matchingText` | ✅ | 4.3 |
+| Specification'ı SQL'e çevirmek | `BookSearchSql`, `Specification` ağacını desen eşleme *(`switch`)* ile `WHERE` koşuluna çevirir; `and` / `or` / `not` dahil. `JdbcCatalogRepositoryTest` SQL ile bellek içi sonucu her kural ve sıralama için karşılaştırır *(ders bunu "bir sonraki adım" olarak bırakıyor)* | ✅ | 3, 4.3 |
 | Repository deseni, arayüzün yeri | Arayüzler domain'de *(ders ADR-0003'ün risk notu baştan önlendi)* | ✅ | 1 |
 | Mapper *(domain ↔ DTO)* | Modüller arası: `sales.application.Products` *(`BookOffer` → `ProductSnapshot`)* ✅. Okuma modelleri bugün `record`'ların `of(...)` metotları; `api` paketindeki DTO'lar ve mapper'lar 4.4'te *(ADR-0003)* | 🔁 | 4.1, 4.4 |
 | Paket düzeni: `api`, `application`, `domain`, `persistence` | Her iş modülünde; `rest` Faz 5'te *(ADR-0002)* | ✅ | 4.1 |

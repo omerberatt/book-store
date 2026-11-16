@@ -1,8 +1,8 @@
 package com.bookstore.sales.persistence;
 
-import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.sales.domain.Cart;
 import com.bookstore.sales.domain.CartRepository;
+import com.bookstore.shared.kernel.identity.CustomerId;
 
 import java.util.HashMap;
 import java.util.Map;

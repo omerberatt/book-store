@@ -1,16 +1,15 @@
 package com.bookstore.sales.application;
 
-import com.bookstore.shared.kernel.identity.BookId;
-import com.bookstore.shared.kernel.identity.CustomerId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.bookstore.shared.kernel.error.NotFoundException;
-import com.bookstore.shared.kernel.money.Money;
 import com.bookstore.sales.domain.Cart;
 import com.bookstore.sales.domain.CartAdjustment;
-
 import com.bookstore.sales.domain.StockShortageException;
+import com.bookstore.shared.kernel.error.NotFoundException;
+import com.bookstore.shared.kernel.identity.BookId;
+import com.bookstore.shared.kernel.identity.CustomerId;
+import com.bookstore.shared.kernel.money.Money;
 
 import org.junit.jupiter.api.Test;
 

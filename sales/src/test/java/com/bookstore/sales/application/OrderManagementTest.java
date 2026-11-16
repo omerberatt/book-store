@@ -1,21 +1,19 @@
 package com.bookstore.sales.application;
 
-import com.bookstore.shared.kernel.identity.CustomerId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.bookstore.sales.domain.OrderEvent;
+import com.bookstore.sales.domain.OrderPlaced;
+import com.bookstore.sales.domain.OrderStatus;
+import com.bookstore.sales.domain.OrderStatusChanged;
 import com.bookstore.shared.kernel.error.AccessDeniedException;
 import com.bookstore.shared.kernel.error.ConflictException;
 import com.bookstore.shared.kernel.error.NotFoundException;
+import com.bookstore.shared.kernel.event.DomainEvent;
+import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.kernel.paging.Page;
 import com.bookstore.shared.kernel.paging.PageRequest;
-
-import com.bookstore.sales.domain.OrderEvent;
-import com.bookstore.shared.kernel.event.DomainEvent;
-import com.bookstore.sales.domain.OrderPlaced;
-import com.bookstore.sales.domain.OrderStatusChanged;
-import com.bookstore.sales.domain.OrderStatus;
-
 
 import org.junit.jupiter.api.Test;
 

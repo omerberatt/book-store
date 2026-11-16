@@ -1,19 +1,18 @@
 package com.bookstore.sales.application;
 
-import com.bookstore.shared.kernel.identity.CustomerId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.bookstore.shared.kernel.error.RuleViolationException;
-import com.bookstore.shared.kernel.error.NotFoundException;
-import com.bookstore.shared.kernel.money.Money;
 import com.bookstore.sales.domain.CartAdjustment;
-
-import com.bookstore.sales.domain.OrderPlaced;
-import com.bookstore.sales.domain.OrderStatusChanged;
 import com.bookstore.sales.domain.Order;
+import com.bookstore.sales.domain.OrderPlaced;
 import com.bookstore.sales.domain.OrderStatus;
+import com.bookstore.sales.domain.OrderStatusChanged;
 import com.bookstore.sales.domain.PaymentMethod;
+import com.bookstore.shared.kernel.error.NotFoundException;
+import com.bookstore.shared.kernel.error.RuleViolationException;
+import com.bookstore.shared.kernel.identity.CustomerId;
+import com.bookstore.shared.kernel.money.Money;
 
 import org.junit.jupiter.api.Test;
 

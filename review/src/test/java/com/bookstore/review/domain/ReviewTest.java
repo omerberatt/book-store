@@ -1,13 +1,13 @@
 package com.bookstore.review.domain;
 
-import com.bookstore.shared.kernel.identity.CustomerId;
-import com.bookstore.shared.kernel.identity.BookId;
 import static com.bookstore.shared.kernel.testing.TestClock.CLOCK;
 import static com.bookstore.shared.kernel.testing.TestClock.NOW;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.bookstore.shared.kernel.error.ValidationException;
+import com.bookstore.shared.kernel.identity.BookId;
+import com.bookstore.shared.kernel.identity.CustomerId;
 
 import java.math.BigDecimal;
 import java.time.Clock;

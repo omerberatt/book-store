@@ -1,7 +1,7 @@
 package com.bookstore.catalog.domain;
 
-import com.bookstore.shared.kernel.validation.Guard;
 import com.bookstore.shared.kernel.domain.Entity;
+import com.bookstore.shared.kernel.validation.Guard;
 
 /**
  * A person who wrote one or more books.

@@ -1,10 +1,10 @@
 package com.bookstore.customer.domain;
 
-import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.kernel.address.Address;
-import com.bookstore.shared.kernel.error.NotFoundException;
-import com.bookstore.shared.kernel.validation.Guard;
 import com.bookstore.shared.kernel.domain.Entity;
+import com.bookstore.shared.kernel.error.NotFoundException;
+import com.bookstore.shared.kernel.identity.CustomerId;
+import com.bookstore.shared.kernel.validation.Guard;
 
 import java.time.Clock;
 import java.time.Instant;

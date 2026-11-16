@@ -1,8 +1,8 @@
 package com.bookstore.sales.application;
 
+import com.bookstore.sales.domain.Cart;
 import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.kernel.validation.Guard;
-import com.bookstore.sales.domain.Cart;
 
 /**
  * Says which cart a cart operation works on: a visitor's cart from the HTTP session, or a signed-in

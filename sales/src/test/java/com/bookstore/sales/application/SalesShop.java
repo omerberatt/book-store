@@ -1,6 +1,5 @@
 package com.bookstore.sales.application;
 
-import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.sales.domain.OrderNumber;
 import com.bookstore.sales.domain.OrderNumberSequence;
 import com.bookstore.sales.domain.OrderStatus;
@@ -10,6 +9,7 @@ import com.bookstore.sales.domain.ShippingPolicy;
 import com.bookstore.sales.persistence.InMemoryCartRepository;
 import com.bookstore.sales.persistence.InMemoryOrderRepository;
 import com.bookstore.shared.kernel.address.Address;
+import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.kernel.money.Money;
 import com.bookstore.shared.kernel.testing.DirectTransactions;
 import com.bookstore.shared.kernel.testing.RecordingNotifier;

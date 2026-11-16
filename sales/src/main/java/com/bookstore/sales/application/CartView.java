@@ -1,8 +1,8 @@
 package com.bookstore.sales.application;
 
+import com.bookstore.sales.domain.CartAdjustment;
 import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.money.Money;
-import com.bookstore.sales.domain.CartAdjustment;
 
 import java.util.List;
 

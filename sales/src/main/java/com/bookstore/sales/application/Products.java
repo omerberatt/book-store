@@ -1,10 +1,10 @@
 package com.bookstore.sales.application;
 
-import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.catalog.api.BookOffer;
 import com.bookstore.catalog.api.StockFacade;
 import com.bookstore.sales.domain.ProductSnapshot;
 import com.bookstore.shared.kernel.error.NotFoundException;
+import com.bookstore.shared.kernel.identity.BookId;
 
 import java.util.Collection;
 import java.util.Map;

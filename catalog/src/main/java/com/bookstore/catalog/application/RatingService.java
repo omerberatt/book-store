@@ -1,10 +1,10 @@
 package com.bookstore.catalog.application;
 
-import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.catalog.api.RatingFacade;
 import com.bookstore.catalog.domain.Book;
 import com.bookstore.catalog.domain.BookRepository;
 import com.bookstore.shared.kernel.error.NotFoundException;
+import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.transaction.TransactionRunner;
 
 import java.util.function.Consumer;

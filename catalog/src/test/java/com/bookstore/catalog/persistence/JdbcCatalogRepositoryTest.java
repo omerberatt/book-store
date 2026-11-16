@@ -1,17 +1,19 @@
 package com.bookstore.catalog.persistence;
 
-import com.bookstore.catalog.domain.AuthorId;
+import static com.bookstore.catalog.domain.BookSpecifications.active;
+import static com.bookstore.catalog.domain.BookSpecifications.byAuthor;
+import static com.bookstore.catalog.domain.BookSpecifications.inCategories;
+import static com.bookstore.catalog.domain.BookSpecifications.inLanguage;
+import static com.bookstore.catalog.domain.BookSpecifications.inStock;
+import static com.bookstore.catalog.domain.BookSpecifications.matchingText;
+import static com.bookstore.catalog.domain.BookSpecifications.pricedFrom;
+import static com.bookstore.catalog.domain.BookSpecifications.pricedUpTo;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.bookstore.shared.kernel.error.ConflictException;
-import com.bookstore.shared.kernel.money.Money;
-import com.bookstore.shared.kernel.paging.Page;
-import com.bookstore.shared.kernel.paging.PageRequest;
-import com.bookstore.shared.kernel.paging.SortOrder;
 import com.bookstore.catalog.domain.Author;
+import com.bookstore.catalog.domain.AuthorId;
 import com.bookstore.catalog.domain.Book;
-import com.bookstore.catalog.domain.BookSearchCriteria;
 import com.bookstore.catalog.domain.BookSort;
 import com.bookstore.catalog.domain.BookSortField;
 import com.bookstore.catalog.domain.Category;
@@ -19,6 +21,12 @@ import com.bookstore.catalog.domain.Language;
 import com.bookstore.catalog.domain.RatingSummary;
 import com.bookstore.catalog.domain.Stock;
 import com.bookstore.shared.jdbc.JdbcExecutor;
+import com.bookstore.shared.kernel.error.ConflictException;
+import com.bookstore.shared.kernel.money.Money;
+import com.bookstore.shared.kernel.paging.Page;
+import com.bookstore.shared.kernel.paging.PageRequest;
+import com.bookstore.shared.kernel.paging.SortOrder;
+import com.bookstore.shared.kernel.specification.Specification;
 
 import java.time.Year;
 import java.util.List;
@@ -204,8 +212,8 @@ class JdbcCatalogRepositoryTest {
     }
 
     /**
-     * The same searches as the domain's {@code BookSearchCriteriaTest}, run as SQL: the database
-     * must agree with {@link BookSearchCriteria#asPredicate()} and the sort comparator.
+     * The same searches as the domain's {@code BookSpecificationsTest}, run as SQL: the database
+     * must agree with {@link Specification#isSatisfiedBy} and the sort comparator.
      */
     @Nested
     class Search {
@@ -222,39 +230,46 @@ class JdbcCatalogRepositoryTest {
         private final Book hidden = db.books.save(db.bookBuilder("Hidden", "50", 9).active(false).build());
 
         @Test
-        void emptyCriteriaReturnsActiveBooksByTitle() {
-            assertThat(search(BookSearchCriteria.all())).containsExactly("Çalıkuşu", "Dune", "Kürk Mantolu Madonna");
+        void activeBooksComeBackByTitle() {
+            assertThat(search(active())).containsExactly("Çalıkuşu", "Dune", "Kürk Mantolu Madonna");
+            assertThat(search(Specification.all())).contains("Hidden");
         }
 
         @Test
         void textIgnoresCaseAndTurkishLettersInTitlesAndAuthors() {
-            assertThat(search(criteria().text("CALIKUSU"))).containsExactly("Çalıkuşu");
-            assertThat(search(criteria().text("sabahattın"))).containsExactly("Kürk Mantolu Madonna");
-            assertThat(search(criteria().text("mantolu"))).containsExactly("Kürk Mantolu Madonna");
+            assertThat(search(matchingText("CALIKUSU"))).containsExactly("Çalıkuşu");
+            assertThat(search(matchingText("sabahattın"))).containsExactly("Kürk Mantolu Madonna");
+            assertThat(search(matchingText("mantolu"))).containsExactly("Kürk Mantolu Madonna");
         }
 
         @Test
         void textMatchesIsbnFragmentsOfFourDigitsOrMore() {
-            assertThat(search(criteria().text(dune.isbn().formatted()))).containsExactly("Dune");
-            assertThat(search(criteria().text("978"))).isEmpty();
+            assertThat(search(matchingText(dune.isbn().formatted()))).containsExactly("Dune");
+            assertThat(search(matchingText("978"))).isEmpty();
         }
 
         @Test
         void wildcardsInTheTextAreTakenLiterally() {
-            assertThat(search(criteria().text("%"))).isEmpty();
-            assertThat(search(criteria().text("_"))).isEmpty();
+            assertThat(search(matchingText("%"))).isEmpty();
+            assertThat(search(matchingText("_"))).isEmpty();
         }
 
         @Test
         void filters() {
-            assertThat(search(criteria().minPrice(Money.of("100")).maxPrice(Money.of("350"))))
+            assertThat(search(pricedFrom(Money.of("100")).and(pricedUpTo(Money.of("350")))))
                     .containsExactly("Dune", "Kürk Mantolu Madonna");
-            assertThat(search(criteria().language(Language.ENGLISH))).containsExactly("Dune");
-            assertThat(search(criteria().inStockOnly(true))).containsExactly("Çalıkuşu", "Kürk Mantolu Madonna");
-            assertThat(search(criteria().categoryIds(Set.of(novels.id()))))
+            assertThat(search(inLanguage(Language.ENGLISH))).containsExactly("Dune");
+            assertThat(search(active().and(inStock()))).containsExactly("Çalıkuşu", "Kürk Mantolu Madonna");
+            assertThat(search(inCategories(Set.of(novels.id()))))
                     .containsExactly("Çalıkuşu", "Kürk Mantolu Madonna");
-            assertThat(search(criteria().authorId(ali.id()))).containsExactly("Kürk Mantolu Madonna");
-            assertThat(search(criteria().includeInactive(true))).contains("Hidden");
+            assertThat(search(byAuthor(ali.id()))).containsExactly("Kürk Mantolu Madonna");
+        }
+
+        @Test
+        void orAndNotAreTranslatedToo() {
+            assertThat(search(inLanguage(Language.ENGLISH).or(byAuthor(ali.id()))))
+                    .containsExactly("Dune", "Kürk Mantolu Madonna");
+            assertThat(search(inStock().not())).containsExactly("Dune");
         }
 
         @Test
@@ -264,33 +279,39 @@ class JdbcCatalogRepositoryTest {
             dune.addRating(3);
             db.books.save(dune);
 
-            assertThat(search(sorted(BookSortField.PRICE, SortOrder.DESC)))
+            assertThat(search(active(), sort(BookSortField.PRICE, SortOrder.DESC)))
                     .containsExactly("Dune", "Kürk Mantolu Madonna", "Çalıkuşu");
-            assertThat(search(sorted(BookSortField.PUBLICATION_YEAR, SortOrder.ASC)))
+            assertThat(search(active(), sort(BookSortField.PUBLICATION_YEAR, SortOrder.ASC)))
                     .containsExactly("Çalıkuşu", "Kürk Mantolu Madonna", "Dune");
-            assertThat(search(sorted(BookSortField.PUBLICATION_YEAR, SortOrder.DESC)))
+            assertThat(search(active(), sort(BookSortField.PUBLICATION_YEAR, SortOrder.DESC)))
                     .containsExactly("Dune", "Kürk Mantolu Madonna", "Çalıkuşu");
-            assertThat(search(sorted(BookSortField.RATING, SortOrder.DESC)))
+            assertThat(search(active(), sort(BookSortField.RATING, SortOrder.DESC)))
                     .containsExactly("Kürk Mantolu Madonna", "Dune", "Çalıkuşu");
         }
 
         @Test
         void sqlAndInMemoryRulesAgreeOnEveryCombination() {
             List<Book> all = List.of(madonna, dune, calikusu, hidden);
-            for (BookSortField field : BookSortField.values()) {
-                for (SortOrder order : SortOrder.values()) {
-                    BookSearchCriteria criteria = criteria().sort(new BookSort(field, order)).build();
-                    List<String> expected = all.stream().filter(criteria.asPredicate())
-                            .sorted(criteria.sort().comparator()).map(Book::title).toList();
+            List<Specification<Book>> rules = List.of(Specification.all(), active(), inStock().not(),
+                    active().and(matchingText("dune").or(byAuthor(ali.id()))),
+                    inCategories(Set.of(novels.id())).and(pricedUpTo(Money.of("100")).not()));
+            for (Specification<Book> rule : rules) {
+                for (BookSortField field : BookSortField.values()) {
+                    for (SortOrder order : SortOrder.values()) {
+                        BookSort sort = sort(field, order);
+                        List<String> expected = all.stream().filter(rule::isSatisfiedBy)
+                                .sorted(sort.comparator()).map(Book::title).toList();
 
-                    assertThat(search(criteria)).as(field + " " + order).containsExactlyElementsOf(expected);
+                        assertThat(search(rule, sort)).as(rule + " " + field + " " + order)
+                                .containsExactlyElementsOf(expected);
+                    }
                 }
             }
         }
 
         @Test
         void pagesCarryTheTotal() {
-            Page<Book> second = db.books.search(BookSearchCriteria.all(), new PageRequest(1, 2));
+            Page<Book> second = db.books.search(active(), BookSort.DEFAULT, new PageRequest(1, 2));
 
             assertThat(second.content()).extracting(Book::title).containsExactly("Kürk Mantolu Madonna");
             assertThat(second.totalElements()).isEqualTo(3);
@@ -298,20 +319,16 @@ class JdbcCatalogRepositoryTest {
             assertThat(second.content().getFirst().authors()).contains(ali);
         }
 
-        private BookSearchCriteria.Builder criteria() {
-            return BookSearchCriteria.builder();
+        private BookSort sort(BookSortField field, SortOrder order) {
+            return new BookSort(field, order);
         }
 
-        private BookSearchCriteria.Builder sorted(BookSortField field, SortOrder order) {
-            return criteria().sort(new BookSort(field, order));
+        private List<String> search(Specification<Book> rule) {
+            return search(rule, BookSort.DEFAULT);
         }
 
-        private List<String> search(BookSearchCriteria.Builder builder) {
-            return search(builder.build());
-        }
-
-        private List<String> search(BookSearchCriteria criteria) {
-            return db.books.search(criteria, PageRequest.first()).content().stream().map(Book::title).toList();
+        private List<String> search(Specification<Book> rule, BookSort sort) {
+            return db.books.search(rule, sort, PageRequest.first()).content().stream().map(Book::title).toList();
         }
     }
 }

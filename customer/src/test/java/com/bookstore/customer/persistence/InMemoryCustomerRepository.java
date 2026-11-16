@@ -1,15 +1,15 @@
 package com.bookstore.customer.persistence;
 
 import com.bookstore.customer.domain.AddressId;
-import com.bookstore.shared.kernel.identity.CustomerId;
-import com.bookstore.shared.kernel.testing.InMemoryStore;
-import com.bookstore.shared.kernel.error.ConflictException;
-import com.bookstore.shared.kernel.paging.Page;
-import com.bookstore.shared.kernel.paging.PageRequest;
 import com.bookstore.customer.domain.Customer;
 import com.bookstore.customer.domain.CustomerRepository;
 import com.bookstore.customer.domain.Email;
 import com.bookstore.customer.domain.SavedAddress;
+import com.bookstore.shared.kernel.error.ConflictException;
+import com.bookstore.shared.kernel.identity.CustomerId;
+import com.bookstore.shared.kernel.paging.Page;
+import com.bookstore.shared.kernel.paging.PageRequest;
+import com.bookstore.shared.kernel.testing.InMemoryStore;
 
 import java.util.Comparator;
 import java.util.HashMap;

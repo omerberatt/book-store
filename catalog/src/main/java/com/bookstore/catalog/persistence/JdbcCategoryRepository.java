@@ -1,11 +1,11 @@
 package com.bookstore.catalog.persistence;
 
-import com.bookstore.catalog.domain.CategoryId;
-import com.bookstore.shared.kernel.error.ConflictException;
 import com.bookstore.catalog.domain.Category;
+import com.bookstore.catalog.domain.CategoryId;
 import com.bookstore.catalog.domain.CategoryRepository;
 import com.bookstore.shared.jdbc.DataAccessException;
 import com.bookstore.shared.jdbc.JdbcExecutor;
+import com.bookstore.shared.kernel.error.ConflictException;
 
 import java.util.Comparator;
 import java.util.HashMap;

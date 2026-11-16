@@ -1,7 +1,7 @@
 package com.bookstore.catalog.application;
 
-import com.bookstore.catalog.domain.AuthorId;
 import com.bookstore.catalog.domain.Author;
+import com.bookstore.catalog.domain.AuthorId;
 import com.bookstore.catalog.domain.Book;
 import com.bookstore.catalog.domain.Category;
 import com.bookstore.catalog.domain.Isbn;

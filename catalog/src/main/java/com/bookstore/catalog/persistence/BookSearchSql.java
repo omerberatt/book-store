@@ -1,64 +1,49 @@
 package com.bookstore.catalog.persistence;
 
-import com.bookstore.shared.kernel.paging.SortOrder;
-import com.bookstore.shared.kernel.text.TextNormalizer;
-import com.bookstore.catalog.domain.BookSearchCriteria;
+import com.bookstore.catalog.domain.Book;
+import com.bookstore.catalog.domain.BookSort;
+import com.bookstore.catalog.domain.BookSpecifications.Active;
+import com.bookstore.catalog.domain.BookSpecifications.BookSpecification;
+import com.bookstore.catalog.domain.BookSpecifications.ByAuthor;
+import com.bookstore.catalog.domain.BookSpecifications.InCategories;
+import com.bookstore.catalog.domain.BookSpecifications.InLanguage;
+import com.bookstore.catalog.domain.BookSpecifications.InStock;
+import com.bookstore.catalog.domain.BookSpecifications.MatchesText;
+import com.bookstore.catalog.domain.BookSpecifications.PricedFrom;
+import com.bookstore.catalog.domain.BookSpecifications.PricedUpTo;
 import com.bookstore.shared.jdbc.JdbcExecutor;
+import com.bookstore.shared.kernel.paging.SortOrder;
+import com.bookstore.shared.kernel.specification.AndSpecification;
+import com.bookstore.shared.kernel.specification.MatchAll;
+import com.bookstore.shared.kernel.specification.NotSpecification;
+import com.bookstore.shared.kernel.specification.OrSpecification;
+import com.bookstore.shared.kernel.specification.Specification;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
 
 /**
- * Translates {@link BookSearchCriteria} into the {@code WHERE} and {@code ORDER BY} parts of a
- * query on {@code books b}. It follows the same rules as {@link BookSearchCriteria#asPredicate()}
- * and {@link com.bookstore.catalog.domain.BookSort#comparator()}, so the database and the
- * in-memory test repositories return the same books in the same order.
+ * Translates a {@code Specification<Book>} into the {@code WHERE} and {@code ORDER BY} parts of a
+ * query on {@code books b}. Each rule in {@link com.bookstore.catalog.domain.BookSpecifications}
+ * has one SQL counterpart here, and {@code and}, {@code or} and {@code not} keep their meaning, so
+ * the database and the in-memory test repositories return the same books in the same order.
  *
  * <p>Only placeholders go into the SQL text; every value goes into {@link #params()}.
  */
 final class BookSearchSql {
 
-    private static final Pattern ISBN_FRAGMENT = Pattern.compile("\\d{4,13}");
-
-    private final List<String> conditions = new ArrayList<>();
     private final List<Object> params = new ArrayList<>();
+    private final String where;
     private final String orderBy;
 
-    BookSearchSql(BookSearchCriteria criteria) {
-        if (!criteria.includeInactive()) {
-            conditions.add("b.active = TRUE");
-        }
-        if (criteria.inStockOnly()) {
-            conditions.add("b.stock > 0");
-        }
-        if (!criteria.categoryIds().isEmpty()) {
-            conditions.add("b.category_id IN (" + JdbcExecutor.placeholders(criteria.categoryIds().size()) + ")");
-            params.addAll(criteria.categoryIds());
-        }
-        criteria.authorId().ifPresent(authorId -> {
-            conditions.add("EXISTS (SELECT 1 FROM book_authors ba WHERE ba.book_id = b.id AND ba.author_id = ?)");
-            params.add(authorId);
-        });
-        criteria.minPrice().ifPresent(min -> {
-            conditions.add("b.price >= ?");
-            params.add(min);
-        });
-        criteria.maxPrice().ifPresent(max -> {
-            conditions.add("b.price <= ?");
-            params.add(max);
-        });
-        criteria.language().ifPresent(language -> {
-            conditions.add("b.language = ?");
-            params.add(language.code());
-        });
-        criteria.text().ifPresent(this::addTextCondition);
-        orderBy = orderBy(criteria);
+    BookSearchSql(Specification<Book> specification, BookSort sort) {
+        this.where = specification instanceof MatchAll<Book> ? "" : " WHERE " + condition(specification);
+        this.orderBy = orderBy(sort);
     }
 
     /** @return {@code " WHERE ..."} or an empty string */
     String where() {
-        return conditions.isEmpty() ? "" : " WHERE " + String.join(" AND ", conditions);
+        return where;
     }
 
     /** @return {@code " ORDER BY ..."} */
@@ -71,20 +56,58 @@ final class BookSearchSql {
         return List.copyOf(params);
     }
 
-    private void addTextCondition(String text) {
-        String pattern = "%" + escapeLike(TextNormalizer.searchKey(text)) + "%";
+    private String condition(Specification<Book> specification) {
+        return switch (specification) {
+            case MatchAll<Book> all -> "1 = 1";
+            case AndSpecification<Book> and -> "(" + condition(and.left()) + " AND " + condition(and.right()) + ")";
+            case OrSpecification<Book> or -> "(" + condition(or.left()) + " OR " + condition(or.right()) + ")";
+            case NotSpecification<Book> not -> "NOT (" + condition(not.negated()) + ")";
+            case BookSpecification rule -> condition(rule);
+            default -> throw new IllegalArgumentException(
+                    "No SQL translation for " + specification.getClass().getName());
+        };
+    }
+
+    private String condition(BookSpecification rule) {
+        return switch (rule) {
+            case Active active -> "b.active = TRUE";
+            case InStock inStock -> "b.stock > 0";
+            case InCategories in -> {
+                params.addAll(in.categoryIds());
+                yield "b.category_id IN (" + JdbcExecutor.placeholders(in.categoryIds().size()) + ")";
+            }
+            case ByAuthor by -> {
+                params.add(by.authorId());
+                yield "EXISTS (SELECT 1 FROM book_authors ba WHERE ba.book_id = b.id AND ba.author_id = ?)";
+            }
+            case PricedFrom from -> {
+                params.add(from.min());
+                yield "b.price >= ?";
+            }
+            case PricedUpTo upTo -> {
+                params.add(upTo.max());
+                yield "b.price <= ?";
+            }
+            case InLanguage in -> {
+                params.add(in.language().code());
+                yield "b.language = ?";
+            }
+            case MatchesText text -> textCondition(text);
+        };
+    }
+
+    private String textCondition(MatchesText text) {
+        String pattern = "%" + escapeLike(text.searchKey()) + "%";
         StringBuilder condition = new StringBuilder("(b.title_key LIKE ? ESCAPE '!'"
                 + " OR EXISTS (SELECT 1 FROM book_authors ba JOIN authors a ON a.id = ba.author_id"
                 + " WHERE ba.book_id = b.id AND a.name_key LIKE ? ESCAPE '!')");
         params.add(pattern);
         params.add(pattern);
-
-        String digits = text.replace("-", "").replace(" ", "");
-        if (ISBN_FRAGMENT.matcher(digits).matches()) {
+        text.isbnFragment().ifPresent(digits -> {
             condition.append(" OR b.isbn LIKE ?");
             params.add("%" + digits + "%");
-        }
-        conditions.add(condition.append(")").toString());
+        });
+        return condition.append(")").toString();
     }
 
     /** Makes {@code %} and {@code _} in the search text match literally. */
@@ -92,9 +115,9 @@ final class BookSearchSql {
         return text.replace("!", "!!").replace("%", "!%").replace("_", "!_");
     }
 
-    private static String orderBy(BookSearchCriteria criteria) {
-        String direction = criteria.sort().order() == SortOrder.ASC ? "ASC" : "DESC";
-        String field = switch (criteria.sort().field()) {
+    private static String orderBy(BookSort sort) {
+        String direction = sort.order() == SortOrder.ASC ? "ASC" : "DESC";
+        String field = switch (sort.field()) {
             case TITLE -> "b.title_key " + direction;
             case PRICE -> "b.price " + direction;
             // Books without a year come first in ascending order, as in the domain comparator.

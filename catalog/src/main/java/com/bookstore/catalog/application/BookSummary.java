@@ -1,8 +1,8 @@
 package com.bookstore.catalog.application;
 
+import com.bookstore.catalog.domain.Book;
 import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.money.Money;
-import com.bookstore.catalog.domain.Book;
 
 import java.math.BigDecimal;
 

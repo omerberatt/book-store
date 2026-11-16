@@ -1,8 +1,8 @@
 package com.bookstore.sales.domain;
 
+import com.bookstore.shared.kernel.error.ConflictException;
 import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.identity.CustomerId;
-import com.bookstore.shared.kernel.error.ConflictException;
 import com.bookstore.shared.kernel.money.Money;
 import com.bookstore.shared.kernel.validation.Guard;
 

@@ -3,6 +3,7 @@ package com.bookstore.catalog.domain;
 import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.paging.Page;
 import com.bookstore.shared.kernel.paging.PageRequest;
+import com.bookstore.shared.kernel.specification.Specification;
 
 import java.util.Collection;
 import java.util.List;
@@ -38,13 +39,14 @@ public interface BookRepository {
     List<Book> findAllById(Collection<BookId> ids);
 
     /**
-     * Returns one page of the books matching the criteria, in the criteria's order.
+     * Returns one page of the books that satisfy a rule, in an order.
      *
-     * @param criteria what to look for
-     * @param page     which page to return
+     * @param specification what to look for, built from {@link BookSpecifications}
+     * @param sort          the order of the results
+     * @param page          which page to return
      * @return the page
      */
-    Page<Book> search(BookSearchCriteria criteria, PageRequest page);
+    Page<Book> search(Specification<Book> specification, BookSort sort, PageRequest page);
 
     /**
      * Tells whether any book, active or not, was written by the author.

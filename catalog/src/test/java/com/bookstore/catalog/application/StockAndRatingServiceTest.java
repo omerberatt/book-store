@@ -1,6 +1,5 @@
 package com.bookstore.catalog.application;
 
-import com.bookstore.shared.kernel.identity.BookId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -10,6 +9,7 @@ import com.bookstore.catalog.domain.InsufficientStockException;
 import com.bookstore.catalog.domain.RatingSummary;
 import com.bookstore.shared.kernel.error.ConflictException;
 import com.bookstore.shared.kernel.error.NotFoundException;
+import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.money.Money;
 
 import java.math.BigDecimal;

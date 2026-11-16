@@ -1,8 +1,8 @@
 package com.bookstore.customer.domain;
 
 import com.bookstore.shared.kernel.address.Address;
-import com.bookstore.shared.kernel.validation.Guard;
 import com.bookstore.shared.kernel.domain.Entity;
+import com.bookstore.shared.kernel.validation.Guard;
 
 /**
  * An address in a customer's address book. It has its own id so that the customer can pick it at
