@@ -3,9 +3,9 @@ package com.bookstore.customer.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.bookstore.customer.domain.AddressId;
+import com.bookstore.customer.api.CustomerView;
+import com.bookstore.customer.api.RegistrationCommand;
 import com.bookstore.customer.domain.Email;
-import com.bookstore.customer.domain.Role;
 import com.bookstore.shared.kernel.address.Address;
 import com.bookstore.shared.kernel.error.ConflictException;
 import com.bookstore.shared.kernel.error.NotFoundException;
@@ -24,7 +24,7 @@ class AccountServiceTest {
                 new RegistrationCommand(" Ali@Example.com ", "Ali", "Veli", CustomerShop.PASSWORD));
 
         assertThat(view.email()).isEqualTo("ali@example.com");
-        assertThat(view.role()).isEqualTo(Role.CUSTOMER);
+        assertThat(view.role()).isEqualTo("CUSTOMER");
         assertThat(view.registeredAt()).isEqualTo(CustomerShop.CLOCK.instant());
         String storedHash = shop.customers.findById(view.id()).orElseThrow().passwordHash();
         assertThat(storedHash).isNotEqualTo(CustomerShop.PASSWORD);
@@ -120,12 +120,12 @@ class AccountServiceTest {
     @Test
     void manageTheAddressBook() {
         CustomerId id = shop.customer("ayse@example.com");
-        AddressId home = shop.defaultAddressId(id);
+        long home = shop.defaultAddressId(id);
         Address work = new Address("Ayşe Yılmaz", "+90 212 000 00 00", "Büyükdere Cad. 100", "Şişli", "İstanbul",
                 "34394");
 
         CustomerView withWork = shop.accounts.addAddress(id, "İş", work, false);
-        AddressId workId = withWork.addresses().get(1).id();
+        long workId = withWork.addresses().get(1).id();
 
         assertThat(withWork.addresses()).extracting(CustomerView.AddressView::label).containsExactly("Ev", "İş");
         assertThat(shop.accounts.makeDefaultAddress(id, workId).addresses().get(1).isDefault()).isTrue();

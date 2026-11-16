@@ -3,6 +3,7 @@ package com.bookstore.shared.kernel.domain;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.bookstore.shared.kernel.error.ValidationException;
 import com.bookstore.shared.kernel.event.DomainEvent;
 import com.bookstore.shared.kernel.identity.Identifier;
 
@@ -38,7 +39,7 @@ class EntityTest {
 
         assertThatThrownBy(() -> thing.markPersisted(new ThingId(6), 2)).isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> thing.markPersisted(new ThingId(5), -1)).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> new ThingId(0)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new ThingId(0)).isInstanceOf(ValidationException.class);
     }
 
     @Test

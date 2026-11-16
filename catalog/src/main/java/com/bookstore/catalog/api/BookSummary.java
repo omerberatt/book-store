@@ -1,6 +1,5 @@
-package com.bookstore.catalog.application;
+package com.bookstore.catalog.api;
 
-import com.bookstore.catalog.domain.Book;
 import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.money.Money;
 
@@ -22,16 +21,4 @@ import java.math.BigDecimal;
  */
 public record BookSummary(BookId id, String isbn, String title, String authorNames, Money price, boolean inStock,
                           BigDecimal averageRating, int ratingCount, String coverImage) {
-
-    /**
-     * Copies the parts of a book that lists show.
-     *
-     * @param book a stored book
-     * @return the summary
-     */
-    public static BookSummary of(Book book) {
-        return new BookSummary(book.id(), book.isbn().value(), book.title(), book.authorNames(), book.price(),
-                book.isAvailableForSale(), book.ratings().average().orElse(null), book.ratings().count(),
-                book.coverImage().orElse(null));
-    }
 }

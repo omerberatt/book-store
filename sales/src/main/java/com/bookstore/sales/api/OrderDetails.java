@@ -1,10 +1,7 @@
-package com.bookstore.sales.application;
+package com.bookstore.sales.api;
 
-import com.bookstore.sales.domain.Order;
-import com.bookstore.sales.domain.OrderLine;
-import com.bookstore.sales.domain.OrderStatus;
-import com.bookstore.sales.domain.PaymentMethod;
 import com.bookstore.shared.kernel.address.Address;
+import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.kernel.money.Money;
 
@@ -19,18 +16,18 @@ import java.util.Set;
  * @param customerId      the customer who placed it
  * @param placedAt        when it was placed
  * @param statusChangedAt when the status last changed
- * @param status          the current status
+ * @param status          the current status, for example {@code SHIPPED}
  * @param nextStatuses    the statuses an administrator may move it to
  * @param lines           the lines, with the titles and prices at the time of the order
  * @param shippingAddress the delivery address
- * @param paymentMethod   how it is paid
+ * @param paymentMethod   how it is paid: {@code CREDIT_CARD} or {@code BANK_TRANSFER}
  * @param subtotal        the price of the books
  * @param shippingCost    the shipping cost
  * @param total           the amount to pay
  */
 public record OrderDetails(String orderNumber, CustomerId customerId, Instant placedAt, Instant statusChangedAt,
-                           OrderStatus status, Set<OrderStatus> nextStatuses, List<OrderLine> lines,
-                           Address shippingAddress, PaymentMethod paymentMethod, Money subtotal, Money shippingCost,
+                           String status, Set<String> nextStatuses, List<Line> lines,
+                           Address shippingAddress, String paymentMethod, Money subtotal, Money shippingCost,
                            Money total) {
 
     /** Copies the collections. */
@@ -40,15 +37,14 @@ public record OrderDetails(String orderNumber, CustomerId customerId, Instant pl
     }
 
     /**
-     * Copies an order.
+     * One line of an order, with the title and price at the time of the order.
      *
-     * @param order a stored order
-     * @return the details
+     * @param bookId    the book
+     * @param bookTitle the title
+     * @param unitPrice the price of one copy
+     * @param quantity  the number of copies
+     * @param lineTotal the price of the line
      */
-    public static OrderDetails of(Order order) {
-        return new OrderDetails(order.number().value(), order.customerId(), order.placedAt(),
-                order.statusChangedAt(), order.status(), order.status().allowedNext(), order.lines(),
-                order.shippingAddress(), order.paymentMethod(), order.subtotal(), order.shippingCost(),
-                order.total());
+    public record Line(BookId bookId, String bookTitle, Money unitPrice, int quantity, Money lineTotal) {
     }
 }

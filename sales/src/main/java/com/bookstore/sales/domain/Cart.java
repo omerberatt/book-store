@@ -55,6 +55,20 @@ public final class Cart implements Iterable<CartItem>, Serializable {
     }
 
     /**
+     * Rebuilds a visitor's cart from the lines the web layer kept between requests.
+     *
+     * @param items the lines, in order
+     * @return the cart
+     */
+    public static Cart guestWith(List<CartItem> items) {
+        Cart cart = guest();
+        for (CartItem item : items) {
+            cart.items.put(item.bookId(), item);
+        }
+        return cart;
+    }
+
+    /**
      * Creates an empty cart for a customer.
      *
      * @param customerId the customer's id

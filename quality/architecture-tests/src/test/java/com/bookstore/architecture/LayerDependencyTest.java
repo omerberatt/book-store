@@ -38,6 +38,14 @@ class LayerDependencyTest {
             .should().dependOnClassesThat().resideInAnyPackage(DOMAIN, APPLICATION, PERSISTENCE, REST, SHARED_JDBC)
             .because("ADR-0003: api carries only commands, DTOs and facade interfaces");
 
+    /** ADR-0003: a façade is part of a module's contract, so it lives in the api package. */
+    @ArchTest
+    static final ArchRule facades_live_in_api = classes()
+            .that().haveSimpleNameEndingWith("Facade")
+            .should().resideInAPackage(API)
+            .andShould().beInterfaces()
+            .because("ADR-0003: other modules and the web layer call a module only through its api façades");
+
     /** ADR-0003, ADR-0006: application knows ports and contracts, not their implementations. */
     @ArchTest
     static final ArchRule application_depends_on_contracts_not_implementations = noClasses()

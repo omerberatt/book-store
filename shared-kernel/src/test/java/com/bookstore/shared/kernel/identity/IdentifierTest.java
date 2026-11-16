@@ -3,6 +3,8 @@ package com.bookstore.shared.kernel.identity;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.bookstore.shared.kernel.error.ValidationException;
+
 import org.junit.jupiter.api.Test;
 
 class IdentifierTest {
@@ -15,9 +17,9 @@ class IdentifierTest {
 
     @Test
     void zeroAndNegativeValuesAreRejected() {
-        assertThatThrownBy(() -> new BookId(0)).isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> new BookId(0)).isInstanceOf(ValidationException.class)
                 .hasMessageContaining("BookId");
-        assertThatThrownBy(() -> new CustomerId(-1)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new CustomerId(-1)).isInstanceOf(ValidationException.class);
     }
 
     @Test

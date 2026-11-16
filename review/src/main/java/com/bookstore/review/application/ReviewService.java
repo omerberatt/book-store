@@ -2,6 +2,10 @@ package com.bookstore.review.application;
 
 import com.bookstore.catalog.api.RatingFacade;
 import com.bookstore.customer.api.CustomerDirectory;
+import com.bookstore.review.api.RatingBreakdown;
+import com.bookstore.review.api.ReviewCommand;
+import com.bookstore.review.api.ReviewFacade;
+import com.bookstore.review.api.ReviewView;
 import com.bookstore.review.domain.Rating;
 import com.bookstore.review.domain.RatingDistribution;
 import com.bookstore.review.domain.Review;
@@ -30,13 +34,7 @@ import java.util.stream.Collectors;
  * transaction, so the average shown in lists always matches the reviews (ADR-0012). The catalog,
  * sales and customer modules are reached only through their {@code api} packages.
  */
-public class ReviewService {
-
-    /** Error code for a customer who has not received the book. */
-    public static final String NOT_ELIGIBLE = "review.not-eligible";
-
-    /** Error code for a second review of the same book. */
-    public static final String DUPLICATE = "review.duplicate";
+public class ReviewService implements ReviewFacade {
 
     private static final String UNKNOWN_AUTHOR = "—";
 
@@ -76,6 +74,7 @@ public class ReviewService {
      * @throws AccessDeniedException if the customer has not received the book
      * @throws ConflictException     if the customer has already reviewed the book
      */
+    @Override
     public ReviewView write(ReviewCommand command) {
         Rating rating = Rating.of(command.stars());
         return transactions.inTransaction(() -> {
@@ -99,6 +98,7 @@ public class ReviewService {
      * @return the updated review
      * @throws NotFoundException if the customer has not reviewed the book
      */
+    @Override
     public ReviewView edit(ReviewCommand command) {
         Rating rating = Rating.of(command.stars());
         return transactions.inTransaction(() -> {
@@ -117,6 +117,7 @@ public class ReviewService {
      * @param bookId     the reviewed book
      * @throws NotFoundException if the customer has not reviewed the book
      */
+    @Override
     public void delete(CustomerId customerId, BookId bookId) {
         transactions.run(() -> {
             Review review = requireOwnReview(customerId, bookId);
@@ -132,11 +133,12 @@ public class ReviewService {
      * @param page   which page to return
      * @return the page
      */
+    @Override
     public Page<ReviewView> reviewsOf(BookId bookId, PageRequest page) {
         Page<Review> found = reviews.findByBookId(bookId, page);
         Set<CustomerId> authorIds = found.content().stream().map(Review::customerId).collect(Collectors.toSet());
         Map<CustomerId, String> names = customers.publicNames(authorIds);
-        return found.map(review -> ReviewView.of(review, names.getOrDefault(review.customerId(), UNKNOWN_AUTHOR)));
+        return found.map(review -> ReviewMapper.viewOf(review, names.getOrDefault(review.customerId(), UNKNOWN_AUTHOR)));
     }
 
     /**
@@ -145,8 +147,9 @@ public class ReviewService {
      * @param bookId the book's id
      * @return the distribution, empty if nobody rated the book
      */
-    public RatingDistribution ratingDistribution(BookId bookId) {
-        return RatingDistribution.of(reviews.findRatingsByBookId(bookId));
+    @Override
+    public RatingBreakdown ratingBreakdown(BookId bookId) {
+        return ReviewMapper.breakdownOf(RatingDistribution.of(reviews.findRatingsByBookId(bookId)));
     }
 
     /**
@@ -156,6 +159,7 @@ public class ReviewService {
      * @param bookId     the book's id
      * @return the review, or empty if the customer has not reviewed the book
      */
+    @Override
     public Optional<ReviewView> myReview(CustomerId customerId, BookId bookId) {
         return reviews.findByBookIdAndCustomerId(bookId, customerId).map(this::view);
     }
@@ -167,6 +171,7 @@ public class ReviewService {
      * @param bookId     the book's id
      * @return {@code true} if the customer received the book and has not reviewed it yet
      */
+    @Override
     public boolean canReview(CustomerId customerId, BookId bookId) {
         return purchases.hasReceived(customerId, bookId)
                 && reviews.findByBookIdAndCustomerId(bookId, customerId).isEmpty();
@@ -175,7 +180,7 @@ public class ReviewService {
     private ReviewView view(Review review) {
         String name = customers.publicNames(List.of(review.customerId()))
                 .getOrDefault(review.customerId(), UNKNOWN_AUTHOR);
-        return ReviewView.of(review, name);
+        return ReviewMapper.viewOf(review, name);
     }
 
     private Review requireOwnReview(CustomerId customerId, BookId bookId) {

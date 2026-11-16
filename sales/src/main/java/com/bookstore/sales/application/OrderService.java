@@ -1,5 +1,8 @@
 package com.bookstore.sales.application;
 
+import com.bookstore.sales.api.OrderDetails;
+import com.bookstore.sales.api.OrderFacade;
+import com.bookstore.sales.api.OrderSummary;
 import com.bookstore.sales.domain.Order;
 import com.bookstore.sales.domain.OrderNumber;
 import com.bookstore.sales.domain.OrderRepository;
@@ -12,7 +15,7 @@ import com.bookstore.shared.kernel.paging.PageRequest;
 /**
  * A customer's own orders (ORD-8).
  */
-public class OrderService {
+public class OrderService implements OrderFacade {
 
     private final OrderRepository orders;
 
@@ -32,8 +35,9 @@ public class OrderService {
      * @param page       which page to return
      * @return the page
      */
+    @Override
     public Page<OrderSummary> myOrders(CustomerId customerId, PageRequest page) {
-        return orders.findByCustomerId(customerId, page).map(OrderSummary::of);
+        return orders.findByCustomerId(customerId, page).map(SalesMapper::summaryOf);
     }
 
     /**
@@ -45,12 +49,13 @@ public class OrderService {
      * @throws NotFoundException     if there is no such order
      * @throws AccessDeniedException if the order belongs to someone else
      */
+    @Override
     public OrderDetails myOrder(CustomerId customerId, String orderNumber) {
         OrderNumber number = new OrderNumber(orderNumber);
         Order order = orders.findByNumber(number).orElseThrow(() -> new NotFoundException("Order", number));
         if (!order.isOwnedBy(customerId)) {
             throw new AccessDeniedException("Order " + number + " belongs to another customer");
         }
-        return OrderDetails.of(order);
+        return SalesMapper.detailsOf(order);
     }
 }

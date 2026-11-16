@@ -1,6 +1,7 @@
 package com.bookstore.customer.application;
 
-import com.bookstore.customer.domain.AddressId;
+import com.bookstore.customer.api.CustomerView;
+import com.bookstore.customer.api.RegistrationCommand;
 import com.bookstore.customer.domain.PasswordHasher;
 import com.bookstore.customer.persistence.InMemoryCustomerRepository;
 import com.bookstore.shared.kernel.address.Address;
@@ -37,7 +38,7 @@ public final class CustomerShop {
     }
 
     /** Returns the id of a customer's default address. */
-    public AddressId defaultAddressId(CustomerId customerId) {
+    public long defaultAddressId(CustomerId customerId) {
         return accounts.profile(customerId).addresses().stream()
                 .filter(CustomerView.AddressView::isDefault)
                 .findFirst()

@@ -5,13 +5,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.bookstore.catalog.domain.Book;
 import com.bookstore.customer.domain.Customer;
-import com.bookstore.sales.application.CartRef;
-import com.bookstore.sales.application.OrderDetails;
-import com.bookstore.sales.application.PaymentDeclinedException;
-import com.bookstore.sales.application.PlaceOrderCommand;
+import com.bookstore.sales.api.CartRef;
+import com.bookstore.sales.api.OrderDetails;
+import com.bookstore.sales.api.PaymentDeclinedException;
+import com.bookstore.sales.api.PlaceOrderCommand;
 import com.bookstore.sales.domain.OrderNumber;
-import com.bookstore.sales.domain.OrderStatus;
-import com.bookstore.sales.domain.PaymentMethod;
 import com.bookstore.shared.kernel.error.ConflictException;
 
 import java.util.ArrayList;
@@ -42,7 +40,7 @@ class CheckoutWithDatabaseTest {
 
         OrderDetails order = place(ayse);
 
-        assertThat(order.status()).isEqualTo(OrderStatus.PAID);
+        assertThat(order.status()).isEqualTo("PAID");
         assertThat(stockOf(dune)).isEqualTo(3);
         assertThat(store.orders.findByNumber(new OrderNumber(order.orderNumber())))
                 .hasValueSatisfying(o -> assertThat(o.totalQuantity()).isEqualTo(2));
@@ -72,10 +70,10 @@ class CheckoutWithDatabaseTest {
         store.cart.add(CartRef.customer(ayse.id()), dune.id(), 4);
         String number = place(ayse).orderNumber();
 
-        store.orderAdmin.changeStatus(number, OrderStatus.CANCELLED);
+        store.orderAdmin.changeStatus(number, "CANCELLED");
 
         assertThat(stockOf(dune)).isEqualTo(5);
-        assertThat(store.orderAdmin.order(number).status()).isEqualTo(OrderStatus.CANCELLED);
+        assertThat(store.orderAdmin.order(number).status()).isEqualTo("CANCELLED");
     }
 
     @Test
@@ -114,7 +112,7 @@ class CheckoutWithDatabaseTest {
 
     private OrderDetails place(Customer customer) {
         long addressId = customer.defaultAddress().orElseThrow().id().value();
-        return store.checkout.placeOrder(new PlaceOrderCommand(customer.id(), addressId, PaymentMethod.CREDIT_CARD));
+        return store.checkout.placeOrder(new PlaceOrderCommand(customer.id(), addressId, "CREDIT_CARD"));
     }
 
     private int stockOf(Book book) {

@@ -3,12 +3,16 @@ package com.bookstore.sales.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.bookstore.sales.domain.CartAdjustment;
+import com.bookstore.sales.api.CartChangedException;
+import com.bookstore.sales.api.CartNotice;
+import com.bookstore.sales.api.CartRef;
+import com.bookstore.sales.api.OrderDetails;
+import com.bookstore.sales.api.PaymentDeclinedException;
+import com.bookstore.sales.api.PlaceOrderCommand;
 import com.bookstore.sales.domain.Order;
 import com.bookstore.sales.domain.OrderPlaced;
 import com.bookstore.sales.domain.OrderStatus;
 import com.bookstore.sales.domain.OrderStatusChanged;
-import com.bookstore.sales.domain.PaymentMethod;
 import com.bookstore.shared.kernel.error.NotFoundException;
 import com.bookstore.shared.kernel.error.RuleViolationException;
 import com.bookstore.shared.kernel.identity.CustomerId;
@@ -29,10 +33,10 @@ class CheckoutServiceTest {
         shop.cart.add(cart, dune.id(), 2);
         shop.cart.add(cart, madonna.id(), 1);
 
-        OrderDetails order = place(PaymentMethod.CREDIT_CARD);
+        OrderDetails order = place("CREDIT_CARD");
 
         assertThat(order.orderNumber()).isEqualTo("BS-2026-000001");
-        assertThat(order.status()).isEqualTo(OrderStatus.PAID);
+        assertThat(order.status()).isEqualTo("PAID");
         assertThat(order.total()).isEqualTo(Money.of("295.40"));
         assertThat(order.shippingAddress()).isEqualTo(SalesShop.address());
         assertThat(shop.payments.charged()).containsExactly(Money.of("295.40"));
@@ -45,7 +49,7 @@ class CheckoutServiceTest {
     void customerIsNotifiedOnlyAfterTheOrderIsStored() {
         shop.cart.add(cart, dune.id(), 1);
 
-        place(PaymentMethod.CREDIT_CARD);
+        place("CREDIT_CARD");
 
         assertThat(shop.notifier.events()).hasSize(2);
         assertThat(shop.notifier.events().get(0)).isInstanceOf(OrderPlaced.class);
@@ -57,10 +61,10 @@ class CheckoutServiceTest {
     void bankTransferWaitsForPayment() {
         shop.cart.add(cart, dune.id(), 1);
 
-        OrderDetails order = place(PaymentMethod.BANK_TRANSFER);
+        OrderDetails order = place("BANK_TRANSFER");
 
-        assertThat(order.status()).isEqualTo(OrderStatus.CREATED);
-        assertThat(order.nextStatuses()).containsExactlyInAnyOrder(OrderStatus.PAID, OrderStatus.CANCELLED);
+        assertThat(order.status()).isEqualTo("CREATED");
+        assertThat(order.nextStatuses()).containsExactlyInAnyOrder("PAID", "CANCELLED");
         assertThat(shop.payments.charged()).isEmpty();
         assertThat(shop.notifier.events()).singleElement().isInstanceOf(OrderPlaced.class);
     }
@@ -70,7 +74,7 @@ class CheckoutServiceTest {
         shop.cart.add(cart, dune.id(), 1);
         shop.payments.declineNext("Insufficient funds");
 
-        assertThatThrownBy(() -> place(PaymentMethod.CREDIT_CARD))
+        assertThatThrownBy(() -> place("CREDIT_CARD"))
                 .isInstanceOfSatisfying(PaymentDeclinedException.class,
                         e -> assertThat(e.reason()).isEqualTo("Insufficient funds"));
 
@@ -84,13 +88,13 @@ class CheckoutServiceTest {
         shop.cart.add(cart, dune.id(), 1);
         dune.changePrice(Money.of("120.00"));
 
-        assertThatThrownBy(() -> place(PaymentMethod.CREDIT_CARD))
+        assertThatThrownBy(() -> place("CREDIT_CARD"))
                 .isInstanceOfSatisfying(CartChangedException.class, e -> assertThat(e.adjustments())
-                        .containsExactly(new CartAdjustment.PriceChanged(dune.id(), "Dune", Money.of("100.00"),
+                        .containsExactly(new CartNotice.PriceChanged(dune.id(), "Dune", Money.of("100.00"),
                                 Money.of("120.00"))));
         assertThat(shop.orders.count()).isZero();
 
-        OrderDetails order = place(PaymentMethod.CREDIT_CARD);
+        OrderDetails order = place("CREDIT_CARD");
         assertThat(order.subtotal()).isEqualTo(Money.of("120.00"));
     }
 
@@ -99,13 +103,13 @@ class CheckoutServiceTest {
         shop.cart.add(cart, madonna.id(), 3);
         madonna.changeStock(0);
 
-        assertThatThrownBy(() -> place(PaymentMethod.CREDIT_CARD)).isInstanceOf(CartChangedException.class);
+        assertThatThrownBy(() -> place("CREDIT_CARD")).isInstanceOf(CartChangedException.class);
         assertThat(shop.cart.view(cart).isEmpty()).isTrue();
     }
 
     @Test
     void emptyCartCannotBeOrdered() {
-        assertThatThrownBy(() -> place(PaymentMethod.CREDIT_CARD))
+        assertThatThrownBy(() -> place("CREDIT_CARD"))
                 .isInstanceOfSatisfying(RuleViolationException.class, e -> assertThat(e.code()).isEqualTo(Order.EMPTY_CART));
     }
 
@@ -115,16 +119,16 @@ class CheckoutServiceTest {
         shop.cart.add(cart, dune.id(), 1);
 
         assertThatThrownBy(() -> shop.checkout.placeOrder(
-                new PlaceOrderCommand(customerId, shop.defaultAddressId(other), PaymentMethod.CREDIT_CARD)))
+                new PlaceOrderCommand(customerId, shop.defaultAddressId(other), "CREDIT_CARD")))
                 .isInstanceOf(NotFoundException.class);
     }
 
     @Test
     void orderNumbersAreSequential() {
         shop.cart.add(cart, dune.id(), 1);
-        String first = place(PaymentMethod.CREDIT_CARD).orderNumber();
+        String first = place("CREDIT_CARD").orderNumber();
         shop.cart.add(cart, dune.id(), 1);
-        String second = place(PaymentMethod.CREDIT_CARD).orderNumber();
+        String second = place("CREDIT_CARD").orderNumber();
 
         assertThat(first).isEqualTo("BS-2026-000001");
         assertThat(second).isEqualTo("BS-2026-000002");
@@ -133,7 +137,7 @@ class CheckoutServiceTest {
     @Test
     void laterPriceChangesDoNotAlterThePlacedOrder() {
         shop.cart.add(cart, dune.id(), 1);
-        String number = place(PaymentMethod.CREDIT_CARD).orderNumber();
+        String number = place("CREDIT_CARD").orderNumber();
 
         dune.changePrice(Money.of("500.00"));
 
@@ -141,7 +145,7 @@ class CheckoutServiceTest {
                 .isEqualTo(Money.of("100.00"));
     }
 
-    private OrderDetails place(PaymentMethod method) {
+    private OrderDetails place(String method) {
         return shop.checkout.placeOrder(new PlaceOrderCommand(customerId, shop.defaultAddressId(customerId), method));
     }
 }

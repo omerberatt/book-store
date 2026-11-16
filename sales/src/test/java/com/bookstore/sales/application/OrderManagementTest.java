@@ -3,6 +3,8 @@ package com.bookstore.sales.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.bookstore.sales.api.OrderDetails;
+import com.bookstore.sales.api.OrderSummary;
 import com.bookstore.sales.domain.OrderEvent;
 import com.bookstore.sales.domain.OrderPlaced;
 import com.bookstore.sales.domain.OrderStatus;
@@ -47,10 +49,10 @@ class OrderManagementTest {
         String number = shop.buy(ayse, dune, 1).orderNumber();
         shop.notifier.clear();
 
-        shop.orderAdmin.changeStatus(number, OrderStatus.SHIPPED);
-        OrderDetails delivered = shop.orderAdmin.changeStatus(number, OrderStatus.DELIVERED);
+        shop.orderAdmin.changeStatus(number, "SHIPPED");
+        OrderDetails delivered = shop.orderAdmin.changeStatus(number, "DELIVERED");
 
-        assertThat(delivered.status()).isEqualTo(OrderStatus.DELIVERED);
+        assertThat(delivered.status()).isEqualTo("DELIVERED");
         assertThat(delivered.nextStatuses()).isEmpty();
         assertThat(shop.notifier.events()).extracting(OrderManagementTest::newStatus)
                 .containsExactly(OrderStatus.SHIPPED, OrderStatus.DELIVERED);
@@ -61,22 +63,22 @@ class OrderManagementTest {
         String number = shop.buy(ayse, dune, 4).orderNumber();
         assertThat(shop.catalog.stockOf(dune.id())).isEqualTo(6);
 
-        shop.orderAdmin.changeStatus(number, OrderStatus.CANCELLED);
+        shop.orderAdmin.changeStatus(number, "CANCELLED");
 
         assertThat(shop.catalog.stockOf(dune.id())).isEqualTo(10);
-        assertThat(shop.orderAdmin.order(number).status()).isEqualTo(OrderStatus.CANCELLED);
+        assertThat(shop.orderAdmin.order(number).status()).isEqualTo("CANCELLED");
     }
 
     @Test
     void shippedOrderCannotBeCancelled() {
         String number = shop.buy(ayse, dune, 4).orderNumber();
-        shop.orderAdmin.changeStatus(number, OrderStatus.SHIPPED);
+        shop.orderAdmin.changeStatus(number, "SHIPPED");
 
-        assertThatThrownBy(() -> shop.orderAdmin.changeStatus(number, OrderStatus.CANCELLED))
+        assertThatThrownBy(() -> shop.orderAdmin.changeStatus(number, "CANCELLED"))
                 .isInstanceOfSatisfying(ConflictException.class,
                         e -> assertThat(e.code()).isEqualTo(OrderStatus.ILLEGAL_TRANSITION));
         assertThat(shop.catalog.stockOf(dune.id())).isEqualTo(6);
-        assertThatThrownBy(() -> shop.orderAdmin.changeStatus(number, OrderStatus.CREATED))
+        assertThatThrownBy(() -> shop.orderAdmin.changeStatus(number, "CREATED"))
                 .isInstanceOf(ConflictException.class);
     }
 
@@ -84,9 +86,9 @@ class OrderManagementTest {
     void administratorFiltersOrdersByStatus() {
         String shipped = shop.buy(ayse, dune, 1).orderNumber();
         shop.buy(mehmet, dune, 1);
-        shop.orderAdmin.changeStatus(shipped, OrderStatus.SHIPPED);
+        shop.orderAdmin.changeStatus(shipped, "SHIPPED");
 
-        assertThat(shop.orderAdmin.ordersIn(OrderStatus.SHIPPED, PageRequest.first()).content())
+        assertThat(shop.orderAdmin.ordersIn("SHIPPED", PageRequest.first()).content())
                 .extracting(OrderSummary::orderNumber).containsExactly(shipped);
         assertThat(shop.orderAdmin.orders(PageRequest.first()).totalElements()).isEqualTo(2);
     }

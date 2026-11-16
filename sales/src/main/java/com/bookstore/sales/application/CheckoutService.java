@@ -2,6 +2,11 @@ package com.bookstore.sales.application;
 
 import com.bookstore.catalog.api.StockFacade;
 import com.bookstore.customer.api.CustomerDirectory;
+import com.bookstore.sales.api.CartChangedException;
+import com.bookstore.sales.api.CheckoutFacade;
+import com.bookstore.sales.api.OrderDetails;
+import com.bookstore.sales.api.PaymentDeclinedException;
+import com.bookstore.sales.api.PlaceOrderCommand;
 import com.bookstore.sales.domain.Cart;
 import com.bookstore.sales.domain.CartAdjustment;
 import com.bookstore.sales.domain.CartRepository;
@@ -14,8 +19,9 @@ import com.bookstore.sales.domain.PaymentMethod;
 import com.bookstore.sales.domain.ProductSnapshot;
 import com.bookstore.sales.domain.ShippingPolicy;
 import com.bookstore.shared.kernel.address.Address;
-import com.bookstore.shared.kernel.error.ConflictException;
 import com.bookstore.shared.kernel.error.NotFoundException;
+import com.bookstore.shared.kernel.error.RuleViolationException;
+import com.bookstore.shared.kernel.error.ValidationException;
 import com.bookstore.shared.kernel.event.Notifier;
 import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.identity.CustomerId;
@@ -43,7 +49,7 @@ import java.util.Map;
  * ({@link StockFacade}, {@link CustomerDirectory}). Notifications are sent only after the second
  * transaction has committed.
  */
-public class CheckoutService {
+public class CheckoutService implements CheckoutFacade {
 
     private final CustomerDirectory customers;
     private final CartRepository carts;
@@ -95,20 +101,23 @@ public class CheckoutService {
      * @param command the checkout form
      * @return the new order
      * @throws CartChangedException     if the cart had to be corrected; nothing was ordered
-     * @throws ConflictException        if the cart is empty
+     * @throws RuleViolationException   if the cart is empty
+     * @throws ValidationException      if the payment method is unknown
      * @throws PaymentDeclinedException if the card was refused; nothing was ordered
      * @throws NotFoundException        if the customer or the address does not exist
      */
+    @Override
     public OrderDetails placeOrder(PlaceOrderCommand command) {
+        PaymentMethod paymentMethod = SalesMapper.paymentMethodOf(command.paymentMethod());
         List<CartAdjustment> adjustments = transactions.inTransaction(() -> reconcileCart(command.customerId()));
         if (!adjustments.isEmpty()) {
-            throw new CartChangedException(adjustments);
+            throw new CartChangedException(SalesMapper.noticesOf(adjustments));
         }
 
-        Order order = transactions.inTransaction(() -> place(command));
+        Order order = transactions.inTransaction(() -> place(command, paymentMethod));
 
         order.pullEvents().forEach(notifier::publish);
-        return OrderDetails.of(order);
+        return SalesMapper.detailsOf(order);
     }
 
     private List<CartAdjustment> reconcileCart(CustomerId customerId) {
@@ -120,7 +129,7 @@ public class CheckoutService {
         return adjustments;
     }
 
-    private Order place(PlaceOrderCommand command) {
+    private Order place(PlaceOrderCommand command, PaymentMethod paymentMethod) {
         Address address = customers.shippingAddress(command.customerId(), command.addressId());
         Cart cart = cartOf(command.customerId());
         Map<BookId, ProductSnapshot> products = Products.load(stock, cart.bookIds());
@@ -128,14 +137,14 @@ public class CheckoutService {
         // Something may have changed since the first transaction; never charge a price the customer has not seen.
         List<CartAdjustment> lateChanges = cart.reconcile(products);
         if (!lateChanges.isEmpty()) {
-            throw new CartChangedException(lateChanges);
+            throw new CartChangedException(SalesMapper.noticesOf(lateChanges));
         }
 
         Order order = Order.place(orderNumbers.next(Year.now(clock)), command.customerId(), cart, products, address,
-                command.paymentMethod(), shippingPolicy, clock);
+                paymentMethod, shippingPolicy, clock);
         stock.reserve(order.quantitiesByBook());
 
-        if (command.paymentMethod() == PaymentMethod.CREDIT_CARD) {
+        if (paymentMethod == PaymentMethod.CREDIT_CARD) {
             PaymentResult result = paymentGateway.charge(order.number(), order.total());
             switch (result) {
                 case PaymentResult.Approved approved -> order.markPaid(clock);

@@ -3,11 +3,12 @@ package com.bookstore.catalog.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.bookstore.catalog.api.BookDetails;
+import com.bookstore.catalog.api.BookSearchQuery;
+import com.bookstore.catalog.api.BookSummary;
+import com.bookstore.catalog.api.CategoryNode;
 import com.bookstore.catalog.domain.Author;
 import com.bookstore.catalog.domain.Book;
-import com.bookstore.catalog.domain.BookSort;
-import com.bookstore.catalog.domain.BookSortField;
-import com.bookstore.catalog.domain.CategoryId;
 import com.bookstore.shared.kernel.error.NotFoundException;
 import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.money.Money;
@@ -49,8 +50,8 @@ class CatalogServiceTest {
 
     @Test
     void parentCategoryIncludesItsSubcategories() {
-        BookSearchQuery literature = BookSearchQuery.everything().inCategory(shop.literature.id());
-        BookSearchQuery poetry = BookSearchQuery.everything().inCategory(shop.poetry.id());
+        BookSearchQuery literature = BookSearchQuery.everything().inCategory(shop.literature.id().value());
+        BookSearchQuery poetry = BookSearchQuery.everything().inCategory(shop.poetry.id().value());
 
         assertThat(titles(shop.catalog.search(literature, PageRequest.first())))
                 .containsExactlyInAnyOrder("Kürk Mantolu Madonna", "Kuyucaklı Yusuf", "Bütün Şiirleri");
@@ -59,13 +60,13 @@ class CatalogServiceTest {
 
     @Test
     void unknownCategoryIsReported() {
-        assertThatThrownBy(() -> shop.catalog.search(BookSearchQuery.everything().inCategory(CategoryId.of(999)), PageRequest.first()))
+        assertThatThrownBy(() -> shop.catalog.search(BookSearchQuery.everything().inCategory(999), PageRequest.first()))
                 .isInstanceOf(NotFoundException.class);
     }
 
     @Test
     void listsAnAuthorsBooks() {
-        BookSearchQuery query = BookSearchQuery.everything().byAuthor(ali.id());
+        BookSearchQuery query = BookSearchQuery.everything().byAuthor(ali.id().value());
 
         assertThat(titles(shop.catalog.search(query, PageRequest.first())))
                 .containsExactly("Kürk Mantolu Madonna", "Kuyucaklı Yusuf");
@@ -78,7 +79,7 @@ class CatalogServiceTest {
                 .onlyInStock();
         BookSearchQuery cheapFirst = BookSearchQuery.everything()
                 .priced(Money.of("50"), Money.of("150"))
-                .sortedBy(new BookSort(BookSortField.PRICE, SortOrder.ASC));
+                .sortedBy("PRICE", SortOrder.ASC);
 
         assertThat(titles(shop.catalog.search(query, PageRequest.first()))).containsExactly("Kürk Mantolu Madonna");
         assertThat(titles(shop.catalog.search(cheapFirst, PageRequest.first())))
@@ -99,7 +100,7 @@ class CatalogServiceTest {
         madonna.addRating(5);
         madonna.addRating(4);
 
-        List<BookSummary> found = shop.catalog.search(BookSearchQuery.everything().byAuthor(ali.id()),
+        List<BookSummary> found = shop.catalog.search(BookSearchQuery.everything().byAuthor(ali.id().value()),
                 PageRequest.first()).content();
 
         BookSummary madonnaSummary = found.get(0);
@@ -116,7 +117,7 @@ class CatalogServiceTest {
 
         assertThat(details.title()).isEqualTo("Kürk Mantolu Madonna");
         assertThat(details.categoryPath()).containsExactly("Literature", "Novel");
-        assertThat(details.authors()).containsExactly(new BookDetails.AuthorRef(ali.id(), "Sabahattin Ali"));
+        assertThat(details.authors()).containsExactly(new BookDetails.AuthorRef(ali.id().value(), "Sabahattin Ali"));
         assertThat(details.stock()).isEqualTo(5);
     }
 

@@ -1,6 +1,5 @@
-package com.bookstore.sales.application;
+package com.bookstore.sales.api;
 
-import com.bookstore.sales.domain.CartAdjustment;
 import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.money.Money;
 
@@ -17,7 +16,7 @@ import java.util.List;
  * @param adjustments   changes made because the catalog changed, to show as warnings (CRT-5)
  */
 public record CartView(List<Line> lines, Money subtotal, Money shippingCost, Money total, int totalQuantity,
-                       List<CartAdjustment> adjustments) {
+                       List<CartNotice> adjustments) {
 
     /** Copies the lists. */
     public CartView {

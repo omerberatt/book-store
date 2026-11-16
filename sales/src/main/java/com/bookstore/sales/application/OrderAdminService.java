@@ -1,6 +1,9 @@
 package com.bookstore.sales.application;
 
 import com.bookstore.catalog.api.StockFacade;
+import com.bookstore.sales.api.OrderAdminFacade;
+import com.bookstore.sales.api.OrderDetails;
+import com.bookstore.sales.api.OrderSummary;
 import com.bookstore.sales.domain.Order;
 import com.bookstore.sales.domain.OrderNumber;
 import com.bookstore.sales.domain.OrderRepository;
@@ -18,7 +21,7 @@ import java.time.Clock;
  * Order management for administrators (ADM-5): listing every order and moving orders through
  * their statuses. Customers are notified of every change (ORD-9).
  */
-public class OrderAdminService {
+public class OrderAdminService implements OrderAdminFacade {
 
     private final OrderRepository orders;
     private final StockFacade stock;
@@ -50,8 +53,9 @@ public class OrderAdminService {
      * @param page which page to return
      * @return the page
      */
+    @Override
     public Page<OrderSummary> orders(PageRequest page) {
-        return orders.findAll(page).map(OrderSummary::of);
+        return orders.findAll(page).map(SalesMapper::summaryOf);
     }
 
     /**
@@ -61,8 +65,9 @@ public class OrderAdminService {
      * @param page   which page to return
      * @return the page
      */
-    public Page<OrderSummary> ordersIn(OrderStatus status, PageRequest page) {
-        return orders.findByStatus(status, page).map(OrderSummary::of);
+    @Override
+    public Page<OrderSummary> ordersIn(String status, PageRequest page) {
+        return orders.findByStatus(SalesMapper.statusOf(status), page).map(SalesMapper::summaryOf);
     }
 
     /**
@@ -71,8 +76,9 @@ public class OrderAdminService {
      * @param orderNumber the order number
      * @return the order
      */
+    @Override
     public OrderDetails order(String orderNumber) {
-        return OrderDetails.of(requireOrder(new OrderNumber(orderNumber)));
+        return SalesMapper.detailsOf(requireOrder(new OrderNumber(orderNumber)));
     }
 
     /**
@@ -83,11 +89,13 @@ public class OrderAdminService {
      * @return the updated order
      * @throws ConflictException if the change is not allowed from the current status (ORD-6)
      */
-    public OrderDetails changeStatus(String orderNumber, OrderStatus target) {
+    @Override
+    public OrderDetails changeStatus(String orderNumber, String target) {
+        OrderStatus status = SalesMapper.statusOf(target);
         OrderNumber number = new OrderNumber(orderNumber);
         Order order = transactions.inTransaction(() -> {
             Order found = requireOrder(number);
-            switch (target) {
+            switch (status) {
                 case PAID -> found.markPaid(clock);
                 case SHIPPED -> found.ship(clock);
                 case DELIVERED -> found.deliver(clock);
@@ -97,7 +105,7 @@ public class OrderAdminService {
             return orders.save(found);
         });
         order.pullEvents().forEach(notifier::publish);
-        return OrderDetails.of(order);
+        return SalesMapper.detailsOf(order);
     }
 
     private void cancel(Order order) {

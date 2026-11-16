@@ -1,4 +1,4 @@
-package com.bookstore.customer.application;
+package com.bookstore.customer.api;
 
 /**
  * The registration form (ACC-1).

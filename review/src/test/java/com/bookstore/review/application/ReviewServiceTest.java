@@ -5,8 +5,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.bookstore.catalog.api.RatingFacade;
 import com.bookstore.customer.api.CustomerDirectory;
-import com.bookstore.review.domain.Rating;
-import com.bookstore.review.domain.RatingDistribution;
+import com.bookstore.review.api.RatingBreakdown;
+import com.bookstore.review.api.ReviewCommand;
+import com.bookstore.review.api.ReviewFacade;
+import com.bookstore.review.api.ReviewView;
 import com.bookstore.review.persistence.InMemoryReviewRepository;
 import com.bookstore.sales.api.PurchaseHistory;
 import com.bookstore.shared.kernel.address.Address;
@@ -51,7 +53,7 @@ class ReviewServiceTest {
         assertThat(service.canReview(AYSE, DUNE)).isFalse();
         assertThatThrownBy(() -> write(AYSE, 5))
                 .isInstanceOfSatisfying(AccessDeniedException.class,
-                        e -> assertThat(e.code()).isEqualTo(ReviewService.NOT_ELIGIBLE));
+                        e -> assertThat(e.code()).isEqualTo(ReviewFacade.NOT_ELIGIBLE));
         assertThat(ratings.count(DUNE)).isZero();
     }
 
@@ -75,7 +77,7 @@ class ReviewServiceTest {
         assertThat(review.edited()).isFalse();
         assertThat(ratings.count(DUNE)).isEqualTo(1);
         assertThat(ratings.sum(DUNE)).isEqualTo(4);
-        assertThat(service.ratingDistribution(DUNE).count(Rating.of(4))).isEqualTo(1);
+        assertThat(service.ratingBreakdown(DUNE).count(4)).isEqualTo(1);
         assertThat(service.canReview(AYSE, DUNE)).isFalse();
     }
 
@@ -86,7 +88,7 @@ class ReviewServiceTest {
 
         assertThatThrownBy(() -> write(AYSE, 5))
                 .isInstanceOfSatisfying(ConflictException.class,
-                        e -> assertThat(e.code()).isEqualTo(ReviewService.DUPLICATE));
+                        e -> assertThat(e.code()).isEqualTo(ReviewFacade.DUPLICATE));
         assertThat(ratings.count(DUNE)).isEqualTo(1);
     }
 
@@ -130,9 +132,9 @@ class ReviewServiceTest {
         Page<ReviewView> page = service.reviewsOf(DUNE, PageRequest.first());
 
         assertThat(page.content()).extracting(ReviewView::authorName).containsExactly("Mehmet Ö.", "Ayşe Y.");
-        RatingDistribution distribution = service.ratingDistribution(DUNE);
+        RatingBreakdown distribution = service.ratingBreakdown(DUNE);
         assertThat(distribution.total()).isEqualTo(2);
-        assertThat(distribution.average()).hasValueSatisfying(a -> assertThat(a).isEqualByComparingTo("4.0"));
+        assertThat(distribution.average()).isEqualByComparingTo("4.0");
     }
 
     @Test

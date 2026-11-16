@@ -1,0 +1,174 @@
+package com.bookstore.app;
+
+import com.bookstore.catalog.api.CatalogFacade;
+import com.bookstore.catalog.application.CatalogService;
+import com.bookstore.catalog.application.RatingService;
+import com.bookstore.catalog.application.StockService;
+import com.bookstore.catalog.persistence.JdbcBookRepository;
+import com.bookstore.catalog.persistence.JdbcCategoryRepository;
+import com.bookstore.customer.api.AccountFacade;
+import com.bookstore.customer.application.AccountService;
+import com.bookstore.customer.application.CustomerDirectoryService;
+import com.bookstore.customer.domain.PasswordHasher;
+import com.bookstore.customer.persistence.JdbcCustomerRepository;
+import com.bookstore.review.api.ReviewFacade;
+import com.bookstore.review.application.ReviewService;
+import com.bookstore.review.persistence.JdbcReviewRepository;
+import com.bookstore.sales.api.CartFacade;
+import com.bookstore.sales.api.CheckoutFacade;
+import com.bookstore.sales.api.OrderAdminFacade;
+import com.bookstore.sales.api.OrderFacade;
+import com.bookstore.sales.application.CartService;
+import com.bookstore.sales.application.CheckoutService;
+import com.bookstore.sales.application.OrderAdminService;
+import com.bookstore.sales.application.OrderService;
+import com.bookstore.sales.application.PurchaseHistoryService;
+import com.bookstore.sales.domain.PaymentGateway;
+import com.bookstore.sales.domain.ShippingPolicy;
+import com.bookstore.sales.persistence.JdbcCartRepository;
+import com.bookstore.sales.persistence.JdbcOrderNumberSequence;
+import com.bookstore.sales.persistence.JdbcOrderRepository;
+import com.bookstore.shared.jdbc.JdbcExecutor;
+import com.bookstore.shared.jdbc.JdbcTransactionRunner;
+import com.bookstore.shared.jdbc.ModuleMigrations;
+import com.bookstore.shared.kernel.event.Notifier;
+
+import java.time.Clock;
+import java.util.Objects;
+import javax.sql.DataSource;
+
+/**
+ * The composition root (ADR-0006): the one place that decides which implementation stands behind
+ * each interface, and wires the modules together by hand. Everything outside it sees only the
+ * façades of the modules' {@code api} packages.
+ *
+ * <p>The caller supplies what the application cannot make by itself: the database, the clock and
+ * the adapters to the outside world. In Phase 6 CDI takes over this job and {@code BookstoreWiring}
+ * produces only these few objects (ADR-0010).
+ *
+ * <pre>{@code
+ * BookstoreModule bookstore = new BookstoreModule(dataSource, new Adapters(Clock.systemUTC(),
+ *         paymentGateway, passwordHasher, notifier));
+ * bookstore.migrate();
+ * bookstore.catalog().search(BookSearchQuery.everything(), PageRequest.first());
+ * }</pre>
+ */
+public final class BookstoreModule {
+
+    private final DataSource dataSource;
+
+    private final CatalogFacade catalog;
+    private final AccountFacade accounts;
+    private final CartFacade cart;
+    private final CheckoutFacade checkout;
+    private final OrderFacade orders;
+    private final OrderAdminFacade orderAdmin;
+    private final ReviewFacade reviews;
+
+    /**
+     * Wires the application.
+     *
+     * @param dataSource the database
+     * @param adapters   the clock and the adapters to the outside world
+     */
+    public BookstoreModule(DataSource dataSource, Adapters adapters) {
+        this.dataSource = Objects.requireNonNull(dataSource, "dataSource");
+        Objects.requireNonNull(adapters, "adapters");
+        JdbcTransactionRunner transactions = new JdbcTransactionRunner(dataSource);
+        JdbcExecutor jdbc = new JdbcExecutor(transactions);
+        ShippingPolicy shipping = ShippingPolicy.standard();
+
+        // catalog
+        JdbcCategoryRepository categoryRepository = new JdbcCategoryRepository(jdbc);
+        JdbcBookRepository bookRepository = new JdbcBookRepository(jdbc, categoryRepository);
+        StockService stock = new StockService(bookRepository, transactions);
+        RatingService ratings = new RatingService(bookRepository, transactions);
+        this.catalog = new CatalogService(bookRepository, categoryRepository);
+
+        // customer
+        JdbcCustomerRepository customerRepository = new JdbcCustomerRepository(jdbc);
+        CustomerDirectoryService directory = new CustomerDirectoryService(customerRepository);
+        this.accounts = new AccountService(customerRepository, adapters.passwordHasher(), transactions,
+                adapters.clock());
+
+        // sales
+        JdbcCartRepository cartRepository = new JdbcCartRepository(jdbc);
+        JdbcOrderRepository orderRepository = new JdbcOrderRepository(jdbc);
+        this.cart = new CartService(stock, cartRepository, shipping, transactions);
+        this.checkout = new CheckoutService(directory, cartRepository, stock, orderRepository,
+                new JdbcOrderNumberSequence(jdbc, transactions), adapters.paymentGateway(), shipping, transactions,
+                adapters.notifier(), adapters.clock());
+        this.orders = new OrderService(orderRepository);
+        this.orderAdmin = new OrderAdminService(orderRepository, stock, transactions, adapters.notifier(),
+                adapters.clock());
+        PurchaseHistoryService purchases = new PurchaseHistoryService(orderRepository);
+
+        // review
+        this.reviews = new ReviewService(new JdbcReviewRepository(jdbc), ratings, purchases, directory,
+                transactions, adapters.clock());
+    }
+
+    /**
+     * Brings the database schema up to date, module by module (ADR-0018).
+     *
+     * @return the number of migrations applied
+     */
+    public int migrate() {
+        return ModuleMigrations.migrate(dataSource, ModuleMigrations.ALL);
+    }
+
+    /** @return browsing and searching the catalog */
+    public CatalogFacade catalog() {
+        return catalog;
+    }
+
+    /** @return registration, sign-in data, profile and address book */
+    public AccountFacade accounts() {
+        return accounts;
+    }
+
+    /** @return visitors' and customers' carts */
+    public CartFacade cart() {
+        return cart;
+    }
+
+    /** @return placing orders */
+    public CheckoutFacade checkout() {
+        return checkout;
+    }
+
+    /** @return a customer's own orders */
+    public OrderFacade orders() {
+        return orders;
+    }
+
+    /** @return order management for administrators */
+    public OrderAdminFacade orderAdmin() {
+        return orderAdmin;
+    }
+
+    /** @return reviews and ratings */
+    public ReviewFacade reviews() {
+        return reviews;
+    }
+
+    /**
+     * What the application needs from outside and cannot make by itself.
+     *
+     * @param clock          the source of the current time
+     * @param paymentGateway charges cards
+     * @param passwordHasher hashes and checks passwords
+     * @param notifier       tells customers about their orders
+     */
+    public record Adapters(Clock clock, PaymentGateway paymentGateway, PasswordHasher passwordHasher,
+                           Notifier notifier) {
+
+        /** Rejects missing adapters. */
+        public Adapters {
+            Objects.requireNonNull(clock, "clock");
+            Objects.requireNonNull(paymentGateway, "paymentGateway");
+            Objects.requireNonNull(passwordHasher, "passwordHasher");
+            Objects.requireNonNull(notifier, "notifier");
+        }
+    }
+}

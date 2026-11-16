@@ -1,5 +1,11 @@
 package com.bookstore.catalog.application;
 
+import com.bookstore.catalog.api.BookDetails;
+import com.bookstore.catalog.api.BookSearchQuery;
+import com.bookstore.catalog.api.BookSummary;
+import com.bookstore.catalog.api.CatalogFacade;
+import com.bookstore.catalog.api.CategoryNode;
+import com.bookstore.catalog.domain.AuthorId;
 import com.bookstore.catalog.domain.Book;
 import com.bookstore.catalog.domain.BookRepository;
 import com.bookstore.catalog.domain.BookSpecifications;
@@ -17,9 +23,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Browsing and searching the catalog, as customers see it: deactivated books are invisible.
+ * Browsing and searching the catalog, as customers see it: deactivated books are invisible. Implements
+ * the {@link CatalogFacade} contract; {@link CatalogMapper} turns books into its DTOs.
  */
-public class CatalogService {
+public class CatalogService implements CatalogFacade {
 
     private final BookRepository books;
     private final CategoryRepository categories;
@@ -35,24 +42,17 @@ public class CatalogService {
         this.categories = categories;
     }
 
-    /**
-     * Searches the active books (CAT-1, CAT-5, SRC-1 to SRC-4).
-     *
-     * @param query what to look for
-     * @param page  which page to return
-     * @return one page of matching books
-     * @throws NotFoundException if the query names a category that does not exist
-     */
+    @Override
     public Page<BookSummary> search(BookSearchQuery query, PageRequest page) {
         Specification<Book> rule = BookSpecifications.active().and(BookSpecifications.matchingText(query.text()));
         if (query.inStockOnly()) {
             rule = rule.and(BookSpecifications.inStock());
         }
         if (query.categoryId() != null) {
-            rule = rule.and(BookSpecifications.inCategories(categoryAndDescendantIds(query.categoryId())));
+            rule = rule.and(BookSpecifications.inCategories(categoryAndDescendantIds(CategoryId.of(query.categoryId()))));
         }
         if (query.authorId() != null) {
-            rule = rule.and(BookSpecifications.byAuthor(query.authorId()));
+            rule = rule.and(BookSpecifications.byAuthor(AuthorId.of(query.authorId())));
         }
         if (query.minPrice() != null) {
             rule = rule.and(BookSpecifications.pricedFrom(query.minPrice()));
@@ -61,33 +61,23 @@ public class CatalogService {
             rule = rule.and(BookSpecifications.pricedUpTo(query.maxPrice()));
         }
         if (query.language() != null) {
-            rule = rule.and(BookSpecifications.inLanguage(query.language()));
+            rule = rule.and(BookSpecifications.inLanguage(CatalogMapper.languageOf(query.language())));
         }
-        return books.search(rule, query.sort(), page).map(BookSummary::of);
+        return books.search(rule, CatalogMapper.sortOf(query), page).map(CatalogMapper::summaryOf);
     }
 
-    /**
-     * Returns a book's detail page (CAT-2, REV-5). The rating distribution (REV-6) comes from the
-     * review module, which depends on this one and not the other way round.
-     *
-     * @param bookId the book's id
-     * @return the details
-     * @throws NotFoundException if the book does not exist or is deactivated (CAT-7)
-     */
+    /** The rating distribution (REV-6) comes from the review module, which depends on this one. */
+    @Override
     public BookDetails book(BookId bookId) {
         Book book = books.findById(bookId)
                 .filter(Book::isActive)
                 .orElseThrow(() -> new NotFoundException("Book", bookId));
-        return BookDetails.of(book);
+        return CatalogMapper.detailsOf(book);
     }
 
-    /**
-     * Returns the category tree for the navigation menu (CAT-4).
-     *
-     * @return the top-level categories with their subcategories
-     */
+    @Override
     public List<CategoryNode> categoryTree() {
-        return categories.findRoots().stream().map(CategoryNode::of).toList();
+        return categories.findRoots().stream().map(CatalogMapper::nodeOf).toList();
     }
 
     private Set<CategoryId> categoryAndDescendantIds(CategoryId categoryId) {

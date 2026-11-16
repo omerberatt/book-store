@@ -101,7 +101,7 @@ Faz numaraları [ROADMAP.md](ROADMAP.md) içindeki aşamalardır; ADR'ler [docs/
 | Specification *(kuralı veri haline getirmek)* | `shared-kernel`: `Specification<T>` *(`and` / `or` / `not`, `all()`)*, `AndSpecification`, `OrSpecification`, `NotSpecification`, `MatchAll`; `catalog.domain.BookSpecifications`: `active`, `inStock`, `inCategories`, `byAuthor`, `pricedFrom`, `pricedUpTo`, `inLanguage`, `matchingText` | ✅ | 4.3 |
 | Specification'ı SQL'e çevirmek | `BookSearchSql`, `Specification` ağacını desen eşleme *(`switch`)* ile `WHERE` koşuluna çevirir; `and` / `or` / `not` dahil. `JdbcCatalogRepositoryTest` SQL ile bellek içi sonucu her kural ve sıralama için karşılaştırır *(ders bunu "bir sonraki adım" olarak bırakıyor)* | ✅ | 3, 4.3 |
 | Repository deseni, arayüzün yeri | Arayüzler domain'de *(ders ADR-0003'ün risk notu baştan önlendi)* | ✅ | 1 |
-| Mapper *(domain ↔ DTO)* | Modüller arası: `sales.application.Products` *(`BookOffer` → `ProductSnapshot`)* ✅. Okuma modelleri bugün `record`'ların `of(...)` metotları; `api` paketindeki DTO'lar ve mapper'lar 4.4'te *(ADR-0003)* | 🔁 | 4.1, 4.4 |
+| Mapper *(domain ↔ DTO)* | Modül başına mapper: `CatalogMapper`, `CustomerMapper`, `SalesMapper`, `ReviewMapper` *(application paketinde, paket içi)*; modüller arası `sales.application.Products` *(`BookOffer` → `ProductSnapshot`)*. Domain nesnesi modülden çıkmaz | ✅ | 4.1, 4.4 |
 | Paket düzeni: `api`, `application`, `domain`, `persistence` | Her iş modülünde; `rest` Faz 5'te *(ADR-0002)* | ✅ | 4.1 |
 
 ## Bölüm 09 — Maven Modülleri ve ArchUnit
@@ -122,10 +122,10 @@ Faz numaraları [ROADMAP.md](ROADMAP.md) içindeki aşamalardır; ADR'ler [docs/
 | --- | --- | --- | --- |
 | Kullanım senaryosu servisleri | `CatalogService`, `CartService`, `AccountService`, `CheckoutService`, `OrderService`, `OrderAdminService`, `ReviewService` | ✅ | 2 |
 | Komut nesneleri *(commands)* | `RegistrationCommand`, `PlaceOrderCommand`, `ReviewCommand` | ✅ | 2 |
-| `api` paketi ve façade arayüzleri | Komutlar ve görünümler `api` paketine taşınacak; façade arayüzleri eklenecek | 🔁 | 4 |
+| `api` paketi ve façade arayüzleri | `CatalogFacade`, `AccountFacade`, `CartFacade`, `CheckoutFacade`, `OrderFacade`, `OrderAdminFacade`, `ReviewFacade` ve modüller arası `StockFacade`, `RatingFacade`, `CustomerDirectory`, `PurchaseHistory`; komutlar ve görünümler *(`BookSearchQuery`, `CustomerView`, `CartView`, `GuestCart`, `OrderDetails`, `ReviewView` …)* `api` paketinde. Kural: shared-kernel kimlikleri tipli, modüle özel kimlikler `long`, domain enum'ları kod olarak *(ADR-0003)*; `facades_live_in_api` | ✅ | 4.4 |
 | Constructor injection, `private final` işbirlikçiler | Tüm servisler | ✅ | 2 |
 | `Clock` enjeksiyonu, `SteppingClock` | `Clock.fixed` ve `Clock.offset` ile testler | ✅ | 1, 2 |
-| Composition root | Testlerde modül başına düzenekler *(`CatalogShop`, `CustomerShop`, `SalesShop`)* ve `app` testlerinde `JdbcBookstore`; üretimde `BookstoreModule` | 🔁 | 4.4 |
+| Composition root | `app` modülünde `BookstoreModule`: bütün modülleri JDBC repository'leriyle elle bağlar, dışarıya yalnızca façade'ları verir; `BookstoreModule.Adapters` saat, ödeme, parola ve bildirim adaptörlerini alır. `BookstoreModuleTest` boş veritabanını migrate edip bir müşterinin bütün yolculuğunu façade'larla yürütür | ✅ | 4.4 |
 | Fake, stub, mock | Modül testlerinde sahte façade'lar *(`FakeCatalog`, `FakeCustomers`, `FakeRatings` …)* ve sahte portlar | ✅ | 2, 4.1 |
 
 ## Bölüm 11 — Domain Events ve Observer Deseni

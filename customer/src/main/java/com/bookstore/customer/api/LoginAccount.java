@@ -1,7 +1,5 @@
-package com.bookstore.customer.application;
+package com.bookstore.customer.api;
 
-import com.bookstore.customer.domain.Customer;
-import com.bookstore.customer.domain.Role;
 import com.bookstore.shared.kernel.identity.CustomerId;
 
 /**
@@ -11,21 +9,10 @@ import com.bookstore.shared.kernel.identity.CustomerId;
  * @param customerId   the customer's id
  * @param email        the e-mail address used as the user name
  * @param passwordHash the stored password hash
- * @param role         the role
+ * @param role         the role: {@code CUSTOMER} or {@code ADMIN}
  * @param active       whether the customer may sign in (ACC-7)
  */
-public record LoginAccount(CustomerId customerId, String email, String passwordHash, Role role, boolean active) {
-
-    /**
-     * Copies a customer.
-     *
-     * @param customer a stored customer
-     * @return the account
-     */
-    public static LoginAccount of(Customer customer) {
-        return new LoginAccount(customer.id(), customer.email().value(), customer.passwordHash(), customer.role(),
-                customer.isActive());
-    }
+public record LoginAccount(CustomerId customerId, String email, String passwordHash, String role, boolean active) {
 
     /** Hides the password hash when the account is logged. */
     @Override

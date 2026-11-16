@@ -18,9 +18,9 @@ class CustomerDirectoryServiceTest {
 
     @Test
     void returnsTheCustomersOwnAddressOnly() {
-        assertThat(shop.directory.shippingAddress(ayse, shop.defaultAddressId(ayse).value())).isEqualTo(CustomerShop.address());
+        assertThat(shop.directory.shippingAddress(ayse, shop.defaultAddressId(ayse))).isEqualTo(CustomerShop.address());
 
-        assertThatThrownBy(() -> shop.directory.shippingAddress(ayse, shop.defaultAddressId(mehmet).value()))
+        assertThatThrownBy(() -> shop.directory.shippingAddress(ayse, shop.defaultAddressId(mehmet)))
                 .isInstanceOf(NotFoundException.class);
         assertThatThrownBy(() -> shop.directory.shippingAddress(CustomerId.of(999), 1)).isInstanceOf(NotFoundException.class);
     }

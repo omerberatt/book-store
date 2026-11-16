@@ -3,10 +3,13 @@ package com.bookstore.sales.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.bookstore.sales.domain.Cart;
-import com.bookstore.sales.domain.CartAdjustment;
+import com.bookstore.sales.api.CartNotice;
+import com.bookstore.sales.api.CartRef;
+import com.bookstore.sales.api.CartView;
+import com.bookstore.sales.api.GuestCart;
 import com.bookstore.sales.domain.StockShortageException;
 import com.bookstore.shared.kernel.error.NotFoundException;
+import com.bookstore.shared.kernel.error.ValidationException;
 import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.kernel.money.Money;
@@ -22,7 +25,7 @@ class CartServiceTest {
 
     @Test
     void guestCartIsChangedInPlaceAndPricedWithShipping() {
-        Cart session = Cart.guest();
+        GuestCart session = new GuestCart();
 
         CartView view = shop.cart.add(CartRef.guest(session), dune.id(), 2);
 
@@ -103,8 +106,8 @@ class CartServiceTest {
         CartView second = shop.cart.view(ref);
 
         assertThat(first.adjustments()).containsExactly(
-                new CartAdjustment.PriceChanged(dune.id(), "Dune", Money.of("100.00"), Money.of("90.00")),
-                new CartAdjustment.QuantityReduced(madonna.id(), "Kürk Mantolu Madonna", 3, 1));
+                new CartNotice.PriceChanged(dune.id(), "Dune", Money.of("100.00"), Money.of("90.00")),
+                new CartNotice.QuantityReduced(madonna.id(), "Kürk Mantolu Madonna", 3, 1));
         assertThat(first.subtotal()).isEqualTo(Money.of("225.50"));
         assertThat(second.adjustments()).as("warnings are shown once").isEmpty();
     }
@@ -112,7 +115,7 @@ class CartServiceTest {
     @Test
     void signingInMergesTheGuestCart() {
         shop.cart.add(CartRef.customer(customerId), dune.id(), 1);
-        Cart session = Cart.guest();
+        GuestCart session = new GuestCart();
         shop.cart.add(CartRef.guest(session), dune.id(), 2);
         shop.cart.add(CartRef.guest(session), madonna.id(), 1);
 
@@ -130,7 +133,7 @@ class CartServiceTest {
     }
 
     @Test
-    void guestReferenceRejectsACustomerCart() {
-        assertThatThrownBy(() -> CartRef.guest(Cart.forCustomer(customerId))).isInstanceOf(Exception.class);
+    void guestReferenceNeedsACart() {
+        assertThatThrownBy(() -> CartRef.guest(null)).isInstanceOf(ValidationException.class);
     }
 }

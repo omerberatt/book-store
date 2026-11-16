@@ -1,4 +1,4 @@
-package com.bookstore.sales.application;
+package com.bookstore.sales.api;
 
 import com.bookstore.shared.kernel.error.ConflictException;
 

@@ -1,5 +1,7 @@
 package com.bookstore.shared.kernel.identity;
 
+import com.bookstore.shared.kernel.error.ValidationException;
+
 import java.io.Serializable;
 
 /**
@@ -24,11 +26,11 @@ public interface Identifier extends Serializable {
      * @param value the value
      * @param type  the id type, for the error message
      * @return the value
-     * @throws IllegalArgumentException if the value is zero or negative
+     * @throws ValidationException if the value is zero or negative
      */
     static long requireValid(long value, String type) {
         if (value <= 0) {
-            throw new IllegalArgumentException(type + " must be greater than zero, was " + value);
+            throw new ValidationException(type, "must be greater than zero, was " + value);
         }
         return value;
     }

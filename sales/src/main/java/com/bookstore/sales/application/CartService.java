@@ -1,6 +1,10 @@
 package com.bookstore.sales.application;
 
 import com.bookstore.catalog.api.StockFacade;
+import com.bookstore.sales.api.CartFacade;
+import com.bookstore.sales.api.CartRef;
+import com.bookstore.sales.api.CartView;
+import com.bookstore.sales.api.GuestCart;
 import com.bookstore.sales.domain.Cart;
 import com.bookstore.sales.domain.CartAdjustment;
 import com.bookstore.sales.domain.CartRepository;
@@ -22,7 +26,7 @@ import java.util.function.Consumer;
  * <p>Every operation returns the cart as it should be shown: checked against the current catalog,
  * priced with current prices and with any adjustments listed.
  */
-public class CartService {
+public class CartService implements CartFacade {
 
     private final StockFacade stock;
     private final CartRepository carts;
@@ -51,6 +55,7 @@ public class CartService {
      * @param ref which cart
      * @return the cart, checked against the current catalog
      */
+    @Override
     public CartView view(CartRef ref) {
         return change(ref, cart -> { });
     }
@@ -64,6 +69,7 @@ public class CartService {
      * @return the updated cart
      * @throws NotFoundException if the book does not exist or is deactivated
      */
+    @Override
     public CartView add(CartRef ref, BookId bookId, int quantity) {
         return change(ref, cart -> cart.add(requireActiveBook(bookId), quantity));
     }
@@ -76,6 +82,7 @@ public class CartService {
      * @param quantity the new quantity
      * @return the updated cart
      */
+    @Override
     public CartView changeQuantity(CartRef ref, BookId bookId, int quantity) {
         return change(ref, cart -> {
             if (quantity == 0) {
@@ -93,6 +100,7 @@ public class CartService {
      * @param bookId the book's id
      * @return the updated cart
      */
+    @Override
     public CartView remove(CartRef ref, BookId bookId) {
         return change(ref, cart -> cart.remove(bookId));
     }
@@ -103,6 +111,7 @@ public class CartService {
      * @param ref which cart
      * @return the empty cart
      */
+    @Override
     public CartView clear(CartRef ref) {
         return change(ref, Cart::clear);
     }
@@ -115,8 +124,9 @@ public class CartService {
      * @param guestCart  the session cart; it is not changed
      * @return the merged cart
      */
-    public CartView mergeGuestCart(CustomerId customerId, Cart guestCart) {
-        return change(CartRef.customer(customerId), cart -> cart.mergeFrom(guestCart));
+    @Override
+    public CartView mergeGuestCart(CustomerId customerId, GuestCart guestCart) {
+        return change(CartRef.customer(customerId), cart -> cart.mergeFrom(SalesMapper.cartOf(guestCart)));
     }
 
     /**
@@ -143,7 +153,7 @@ public class CartService {
 
     private Cart load(CartRef ref) {
         return switch (ref) {
-            case CartRef.Guest guest -> guest.cart();
+            case CartRef.Guest guest -> SalesMapper.cartOf(guest.cart());
             case CartRef.Customer customer -> carts.findByCustomerId(customer.customerId())
                     .orElseGet(() -> Cart.forCustomer(customer.customerId()));
         };
@@ -151,9 +161,7 @@ public class CartService {
 
     private void store(CartRef ref, Cart cart) {
         switch (ref) {
-            case CartRef.Guest guest -> {
-                // The session cart was changed in place; the web layer keeps it in the session.
-            }
+            case CartRef.Guest guest -> SalesMapper.copyInto(cart, guest.cart());
             case CartRef.Customer customer -> carts.save(cart);
         }
     }
@@ -172,6 +180,7 @@ public class CartService {
                 .toList();
         Money subtotal = Money.sum(lines.stream().map(CartView.Line::lineTotal));
         Money shipping = lines.isEmpty() ? Money.ZERO : shippingPolicy.costFor(subtotal);
-        return new CartView(lines, subtotal, shipping, subtotal.plus(shipping), cart.totalQuantity(), adjustments);
+        return new CartView(lines, subtotal, shipping, subtotal.plus(shipping), cart.totalQuantity(),
+                SalesMapper.noticesOf(adjustments));
     }
 }

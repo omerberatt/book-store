@@ -1,9 +1,8 @@
-package com.bookstore.catalog.application;
+package com.bookstore.catalog.api;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.bookstore.catalog.domain.BookSort;
 import com.bookstore.shared.kernel.error.ValidationException;
 import com.bookstore.shared.kernel.money.Money;
 
@@ -21,6 +20,6 @@ class BookSearchQueryTest {
     @Test
     void anOpenEndedRangeIsFine() {
         assertThat(BookSearchQuery.everything().priced(null, Money.of("50")).maxPrice()).isEqualTo(Money.of("50"));
-        assertThat(BookSearchQuery.everything().sort()).isEqualTo(BookSort.DEFAULT);
+        assertThat(BookSearchQuery.everything().sortBy()).isEqualTo(BookSearchQuery.DEFAULT_SORT);
     }
 }

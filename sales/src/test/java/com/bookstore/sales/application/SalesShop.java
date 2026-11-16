@@ -1,10 +1,11 @@
 package com.bookstore.sales.application;
 
+import com.bookstore.sales.api.CartRef;
+import com.bookstore.sales.api.OrderDetails;
+import com.bookstore.sales.api.PlaceOrderCommand;
 import com.bookstore.sales.domain.OrderNumber;
 import com.bookstore.sales.domain.OrderNumberSequence;
-import com.bookstore.sales.domain.OrderStatus;
 import com.bookstore.sales.domain.PaymentGateway;
-import com.bookstore.sales.domain.PaymentMethod;
 import com.bookstore.sales.domain.ShippingPolicy;
 import com.bookstore.sales.persistence.InMemoryCartRepository;
 import com.bookstore.sales.persistence.InMemoryOrderRepository;
@@ -69,14 +70,14 @@ public final class SalesShop {
     public OrderDetails buy(CustomerId customerId, FakeCatalog.Item book, int quantity) {
         cart.add(CartRef.customer(customerId), book.id(), quantity);
         return checkout.placeOrder(new PlaceOrderCommand(customerId, defaultAddressId(customerId),
-                PaymentMethod.CREDIT_CARD));
+                "CREDIT_CARD"));
     }
 
     /** Buys a book and has the order shipped and delivered. */
     public OrderDetails buyAndReceive(CustomerId customerId, FakeCatalog.Item book) {
         OrderDetails order = buy(customerId, book, 1);
-        orderAdmin.changeStatus(order.orderNumber(), OrderStatus.SHIPPED);
-        return orderAdmin.changeStatus(order.orderNumber(), OrderStatus.DELIVERED);
+        orderAdmin.changeStatus(order.orderNumber(), "SHIPPED");
+        return orderAdmin.changeStatus(order.orderNumber(), "DELIVERED");
     }
 
     /** A valid delivery address, the one every fake customer has. */

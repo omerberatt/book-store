@@ -1,7 +1,6 @@
-package com.bookstore.sales.application;
+package com.bookstore.sales.api;
 
 import com.bookstore.shared.kernel.error.ConflictException;
-import com.bookstore.sales.domain.CartAdjustment;
 
 import java.util.List;
 
@@ -14,14 +13,14 @@ public class CartChangedException extends ConflictException {
     /** Error code for a cart that changed at checkout. */
     public static final String CODE = "cart.changed";
 
-    private final List<CartAdjustment> adjustments;
+    private final List<CartNotice> adjustments;
 
     /**
      * Creates the exception.
      *
      * @param adjustments what changed, at least one
      */
-    public CartChangedException(List<CartAdjustment> adjustments) {
+    public CartChangedException(List<CartNotice> adjustments) {
         super(CODE, "The cart changed: " + adjustments);
         this.adjustments = List.copyOf(adjustments);
     }
@@ -31,7 +30,7 @@ public class CartChangedException extends ConflictException {
      *
      * @return the adjustments
      */
-    public List<CartAdjustment> adjustments() {
+    public List<CartNotice> adjustments() {
         return adjustments;
     }
 }

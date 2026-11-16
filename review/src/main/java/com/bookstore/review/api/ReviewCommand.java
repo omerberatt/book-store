@@ -1,4 +1,4 @@
-package com.bookstore.review.application;
+package com.bookstore.review.api;
 
 import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.identity.CustomerId;

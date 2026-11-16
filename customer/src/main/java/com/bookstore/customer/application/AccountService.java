@@ -1,5 +1,9 @@
 package com.bookstore.customer.application;
 
+import com.bookstore.customer.api.AccountFacade;
+import com.bookstore.customer.api.CustomerView;
+import com.bookstore.customer.api.LoginAccount;
+import com.bookstore.customer.api.RegistrationCommand;
 import com.bookstore.customer.domain.AddressId;
 import com.bookstore.customer.domain.Customer;
 import com.bookstore.customer.domain.CustomerRepository;
@@ -22,7 +26,7 @@ import java.util.function.Consumer;
 /**
  * Registration, sign-in lookup, profile and address book (ACC-1 to ACC-7).
  */
-public class AccountService {
+public class AccountService implements AccountFacade {
 
     /** Error code for an e-mail address that is already registered. */
     public static final String EMAIL_TAKEN = "email.taken";
@@ -56,6 +60,7 @@ public class AccountService {
      * @throws ValidationException if a field is invalid or the password breaks a rule
      * @throws ConflictException   if the e-mail address is already registered
      */
+    @Override
     public CustomerView register(RegistrationCommand command) {
         Email email = Email.of(command.email());
         PersonName name = new PersonName(command.firstName(), command.lastName());
@@ -64,7 +69,7 @@ public class AccountService {
         return transactions.inTransaction(() -> {
             requireEmailFree(email);
             Customer customer = Customer.register(email, name, passwordHasher.hash(command.password()), clock);
-            return CustomerView.of(customers.save(customer));
+            return CustomerMapper.viewOf(customers.save(customer));
         });
     }
 
@@ -74,6 +79,7 @@ public class AccountService {
      * @param email the address as typed
      * @return the account, or empty if no customer has that address or it is not a valid address
      */
+    @Override
     public Optional<LoginAccount> findLoginAccount(String email) {
         Email parsed;
         try {
@@ -81,7 +87,7 @@ public class AccountService {
         } catch (ValidationException e) {
             return Optional.empty();
         }
-        return customers.findByEmail(parsed).map(LoginAccount::of);
+        return customers.findByEmail(parsed).map(CustomerMapper::loginOf);
     }
 
     /**
@@ -90,8 +96,9 @@ public class AccountService {
      * @param customerId the customer's id
      * @return the profile
      */
+    @Override
     public CustomerView profile(CustomerId customerId) {
-        return CustomerView.of(requireCustomer(customerId));
+        return CustomerMapper.viewOf(requireCustomer(customerId));
     }
 
     /**
@@ -104,6 +111,7 @@ public class AccountService {
      * @return the updated profile
      * @throws ConflictException if another customer already uses the e-mail address
      */
+    @Override
     public CustomerView updateProfile(CustomerId customerId, String firstName, String lastName, String email) {
         PersonName name = new PersonName(firstName, lastName);
         Email newEmail = Email.of(email);
@@ -124,6 +132,7 @@ public class AccountService {
      * @param newPassword     the new password, as typed
      * @throws ValidationException if the current password is wrong or the new one breaks a rule
      */
+    @Override
     public void changePassword(CustomerId customerId, String currentPassword, String newPassword) {
         PasswordPolicy.check(newPassword);
         change(customerId, customer -> {
@@ -143,6 +152,7 @@ public class AccountService {
      * @param makeDefault whether to make it the default
      * @return the updated profile, including the new address with its id
      */
+    @Override
     public CustomerView addAddress(CustomerId customerId, String label, Address address, boolean makeDefault) {
         return change(customerId, customer -> customer.addAddress(label, address, makeDefault));
     }
@@ -156,8 +166,9 @@ public class AccountService {
      * @param address    the new address
      * @return the updated profile
      */
-    public CustomerView changeAddress(CustomerId customerId, AddressId addressId, String label, Address address) {
-        return change(customerId, customer -> customer.changeAddress(addressId, label, address));
+    @Override
+    public CustomerView changeAddress(CustomerId customerId, long addressId, String label, Address address) {
+        return change(customerId, customer -> customer.changeAddress(AddressId.of(addressId), label, address));
     }
 
     /**
@@ -167,8 +178,9 @@ public class AccountService {
      * @param addressId  the address id
      * @return the updated profile
      */
-    public CustomerView makeDefaultAddress(CustomerId customerId, AddressId addressId) {
-        return change(customerId, customer -> customer.makeDefault(addressId));
+    @Override
+    public CustomerView makeDefaultAddress(CustomerId customerId, long addressId) {
+        return change(customerId, customer -> customer.makeDefault(AddressId.of(addressId)));
     }
 
     /**
@@ -178,8 +190,9 @@ public class AccountService {
      * @param addressId  the address id
      * @return the updated profile
      */
-    public CustomerView removeAddress(CustomerId customerId, AddressId addressId) {
-        return change(customerId, customer -> customer.removeAddress(addressId));
+    @Override
+    public CustomerView removeAddress(CustomerId customerId, long addressId) {
+        return change(customerId, customer -> customer.removeAddress(AddressId.of(addressId)));
     }
 
     /**
@@ -189,17 +202,18 @@ public class AccountService {
      * @param addressId  the address id
      * @return the address
      */
-    public CustomerView.AddressView address(CustomerId customerId, AddressId addressId) {
+    @Override
+    public CustomerView.AddressView address(CustomerId customerId, long addressId) {
         Customer customer = requireCustomer(customerId);
-        SavedAddress address = customer.address(addressId);
-        return CustomerView.AddressView.of(customer, address);
+        SavedAddress address = customer.address(AddressId.of(addressId));
+        return CustomerMapper.addressOf(customer, address);
     }
 
     private CustomerView change(CustomerId customerId, Consumer<Customer> operation) {
         return transactions.inTransaction(() -> {
             Customer customer = requireCustomer(customerId);
             operation.accept(customer);
-            return CustomerView.of(customers.save(customer));
+            return CustomerMapper.viewOf(customers.save(customer));
         });
     }
 
