@@ -52,19 +52,19 @@ public class Category extends Entity {
     }
 
     /**
-     * Restores a top-level category loaded from storage.
+     * Reconstitutes a top-level category loaded from storage.
      *
      * @param id      the stored id
      * @param version the stored version
      * @param name    the stored name
      * @return the category, without children until they are restored
      */
-    public static Category restoreRoot(long id, int version, String name) {
+    public static Category reconstituteRoot(long id, int version, String name) {
         return new Category(id, version, name, null);
     }
 
     /**
-     * Restores a subcategory loaded from storage and attaches it to its parent.
+     * Reconstitutes a subcategory loaded from storage and attaches it to its parent.
      *
      * @param id      the stored id
      * @param version the stored version
@@ -72,7 +72,7 @@ public class Category extends Entity {
      * @param parent  the already restored parent, which must be a root
      * @return the subcategory
      */
-    public static Category restoreChild(long id, int version, String name, Category parent) {
+    public static Category reconstituteChild(long id, int version, String name, Category parent) {
         requireCanHaveChildren(parent);
         Category child = new Category(id, version, name, parent);
         parent.children.add(child);

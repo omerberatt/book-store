@@ -64,13 +64,13 @@ public final class Cart implements Iterable<CartItem>, Serializable {
     }
 
     /**
-     * Restores a customer's cart loaded from storage.
+     * Reconstitutes a customer's cart loaded from storage.
      *
      * @param customerId the customer's id
      * @param items      the stored lines, in order
      * @return the cart
      */
-    public static Cart restore(long customerId, List<CartItem> items) {
+    public static Cart reconstitute(long customerId, List<CartItem> items) {
         Cart cart = forCustomer(customerId);
         for (CartItem item : items) {
             cart.items.put(item.bookId(), item);

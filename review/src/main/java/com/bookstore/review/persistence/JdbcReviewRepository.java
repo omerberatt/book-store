@@ -103,7 +103,7 @@ public class JdbcReviewRepository implements ReviewRepository {
                              Instant createdAt, Instant updatedAt) {
 
         Review toReview() {
-            return Review.restore(id, version, bookId, userId, Rating.of(rating), commentText, createdAt, updatedAt);
+            return Review.reconstitute(id, version, bookId, userId, Rating.of(rating), commentText, createdAt, updatedAt);
         }
     }
 }

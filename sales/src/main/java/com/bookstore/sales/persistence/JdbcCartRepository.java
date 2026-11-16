@@ -37,7 +37,7 @@ public class JdbcCartRepository implements CartRepository {
                 row -> new CartItem(row.getLong("book_id"), row.getInt("quantity"),
                         Columns.money(row, "price_when_added")),
                 customerId);
-        return Optional.of(Cart.restore(customerId, items));
+        return Optional.of(Cart.reconstitute(customerId, items));
     }
 
     @Override

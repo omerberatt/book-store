@@ -153,7 +153,7 @@ public class JdbcOrderRepository implements OrderRepository {
 
         Order toOrder(List<OrderLine> lines) {
             Address address = new Address(shipRecipient, shipPhone, shipLine, shipDistrict, shipCity, shipPostalCode);
-            return Order.restore(id, version, new OrderNumber(orderNumber), userId, lines, address, paymentMethod,
+            return Order.reconstitute(id, version, new OrderNumber(orderNumber), userId, lines, address, paymentMethod,
                     shippingCost, status, placedAt, statusChangedAt);
         }
     }

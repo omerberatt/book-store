@@ -53,7 +53,7 @@ public class Review extends Entity {
     }
 
     /**
-     * Restores a review loaded from storage.
+     * Reconstitutes a review loaded from storage.
      *
      * @param id         the stored id
      * @param version    the stored version
@@ -65,7 +65,7 @@ public class Review extends Entity {
      * @param updatedAt  when it was last edited
      * @return the review
      */
-    public static Review restore(long id, int version, long bookId, long customerId, Rating rating, String comment,
+    public static Review reconstitute(long id, int version, long bookId, long customerId, Rating rating, String comment,
                                  Instant createdAt, Instant updatedAt) {
         Review review = new Review(bookId, customerId, rating, comment, createdAt, updatedAt);
         review.markPersisted(id, version);

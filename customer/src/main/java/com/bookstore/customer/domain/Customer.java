@@ -71,7 +71,7 @@ public class Customer extends Entity {
     }
 
     /**
-     * Restores a customer loaded from storage.
+     * Reconstitutes a customer loaded from storage.
      *
      * @param id               the stored id
      * @param version          the stored version
@@ -85,7 +85,7 @@ public class Customer extends Entity {
      * @param defaultAddressId id of the default address among {@code addresses}, or {@code null}
      * @return the customer
      */
-    public static Customer restore(long id, int version, Email email, PersonName name, String passwordHash,
+    public static Customer reconstitute(long id, int version, Email email, PersonName name, String passwordHash,
                                    Role role, boolean active, Instant registeredAt, List<SavedAddress> addresses,
                                    Long defaultAddressId) {
         Customer customer = new Customer(email, name, passwordHash, role, active, registeredAt);

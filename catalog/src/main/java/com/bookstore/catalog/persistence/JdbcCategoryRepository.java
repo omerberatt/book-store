@@ -61,8 +61,8 @@ public class JdbcCategoryRepository implements CategoryRepository {
         Map<Long, Category> byId = new HashMap<>();
         for (CategoryRow row : rows) {
             Category category = row.parentId() == null
-                    ? Category.restoreRoot(row.id(), row.version(), row.name())
-                    : Category.restoreChild(row.id(), row.version(), row.name(), byId.get(row.parentId()));
+                    ? Category.reconstituteRoot(row.id(), row.version(), row.name())
+                    : Category.reconstituteChild(row.id(), row.version(), row.name(), byId.get(row.parentId()));
             byId.put(category.id(), category);
         }
         return byId;

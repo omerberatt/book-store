@@ -108,7 +108,7 @@ public class Order extends Entity {
     }
 
     /**
-     * Restores an order loaded from storage.
+     * Reconstitutes an order loaded from storage.
      *
      * @param id              the stored id
      * @param version         the stored version
@@ -123,7 +123,7 @@ public class Order extends Entity {
      * @param statusChangedAt when the status last changed
      * @return the order
      */
-    public static Order restore(long id, int version, OrderNumber number, long customerId, List<OrderLine> lines,
+    public static Order reconstitute(long id, int version, OrderNumber number, long customerId, List<OrderLine> lines,
                                 Address shippingAddress, PaymentMethod paymentMethod, Money shippingCost,
                                 OrderStatus status, Instant placedAt, Instant statusChangedAt) {
         Order order = new Order(number, customerId, lines, shippingAddress, paymentMethod, shippingCost, status,

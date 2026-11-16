@@ -169,7 +169,7 @@ public class JdbcCustomerRepository implements CustomerRepository {
             List<SavedAddress> addresses = addressRows.stream().map(AddressRow::toSavedAddress).toList();
             Long defaultId = addressRows.stream().filter(AddressRow::isDefault).map(AddressRow::id)
                     .findFirst().orElse(null);
-            return Customer.restore(id, version, Email.of(email), new PersonName(firstName, lastName), passwordHash,
+            return Customer.reconstitute(id, version, Email.of(email), new PersonName(firstName, lastName), passwordHash,
                     role, active, registeredAt, addresses, defaultId);
         }
     }
@@ -179,7 +179,7 @@ public class JdbcCustomerRepository implements CustomerRepository {
                               String phone, String addressLine, String district, String city, String postalCode) {
 
         SavedAddress toSavedAddress() {
-            return SavedAddress.restore(id, version, label,
+            return SavedAddress.reconstitute(id, version, label,
                     new Address(recipient, phone, addressLine, district, city, postalCode));
         }
     }

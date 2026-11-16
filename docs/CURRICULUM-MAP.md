@@ -147,7 +147,7 @@ Faz numaraları [ROADMAP.md](ROADMAP.md) içindeki aşamalardır; ADR'ler [docs/
 | Migration'ların sahibi olan modül | Her modül `db/migration/<modül>` altında kendi dosyalarına ve `flyway_history_<modül>` tablosuna sahip *(ADR-0018)* | ✅ | 4.1 |
 | JDBC repository, aggregate = depolama birimi | `JdbcBookRepository`, `JdbcOrderRepository` … | ✅ | 3 |
 | Alt satırları silip yeniden yazmak | `cart_items`, `book_authors` | ✅ | 3 |
-| Veritabanından yeniden oluşturma *(reconstitute)* | Bugün adı `restore(...)`; `reconstitute` olacak | 🔁 | 4 |
+| Veritabanından yeniden oluşturma *(reconstitute)* | `Author`, `Category`, `Customer`, `SavedAddress`, `Order`, `Cart`, `Review` için `reconstitute…`; `Book.builder().persisted(...)`; yalnızca persistence çağırır *(`only_persistence_reconstitutes`)* | ✅ | 4.3 |
 | N+1 sorgu problemi | Bir sayfa kitap üç sorguyla yüklenir | ✅ | 3 |
 | Specification sorgularının bedeli | `BookSearchSql` tüm filtreyi SQL'de yapar | ✅ | 3 |
 | `BigDecimal` ölçek problemi | `Money` her zaman 2 basamağa yuvarlar | ✅ | 1 |

@@ -191,8 +191,8 @@ class CartTest {
     }
 
     @Test
-    void restoreRebuildsTheLines() {
-        Cart restored = Cart.restore(CUSTOMER_ID, List.of(new CartItem(2, 1, MADONNA_PRICE), new CartItem(1, 4, DUNE_PRICE)));
+    void reconstituteRebuildsTheLines() {
+        Cart restored = Cart.reconstitute(CUSTOMER_ID, List.of(new CartItem(2, 1, MADONNA_PRICE), new CartItem(1, 4, DUNE_PRICE)));
 
         assertThat(restored.bookIds()).containsExactlyInAnyOrder(1L, 2L);
         assertThat(restored.items()).first().isEqualTo(new CartItem(2, 1, MADONNA_PRICE));

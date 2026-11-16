@@ -17,7 +17,7 @@ import java.util.Optional;
 public class JdbcAuthorRepository implements AuthorRepository {
 
     static final RowMapper<Author> MAPPER =
-            row -> Author.restore(row.getLong("id"), row.getInt("version"), row.getString("name"));
+            row -> Author.reconstitute(row.getLong("id"), row.getInt("version"), row.getString("name"));
 
     private final JdbcExecutor jdbc;
 

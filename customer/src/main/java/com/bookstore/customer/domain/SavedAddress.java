@@ -28,7 +28,7 @@ public class SavedAddress extends Entity {
     }
 
     /**
-     * Restores a saved address loaded from storage, to be passed to {@link Customer#restore}.
+     * Reconstitutes a saved address loaded from storage, to be passed to {@link Customer#reconstitute}.
      *
      * @param id      the stored id
      * @param version the stored version
@@ -36,7 +36,7 @@ public class SavedAddress extends Entity {
      * @param address the stored address
      * @return the saved address
      */
-    public static SavedAddress restore(long id, int version, String label, Address address) {
+    public static SavedAddress reconstitute(long id, int version, String label, Address address) {
         return new SavedAddress(id, version, label, address);
     }
 

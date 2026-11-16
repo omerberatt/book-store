@@ -187,8 +187,8 @@ class OrderTest {
     }
 
     @Test
-    void restoreRecomputesTheSubtotal() {
-        Order order = Order.restore(5, 2, NUMBER, CUSTOMER_ID,
+    void reconstituteRecomputesTheSubtotal() {
+        Order order = Order.reconstitute(5, 2, NUMBER, CUSTOMER_ID,
                 List.of(new OrderLine(1, "Dune", Money.of("100"), 3)), home(),
                 PaymentMethod.BANK_TRANSFER, Money.ZERO, OrderStatus.SHIPPED, NOW, NOW);
 

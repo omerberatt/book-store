@@ -55,9 +55,9 @@ class CustomerTest {
 
     @Test
     void addressesAreFoundByIdAndTheDefaultMovesWhenItIsRemoved() {
-        Customer stored = Customer.restore(1, 0, Email.of("a@b.co"), new PersonName("A", "B"), "hash", Role.CUSTOMER,
-                true, NOW, List.of(SavedAddress.restore(10, 0, "Ev", home()),
-                        SavedAddress.restore(11, 0, "İş", home())), 10L);
+        Customer stored = Customer.reconstitute(1, 0, Email.of("a@b.co"), new PersonName("A", "B"), "hash", Role.CUSTOMER,
+                true, NOW, List.of(SavedAddress.reconstitute(10, 0, "Ev", home()),
+                        SavedAddress.reconstitute(11, 0, "İş", home())), 10L);
 
         assertThat(stored.defaultAddress()).map(SavedAddress::label).contains("Ev");
 

@@ -30,7 +30,7 @@ public abstract class Entity {
     }
 
     /**
-     * Restores an entity that was loaded from storage.
+     * Reconstitutes an entity that was loaded from storage.
      *
      * @param id      the stored id, greater than zero
      * @param version the stored version, zero or greater

@@ -39,7 +39,7 @@ final class Layers {
     }
 
     /**
-     * Calls that rebuild a stored aggregate: {@code restore…}/{@code reconstitute…} factories,
+     * Calls that rebuild a stored aggregate: {@code reconstitute…} factories,
      * {@code Entity.markPersisted} and the builders' {@code persisted(id, version)}.
      *
      * @return the predicate
@@ -47,7 +47,7 @@ final class Layers {
     static DescribedPredicate<JavaMethodCall> reconstitution() {
         return DescribedPredicate.describe("a method that rebuilds a stored aggregate", call -> {
             String name = call.getName();
-            boolean reconstituting = name.startsWith("restore") || name.startsWith("reconstitute")
+            boolean reconstituting = name.startsWith("reconstitute")
                     || RECONSTITUTING_METHODS.contains(name);
             return reconstituting && DOMAIN_PACKAGE.matcher(call.getTargetOwner().getPackageName()).matches();
         });

@@ -33,14 +33,14 @@ public class Author extends Entity {
     }
 
     /**
-     * Restores an author loaded from storage.
+     * Reconstitutes an author loaded from storage.
      *
      * @param id      the stored id
      * @param version the stored version
      * @param name    the stored name
      * @return the author
      */
-    public static Author restore(long id, int version, String name) {
+    public static Author reconstitute(long id, int version, String name) {
         return new Author(id, version, name);
     }
 
