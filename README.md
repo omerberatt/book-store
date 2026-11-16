@@ -4,7 +4,7 @@ Java ile yazılmış, modüler bir çevrimiçi kitap mağazası.
 
 Projenin amacı: çalışan bir e-ticaret uygulaması ortaya koymak.
 
-> **Durum:** Faz 0–3 tamamlandı: domain modeli, kullanım senaryoları ve JDBC ile veritabanı katmanı testleriyle hazır. Kodun hedef mimariye *(iş alanına göre modüller, Jakarta EE, PostgreSQL)* taşınması Faz 4'te yapılacak. HTTP katmanı ve web sayfaları henüz yok. Ayrıntılar [yol haritasında](docs/ROADMAP.md).
+> **Durum:** Faz 0–3 ve Faz 4.1 tamamlandı. Kod iş alanına göre modüllerde *(katalog, müşteri, satış, yorum)*; modüller birbirini yalnızca `api` paketleriyle kullanıyor ve bu kural ArchUnit ile korunuyor. Jakarta EE, PostgreSQL, HTTP katmanı ve web sayfaları henüz yok. Ayrıntılar [yol haritasında](docs/ROADMAP.md).
 
 ## Dokümanlar
 
@@ -12,14 +12,15 @@ Projenin amacı: çalışan bir e-ticaret uygulaması ortaya koymak.
 | --- | --- |
 | [SPEC.md](docs/SPEC.md) | Sistem ne yapar: aktörler, gereksinimler, kapsam dışı kalanlar |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Hedef mimari: modüller, paketler, uygulama sunucusu, veritabanı, test |
-| [adr/](docs/adr/README.md) | Mimari karar kayıtları *(ADR-0001 – ADR-0017)* |
+| [adr/](docs/adr/README.md) | Mimari karar kayıtları *(ADR-0001 – ADR-0018)* |
 | [CURRICULUM-MAP.md](docs/CURRICULUM-MAP.md) | Ders notlarının her bölümü projenin neresinde |
 | [ROADMAP.md](docs/ROADMAP.md) | Fazlar ve sıradaki adımlar |
 
 ## Hedef mimari
 
 ```
-shared-kernel                 Money, Specification, DomainException
+shared-kernel                 Money, Address, Entity, hatalar
+shared-jdbc                   JDBC araç seti, modül başına migration'lar
 catalog | customer | sales | review     iş modülleri; her birinde api, application, domain, persistence, rest
 app                           WAR: Payara Micro 7, CDI bağlama, açılış, HTML/JS arayüz
 quality/architecture-tests    ArchUnit kuralları
@@ -31,7 +32,7 @@ quality/architecture-tests    ArchUnit kuralları
 
 Java 21 · Maven · Jakarta EE 11 · MicroProfile 6.1 · Payara Micro 7 · PostgreSQL 17 · Flyway · JDBC · JUnit · AssertJ · ArchUnit · Testcontainers
 
-*(Bugünkü kod hâlâ Faz 0'daki Spring Boot iskeletini ve H2'yi kullanıyor; geçiş Faz 4–6'da.)*
+*(Testler bugün H2 üzerinde çalışıyor; Jakarta EE ve PostgreSQL geçişi Faz 4.6–6'da.)*
 
 ## Gereksinimler
 

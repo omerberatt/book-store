@@ -1,0 +1,90 @@
+package com.bookstore.shared.kernel.domain;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import com.bookstore.shared.kernel.event.DomainEvent;
+
+import java.time.Instant;
+import java.util.HashSet;
+import java.util.Set;
+
+import org.junit.jupiter.api.Test;
+
+class EntityTest {
+
+    @Test
+    void newEntityHasNoIdUntilStored() {
+        Thing thing = new Thing();
+
+        assertThat(thing.isNew()).isTrue();
+        assertThat(thing.version()).isZero();
+        assertThatThrownBy(thing::id).isInstanceOf(IllegalStateException.class);
+
+        thing.markPersisted(5, 1);
+
+        assertThat(thing.isNew()).isFalse();
+        assertThat(thing.id()).isEqualTo(5);
+        assertThat(thing.version()).isEqualTo(1);
+    }
+
+    @Test
+    void idCannotChangeOnceAssignedButVersionCan() {
+        Thing thing = new Thing(5, 0);
+
+        thing.markPersisted(5, 1);
+        assertThat(thing.version()).isEqualTo(1);
+
+        assertThatThrownBy(() -> thing.markPersisted(6, 2)).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> thing.markPersisted(0, 0)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void storedEntitiesAreEqualByIdAndNewOnesOnlyToThemselves() {
+        Thing first = new Thing(5, 0);
+        Thing sameId = new Thing(5, 3);
+        Thing newOne = new Thing();
+        Thing otherNewOne = new Thing();
+
+        assertThat(first).isEqualTo(sameId);
+        assertThat(newOne).isEqualTo(newOne).isNotEqualTo(otherNewOne).isNotEqualTo(first);
+    }
+
+    @Test
+    void hashCodeDoesNotChangeWhenTheIdIsAssigned() {
+        Thing thing = new Thing();
+        Set<Thing> set = new HashSet<>(Set.of(thing));
+
+        thing.markPersisted(9, 0);
+
+        assertThat(set).contains(thing);
+    }
+
+    @Test
+    void eventsArePulledOnce() {
+        Thing thing = new Thing();
+        Happened event = new Happened(Instant.EPOCH);
+
+        thing.happen(event);
+
+        assertThat(thing.pullEvents()).containsExactly(event);
+        assertThat(thing.pullEvents()).isEmpty();
+    }
+
+    private static final class Thing extends Entity {
+
+        Thing() {
+        }
+
+        Thing(long id, int version) {
+            super(id, version);
+        }
+
+        void happen(DomainEvent event) {
+            raise(event);
+        }
+    }
+
+    private record Happened(Instant occurredAt) implements DomainEvent {
+    }
+}

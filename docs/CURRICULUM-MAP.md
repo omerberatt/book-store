@@ -56,7 +56,7 @@ Faz numaraları [ROADMAP.md](ROADMAP.md) içindeki aşamalardır; ADR'ler [docs/
 | --- | --- | --- | --- |
 | Niyet bildiren metotlar *(setter yerine)* | `Customer.rename`, `changeEmail`; `Book.reserve`, `changePrice` | ✅ | 1 |
 | Aggregate kökü ve parçaları | `Order` → `OrderLine`, `Customer` → `SavedAddress`, `Cart` → `CartItem` | ✅ | 1 |
-| Aggregate'ler arası kimlikle referans | `Order` ve `Review` müşteriye `long` kimlikle bağlı. Ancak `Order.place` ve `Cart.add` başka bir aggregate'in nesnesini *(`Book`)* alıyor. Modüller ayrılınca `sales` kendi `ProductSnapshot` değerini kullanacak *(ADR-0002)*. | 🔁 | 4 |
+| Aggregate'ler arası kimlikle referans | `Order` ve `Review` müşteriye kimlikle bağlı; `Cart.add` ve `Order.place` artık `catalog`'un `Book` aggregate'ini değil, `sales`'in kendi `ProductSnapshot` değerini alıyor *(ADR-0002)*. Kimlikler henüz `long`. | ✅ | 4.1 |
 | `OrderStatus` state machine, `EnumSet`, final durumlar | `OrderStatus.allowedNext`, `canMoveTo`, `isFinal` | ✅ | 1 |
 | Domain exception hiyerarşisi | Bugün `BookstoreException` alt türleri; `DomainException` + `Kind` + `code` yapısına dönüştürülecek *(ADR-0004)* | 🔁 | 4 |
 | JUnit ve AssertJ ile birim testler | Tüm modüllerde; parametreli testler *(`@CsvSource`, `@EnumSource`)* | ✅ | 1 |
@@ -79,8 +79,8 @@ Faz numaraları [ROADMAP.md](ROADMAP.md) içindeki aşamalardır; ADR'ler [docs/
 | Konu | Kitap mağazasında | Durum | Faz |
 | --- | --- | --- | --- |
 | Coupling, cohesion, test edilebilirlik, bilişsel yük | ADR-0002'nin gerekçeleri | ✅ | — |
-| Katmanlı, hexagonal *(ports & adapters)*, onion/clean | Her iş modülünün içi hexagonal: `domain` merkezde, repository'ler ve portlar arayüz, `persistence` ve `rest` adaptör | 🔁 | 4 |
-| Modüler monolit | İş alanına göre Maven modülleri *(ADR-0002)*; bugün modüller katmana göre | 🔁 | 4 |
+| Katmanlı, hexagonal *(ports & adapters)*, onion/clean | Her iş modülünün içi hexagonal: `domain` merkezde; repository'ler ve portlar domain'de arayüz; `persistence` (ve Faz 5'te `rest`) adaptör | ✅ | 4.1 |
+| Modüler monolit | İş alanına göre Maven modülleri; modüller birbirini yalnızca `api` paketleriyle kullanıyor *(ADR-0002, ADR-0003)* | ✅ | 4.1 |
 | Mikroservis, SOA | Bilinçli olarak seçilmedi *(ADR-0002)* | — | — |
 
 ## Bölüm 07 — Typed Identity, Static Factory, Factory ve Builder
@@ -101,19 +101,19 @@ Faz numaraları [ROADMAP.md](ROADMAP.md) içindeki aşamalardır; ADR'ler [docs/
 | Specification *(kuralı veri haline getirmek)* | Bugün `BookSearchCriteria.asPredicate()` birleşik bir `Predicate`. `shared-kernel`'e `Specification<T>` *(and / or / not)* ve `BookSpecifications` eklenecek. | 🔁 | 4 |
 | Specification'ı SQL'e çevirmek | `BookSearchSql` *(ders bunu "bir sonraki adım" olarak bırakıyor)* | ✅ | 3 |
 | Repository deseni, arayüzün yeri | Arayüzler domain'de *(ders ADR-0003'ün risk notu baştan önlendi)* | ✅ | 1 |
-| Mapper *(domain ↔ DTO)* | Bugün okuma modeli `record`'larının `of(...)` metotları. `api` paketindeki DTO'lar ve `application` paketindeki mapper'lar olacak *(ADR-0003)*. | 🔁 | 4 |
-| Paket düzeni: `api`, `application`, `domain`, `persistence` | Her iş modülünde *(ADR-0002)* | ⏳ | 4 |
+| Mapper *(domain ↔ DTO)* | Modüller arası: `sales.application.Products` *(`BookOffer` → `ProductSnapshot`)* ✅. Okuma modelleri bugün `record`'ların `of(...)` metotları; `api` paketindeki DTO'lar ve mapper'lar 4.4'te *(ADR-0003)* | 🔁 | 4.1, 4.4 |
+| Paket düzeni: `api`, `application`, `domain`, `persistence` | Her iş modülünde; `rest` Faz 5'te *(ADR-0002)* | ✅ | 4.1 |
 
 ## Bölüm 09 — Maven Modülleri ve ArchUnit
 
 | Konu | Kitap mağazasında | Durum | Faz |
 | --- | --- | --- | --- |
-| Çok modüllü Maven, `pom` / `jar` paketleme | Altı modül var ama katmana göre ayrılmış | 🔁 | 4 |
-| İş alanına göre modüller *(package-by-feature)* | `shared-kernel`, `catalog`, `customer`, `sales`, `review`, `app` *(ADR-0002)* | ⏳ | 4 |
-| `shared-kernel` | Bugünkü `bookstore-common` yeniden adlandırılacak *(ADR-0005)* | 🔁 | 4 |
-| Test fixture'ını `test-jar` ile paylaşmak | `TestData` ve `Shop` düzenekleri | ⏳ | 4 |
-| Uçtan uca smoke test | `app` modülünde tüm modülleri kuran bir test | ⏳ | 4 |
-| ArchUnit ile mimari testler | `quality/architecture-tests`; ADR-0003–0008 kuralları | ⏳ | 4 |
+| Çok modüllü Maven, `pom` / `jar` paketleme | Kök `pom` ve sekiz `jar` modülü; sürümler kök POM'da sabit *(Spring BOM kaldırıldı)* | ✅ | 4.1 |
+| İş alanına göre modüller *(package-by-feature)* | `shared-kernel`, `shared-jdbc`, `catalog`, `customer`, `sales`, `review`, `app`, `quality/architecture-tests` *(ADR-0002, ADR-0018)* | ✅ | 4.1 |
+| `shared-kernel` | `Money`, `Address`, `Entity`, `DomainEvent`, `TransactionRunner`, sayfalama, metin ve hatalar; hiçbir iş modülüne bağımlı değil *(ArchUnit ile korunuyor)* | ✅ | 4.1 |
+| Test fixture'ını `test-jar` ile paylaşmak | `shared-kernel` *(`InMemoryStore`, `DirectTransactions`, `TestClock`)*, `shared-jdbc` *(`TestDatabase`)*, `catalog` *(`CatalogDb`)*, `customer` *(`CustomerDb`)*, `sales` *(`SalesDb`)* | ✅ | 4.1 |
+| Uçtan uca smoke test | `app` modülünde dört modülü gerçek JDBC ile kuran `JdbcBookstore`; `CheckoutWithDatabaseTest`, `ReviewFlowTest` | ✅ | 4.1 |
+| ArchUnit ile mimari testler | `quality/architecture-tests`: modül sınırı kuralları *(`ModuleBoundaryTest`)* ✅; ADR-0003–0008'in paket ve domain kuralları ⏳; kasıtlı ihlal denemesiyle doğrulandı | 🔁 | 4.1, 4.2 |
 | `no_standard_streams`, `no_dumping_ground_packages` | [ADR-0005](adr/ADR-0005.md) | ⏳ | 4 |
 
 ## Bölüm 10 — Uygulama Servisleri ve Manuel Dependency Injection
@@ -125,14 +125,14 @@ Faz numaraları [ROADMAP.md](ROADMAP.md) içindeki aşamalardır; ADR'ler [docs/
 | `api` paketi ve façade arayüzleri | Komutlar ve görünümler `api` paketine taşınacak; façade arayüzleri eklenecek | 🔁 | 4 |
 | Constructor injection, `private final` işbirlikçiler | Tüm servisler | ✅ | 2 |
 | `Clock` enjeksiyonu, `SteppingClock` | `Clock.fixed` ve `Clock.offset` ile testler | ✅ | 1, 2 |
-| Composition root | Testlerde `Shop`; üretimde `app` modülünde `BookstoreModule` | 🔁 | 4 |
-| Fake, stub, mock | `application` testlerinde `FakePorts` *(fake)* | ✅ | 2 |
+| Composition root | Testlerde modül başına düzenekler *(`CatalogShop`, `CustomerShop`, `SalesShop`)* ve `app` testlerinde `JdbcBookstore`; üretimde `BookstoreModule` | 🔁 | 4.4 |
+| Fake, stub, mock | Modül testlerinde sahte façade'lar *(`FakeCatalog`, `FakeCustomers`, `FakeRatings` …)* ve sahte portlar | ✅ | 2, 4.1 |
 
 ## Bölüm 11 — Domain Events ve Observer Deseni
 
 | Konu | Kitap mağazasında | Durum | Faz |
 | --- | --- | --- | --- |
-| Olaylar `sealed` arayüz + `record` | `DomainEvent`, `OrderPlaced`, `OrderStatusChanged`; modül başına olay arayüzüne bölünecek | 🔁 | 4 |
+| Olaylar `sealed` arayüz + `record` | `shared-kernel` `DomainEvent`; `sales` modülünün `sealed` `OrderEvent` arayüzü: `OrderPlaced`, `OrderStatusChanged` | ✅ | 4.1 |
 | Aggregate olayı biriktirir, servis toplar *(`pullEvents`)* | `Entity.raise` / `pullEvents` | ✅ | 1 |
 | Önce kayıt, sonra yayın | `CheckoutService`, `OrderAdminService` | ✅ | 2 |
 | Yayıncı portu ve gözlemciler | Bugün tek bir `Notifier` portu; `DomainEventPublisher` + `InProcessEventPublisher` + gözlemciler olacak *(ADR-0007)* | 🔁 | 4 |
@@ -143,8 +143,8 @@ Faz numaraları [ROADMAP.md](ROADMAP.md) içindeki aşamalardır; ADR'ler [docs/
 
 | Konu | Kitap mağazasında | Durum | Faz |
 | --- | --- | --- | --- |
-| Flyway ile şema yönetimi | `V1__initial_schema.sql`, `DatabaseMigrator` | ✅ | 3 |
-| Migration'ların sahibi olan modül | Bugün tek dosya; modül başına `db/migration/<modül>` olacak *(ADR-0008)* | 🔁 | 4 |
+| Flyway ile şema yönetimi | Modül başına `V1__<modül>.sql`; `ModuleMigrations` *(ADR-0018)* | ✅ | 3, 4.1 |
+| Migration'ların sahibi olan modül | Her modül `db/migration/<modül>` altında kendi dosyalarına ve `flyway_history_<modül>` tablosuna sahip *(ADR-0018)* | ✅ | 4.1 |
 | JDBC repository, aggregate = depolama birimi | `JdbcBookRepository`, `JdbcOrderRepository` … | ✅ | 3 |
 | Alt satırları silip yeniden yazmak | `cart_items`, `book_authors` | ✅ | 3 |
 | Veritabanından yeniden oluşturma *(reconstitute)* | Bugün adı `restore(...)`; `reconstitute` olacak | 🔁 | 4 |
@@ -158,7 +158,7 @@ Faz numaraları [ROADMAP.md](ROADMAP.md) içindeki aşamalardır; ADR'ler [docs/
 | Sözleşme testleri *(contract tests)* | Her repository için tek sözleşme; bellek içi, H2 ve PostgreSQL implementasyonlarının hepsi geçecek | ⏳ | 4 |
 | Bellek içi repository'nin kopya saklaması | Bugün referans saklıyor *(ders Bölüm 12'deki açığın aynısı)* | 🔁 | 4 |
 | PostgreSQL ve Testcontainers | Bugün H2 MySQL modu; PostgreSQL 17, H2 PostgreSQL modu ve Testcontainers olacak *(ADR-0008)* | 🔁 | 4 |
-| Atomik kayıt, geri alma | `CheckoutWithDatabaseTest.declinedPaymentRollsBack…` | ✅ | 3 |
+| Atomik kayıt, geri alma | `app` modülünde `CheckoutWithDatabaseTest.declinedPaymentRollsBack…`: başka bir modüldeki stok da geri alınıyor | ✅ | 3, 4.1 |
 | JPA'nın neleri ortadan kaldırdığı | Ayrı persistence modeliyle ikinci uygulama | ⏳ | 9 |
 
 ## Bölüm 13 — HTTP Boundary, DTO, Validasyon ve Hata Sözleşmeleri
@@ -219,7 +219,7 @@ Bunlar ders notlarında yok; kitap mağazasının ihtiyacından doğdu ya da Faz
 | `ArrayDeque` ile genişlik öncelikli gezinme | `Category.selfAndDescendants` |
 | Diziler ve kontrol basamağı hesabı | `Isbn` *(ISBN-10 → ISBN-13)* |
 | Java serileştirmesi | `Cart` *(misafir sepeti oturumda; ADR-0011 ile yeniden değerlendirilecek)* |
-| Eşzamanlılık testleri *(`ExecutorService`, `CountDownLatch`)* | `JdbcRepositoriesTest.OrderNumbers`, `CheckoutWithDatabaseTest` |
+| Eşzamanlılık testleri *(`ExecutorService`, `CountDownLatch`)* | `JdbcSalesRepositoriesTest.OrderNumbers`, `CheckoutWithDatabaseTest` |
 | Kimlik doğrulama, BCrypt | Faz 7 *(ADR-0011)* |
 | HTML / JavaScript arayüz | Faz 7 *(ADR-0011)* |
 

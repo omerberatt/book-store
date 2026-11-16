@@ -6,7 +6,9 @@ Read before non-trivial work: `docs/SPEC.md` (what), `docs/ARCHITECTURE.md` (tar
 
 ## Current state vs target
 
-Phases 0–3 were built before the course notes were adopted. The code still lives in layer-based modules (`bookstore-common`, `-domain`, `-application`, `-persistence`, `-infrastructure`, `-web`), has a Spring Boot skeleton in `bookstore-web` and is tested on H2 in MySQL mode. Phase 4 (`docs/ROADMAP.md`) moves it to the target below; `docs/ARCHITECTURE.md` section 9 lists every difference. Do not add new code to the old layout beyond what a Phase 4 step needs.
+Phase 4.1 is done: the code lives in the business-area modules below, with a technical `shared-jdbc` module for the JDBC toolkit (ADR-0018), and modules use each other only through their `api` packages (`catalog.api.StockFacade`/`RatingFacade`, `customer.api.CustomerDirectory`, `sales.api.PurchaseHistory`). Still to come (`docs/ROADMAP.md`): the remaining ArchUnit rules (4.2), typed ids, `DomainException` and `Specification` (4.3), the `api` contract for the web layer and a composition root (4.4), the event publisher (4.5), PostgreSQL and contract tests (4.6). There is no web layer yet; tests run on H2 in MySQL mode. `docs/ARCHITECTURE.md` section 9 lists every remaining difference.
+
+Each module's migrations live in `src/main/resources/db/migration/<module>` with their own Flyway history table; `ModuleMigrations.ALL` gives the order (catalog, customer, sales, review). Each module shares its test fixtures as a `test-jar` (`CatalogDb`, `CustomerDb`, `SalesDb`, in-memory repositories, `TestDatabase`, `TestClock`).
 
 ## Commands
 
@@ -24,7 +26,7 @@ Phases 0–3 were built before the course notes were adopted. The code still liv
 
 ## Target architecture
 
-- Modules by business area (ADR-0002): `shared-kernel`, `catalog`, `customer`, `sales`, `review`, `app` (WAR), `quality/architecture-tests`. No module is a layer.
+- Modules by business area (ADR-0002): `shared-kernel`, `catalog`, `customer`, `sales`, `review`, `app` (WAR), `quality/architecture-tests`, plus the technical `shared-jdbc` (ADR-0018). No module is a layer.
 - Inside each business module, packages `api`, `application`, `domain`, `persistence`, `rest`. Allowed directions are the matrix in ADR-0003: domain sees only shared-kernel; api is a pure contract; application sees domain and api; persistence sees domain; rest sees api. A business module uses another module only through its `api` package. No cycles.
 - Platform (ADR-0010): Jakarta EE 11 Web Profile + MicroProfile 6.1 on Payara Micro 7. CDI with `annotated` discovery and constructor injection; JTA `@Transactional` on use cases; CDI events observed `AFTER_SUCCESS`; JAX-RS + JSON-B; MicroProfile Config and OpenAPI. Until Phase 6, wiring is a hand-written composition root and transactions go through the `TransactionRunner` port.
 - Database (ADR-0008): PostgreSQL 17. Fast tests on H2 in PostgreSQL mode; the same contract tests run on PostgreSQL via Testcontainers when Docker is available and are skipped otherwise. Hand-written JDBC with `PreparedStatement`; no JPA, Spring Data or `JdbcTemplate` (JPA is a Phase 9 option). Each module owns its Flyway migrations under `db/migration/<module>`. Never edit an applied migration. No `IN (...)` lists in `CHECK` constraints (H2 2.4 bug); use reference tables.

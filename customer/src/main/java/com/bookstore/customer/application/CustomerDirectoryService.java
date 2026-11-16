@@ -1,0 +1,44 @@
+package com.bookstore.customer.application;
+
+import com.bookstore.customer.api.CustomerDirectory;
+import com.bookstore.customer.domain.Customer;
+import com.bookstore.customer.domain.CustomerRepository;
+import com.bookstore.shared.kernel.address.Address;
+import com.bookstore.shared.kernel.error.NotFoundException;
+
+import java.util.Collection;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+/**
+ * Answers other modules' questions about customers.
+ */
+public class CustomerDirectoryService implements CustomerDirectory {
+
+    private final CustomerRepository customers;
+
+    /**
+     * Creates the service.
+     *
+     * @param customers where customers are stored
+     */
+    public CustomerDirectoryService(CustomerRepository customers) {
+        this.customers = customers;
+    }
+
+    @Override
+    public Address shippingAddress(long customerId, long addressId) {
+        Customer customer = customers.findById(customerId)
+                .orElseThrow(() -> new NotFoundException("Customer", customerId));
+        return customer.address(addressId).address();
+    }
+
+    @Override
+    public Map<Long, String> publicNames(Collection<Long> customerIds) {
+        if (customerIds.isEmpty()) {
+            return Map.of();
+        }
+        return customers.findAllById(customerIds).stream()
+                .collect(Collectors.toMap(Customer::id, customer -> customer.name().publicName()));
+    }
+}

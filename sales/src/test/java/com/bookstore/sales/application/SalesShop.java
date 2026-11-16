@@ -1,0 +1,125 @@
+package com.bookstore.sales.application;
+
+import com.bookstore.sales.domain.OrderNumber;
+import com.bookstore.sales.domain.OrderNumberSequence;
+import com.bookstore.sales.domain.OrderStatus;
+import com.bookstore.sales.domain.PaymentGateway;
+import com.bookstore.sales.domain.PaymentMethod;
+import com.bookstore.sales.domain.ShippingPolicy;
+import com.bookstore.sales.persistence.InMemoryCartRepository;
+import com.bookstore.sales.persistence.InMemoryOrderRepository;
+import com.bookstore.shared.kernel.address.Address;
+import com.bookstore.shared.kernel.money.Money;
+import com.bookstore.shared.kernel.testing.DirectTransactions;
+import com.bookstore.shared.kernel.testing.RecordingNotifier;
+import com.bookstore.shared.kernel.testing.TestAddresses;
+import com.bookstore.shared.kernel.testing.TestClock;
+
+import java.time.Clock;
+import java.time.Year;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
+
+/**
+ * The sales module wired with in-memory repositories, fake ports and fakes of the catalog and
+ * customer modules' facades. Each test creates a fresh shop.
+ */
+public final class SalesShop {
+
+    /** A clock stopped at a fixed moment. */
+    public static final Clock CLOCK = TestClock.CLOCK;
+
+    public final FakeCatalog catalog = new FakeCatalog();
+    public final FakeCustomers customers = new FakeCustomers();
+    public final InMemoryCartRepository carts = new InMemoryCartRepository();
+    public final InMemoryOrderRepository orders = new InMemoryOrderRepository();
+    public final DirectTransactions transactions = new DirectTransactions();
+    public final RecordingNotifier notifier = new RecordingNotifier();
+    public final ScriptedPaymentGateway payments = new ScriptedPaymentGateway();
+    public final CountingOrderNumbers orderNumbers = new CountingOrderNumbers();
+    public final ShippingPolicy shipping = ShippingPolicy.standard();
+
+    public final CartService cart = new CartService(catalog, carts, shipping, transactions);
+    public final CheckoutService checkout = new CheckoutService(customers, carts, catalog, orders, orderNumbers,
+            payments, shipping, transactions, notifier, CLOCK);
+    public final OrderService myOrders = new OrderService(orders);
+    public final OrderAdminService orderAdmin = new OrderAdminService(orders, catalog, transactions, notifier, CLOCK);
+    public final PurchaseHistoryService purchases = new PurchaseHistoryService(orders);
+
+    /** Adds an active book to the fake catalog. */
+    public FakeCatalog.Item book(String title, String price, int stock) {
+        return catalog.add(title, price, stock);
+    }
+
+    /** Registers a customer with one address and returns the customer's id. The e-mail is ignored. */
+    public long customer(String email) {
+        return customers.register();
+    }
+
+    /** Returns the id of a customer's address. */
+    public long defaultAddressId(long customerId) {
+        return customers.addressIdOf(customerId);
+    }
+
+    /** Puts a book in a customer's cart and pays by card. */
+    public OrderDetails buy(long customerId, FakeCatalog.Item book, int quantity) {
+        cart.add(CartRef.customer(customerId), book.id(), quantity);
+        return checkout.placeOrder(new PlaceOrderCommand(customerId, defaultAddressId(customerId),
+                PaymentMethod.CREDIT_CARD));
+    }
+
+    /** Buys a book and has the order shipped and delivered. */
+    public OrderDetails buyAndReceive(long customerId, FakeCatalog.Item book) {
+        OrderDetails order = buy(customerId, book, 1);
+        orderAdmin.changeStatus(order.orderNumber(), OrderStatus.SHIPPED);
+        return orderAdmin.changeStatus(order.orderNumber(), OrderStatus.DELIVERED);
+    }
+
+    /** A valid delivery address, the one every fake customer has. */
+    public static Address address() {
+        return TestAddresses.home();
+    }
+
+    /** Approves every charge unless told to decline the next one. */
+    public static final class ScriptedPaymentGateway implements PaymentGateway {
+
+        private final List<Money> charged = new ArrayList<>();
+        private String declineReason;
+
+        @Override
+        public PaymentResult charge(OrderNumber orderNumber, Money amount) {
+            if (declineReason != null) {
+                String reason = declineReason;
+                declineReason = null;
+                return new PaymentResult.Declined(reason);
+            }
+            charged.add(amount);
+            return new PaymentResult.Approved("TX-" + orderNumber.value());
+        }
+
+        /** Makes the next charge fail. */
+        public void declineNext(String reason) {
+            this.declineReason = reason;
+        }
+
+        /** @return the amounts charged successfully, in order */
+        public List<Money> charged() {
+            return List.copyOf(charged);
+        }
+    }
+
+    /** One counter per year, safe for concurrent use. */
+    public static final class CountingOrderNumbers implements OrderNumberSequence {
+
+        private final Map<Year, AtomicLong> counters = new ConcurrentHashMap<>();
+
+        @Override
+        public OrderNumber next(Year year) {
+            long sequence = counters.computeIfAbsent(year, y -> new AtomicLong()).incrementAndGet();
+            return OrderNumber.of(year, sequence);
+        }
+    }
+}

@@ -1,0 +1,85 @@
+package com.bookstore.catalog.application;
+
+import com.bookstore.catalog.api.BookOffer;
+import com.bookstore.catalog.api.StockFacade;
+import com.bookstore.catalog.domain.Book;
+import com.bookstore.catalog.domain.BookRepository;
+import com.bookstore.catalog.domain.InsufficientStockException;
+import com.bookstore.shared.kernel.error.ConflictException;
+import com.bookstore.shared.kernel.error.NotFoundException;
+import com.bookstore.shared.kernel.transaction.TransactionRunner;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+/**
+ * Prices and stock for other modules.
+ */
+public class StockService implements StockFacade {
+
+    private final BookRepository books;
+    private final TransactionRunner transactions;
+
+    /**
+     * Creates the service.
+     *
+     * @param books        where books are stored
+     * @param transactions runs work in a transaction; joins the caller's if there is one
+     */
+    public StockService(BookRepository books, TransactionRunner transactions) {
+        this.books = books;
+        this.transactions = transactions;
+    }
+
+    @Override
+    public List<BookOffer> offers(Collection<Long> bookIds) {
+        return books.findAllById(bookIds).stream().map(StockService::offerOf).toList();
+    }
+
+    @Override
+    public void reserve(Map<Long, Integer> quantities) {
+        transactions.run(() -> {
+            Map<Long, Book> found = load(quantities);
+            // Check every book before taking any stock, so a failure leaves all of them unchanged.
+            quantities.forEach((bookId, quantity) -> {
+                Book book = found.get(bookId);
+                if (!book.isActive()) {
+                    throw new ConflictException("book.inactive", "'" + book.title() + "' is no longer sold");
+                }
+                if (!book.stock().hasAtLeast(quantity)) {
+                    throw new InsufficientStockException(book.title(), quantity, book.stock().quantity());
+                }
+            });
+            quantities.forEach((bookId, quantity) -> found.get(bookId).reserve(quantity));
+            found.values().forEach(books::save);
+        });
+    }
+
+    @Override
+    public void release(Map<Long, Integer> quantities) {
+        transactions.run(() -> {
+            Map<Long, Book> found = load(quantities);
+            quantities.forEach((bookId, quantity) -> found.get(bookId).release(quantity));
+            found.values().forEach(books::save);
+        });
+    }
+
+    private Map<Long, Book> load(Map<Long, Integer> quantities) {
+        Map<Long, Book> found = books.findAllById(quantities.keySet()).stream()
+                .collect(Collectors.toMap(Book::id, Function.identity()));
+        for (long bookId : quantities.keySet()) {
+            if (!found.containsKey(bookId)) {
+                throw new NotFoundException("Book", bookId);
+            }
+        }
+        return found;
+    }
+
+    private static BookOffer offerOf(Book book) {
+        return new BookOffer(book.id(), book.title(), book.authorNames(), book.price(), book.stock().quantity(),
+                book.isActive());
+    }
+}

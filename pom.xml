@@ -4,64 +4,141 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <!-- Used only for dependency and plugin version management.
-         The core modules (common, domain, application) do not depend on Spring. -->
-    <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.1.2</version>
-        <relativePath/>
-    </parent>
-
     <groupId>com.bookstore</groupId>
     <artifactId>bookstore-parent</artifactId>
     <version>0.1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Book Store</name>
-    <description>Layered, multi-module online book store built to exercise the undergraduate Java curriculum.</description>
+    <description>Modular online book store: the lab project of the Java Patterns and Practices course.</description>
 
+    <!--
+      Modules are cut by business area, not by layer (ADR-0002). Each business module holds the
+      packages api, application, domain and persistence (ADR-0003).
+    -->
     <modules>
-        <module>bookstore-common</module>
-        <module>bookstore-domain</module>
-        <module>bookstore-application</module>
-        <module>bookstore-persistence</module>
-        <module>bookstore-infrastructure</module>
-        <module>bookstore-web</module>
+        <module>shared-kernel</module>
+        <module>shared-jdbc</module>
+        <module>catalog</module>
+        <module>customer</module>
+        <module>sales</module>
+        <module>review</module>
+        <module>app</module>
+        <module>quality/architecture-tests</module>
     </modules>
 
     <properties>
-        <java.version>21</java.version>
+        <maven.compiler.release>21</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <junit.version>6.0.3</junit.version>
+        <assertj.version>3.27.7</assertj.version>
+        <archunit.version>1.5.1</archunit.version>
+        <flyway.version>12.4.0</flyway.version>
+        <h2.version>2.4.240</h2.version>
+
+        <compiler-plugin.version>3.15.0</compiler-plugin.version>
+        <surefire-plugin.version>3.5.6</surefire-plugin.version>
+        <jar-plugin.version>3.5.1</jar-plugin.version>
+        <resources-plugin.version>3.5.0</resources-plugin.version>
+        <install-plugin.version>3.1.4</install-plugin.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
             <dependency>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>${junit.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.assertj</groupId>
+                <artifactId>assertj-core</artifactId>
+                <version>${assertj.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.tngtech.archunit</groupId>
+                <artifactId>archunit-junit5</artifactId>
+                <version>${archunit.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-core</artifactId>
+                <version>${flyway.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.h2database</groupId>
+                <artifactId>h2</artifactId>
+                <version>${h2.version}</version>
+            </dependency>
+
+            <dependency>
                 <groupId>com.bookstore</groupId>
-                <artifactId>bookstore-common</artifactId>
+                <artifactId>shared-kernel</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.bookstore</groupId>
-                <artifactId>bookstore-domain</artifactId>
+                <artifactId>shared-kernel</artifactId>
+                <version>${project.version}</version>
+                <type>test-jar</type>
+            </dependency>
+            <dependency>
+                <groupId>com.bookstore</groupId>
+                <artifactId>shared-jdbc</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.bookstore</groupId>
-                <artifactId>bookstore-application</artifactId>
+                <artifactId>shared-jdbc</artifactId>
+                <version>${project.version}</version>
+                <type>test-jar</type>
+            </dependency>
+            <dependency>
+                <groupId>com.bookstore</groupId>
+                <artifactId>catalog</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.bookstore</groupId>
-                <artifactId>bookstore-persistence</artifactId>
+                <artifactId>customer</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.bookstore</groupId>
-                <artifactId>bookstore-infrastructure</artifactId>
+                <artifactId>sales</artifactId>
                 <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.bookstore</groupId>
+                <artifactId>review</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.bookstore</groupId>
+                <artifactId>app</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.bookstore</groupId>
+                <artifactId>catalog</artifactId>
+                <version>${project.version}</version>
+                <type>test-jar</type>
+            </dependency>
+            <dependency>
+                <groupId>com.bookstore</groupId>
+                <artifactId>customer</artifactId>
+                <version>${project.version}</version>
+                <type>test-jar</type>
+            </dependency>
+            <dependency>
+                <groupId>com.bookstore</groupId>
+                <artifactId>sales</artifactId>
+                <version>${project.version}</version>
+                <type>test-jar</type>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -79,4 +156,36 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${compiler-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>${surefire-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>${jar-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <version>${resources-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-install-plugin</artifactId>
+                    <version>${install-plugin.version}</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
 </project>

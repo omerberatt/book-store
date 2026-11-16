@@ -2,7 +2,7 @@
 
 Bu doküman sistemin **nasıl** kurulduğunu anlatır. **Ne** yaptığı [SPEC.md](SPEC.md), kararların gerekçeleri [docs/adr](adr/README.md), müfredatla ilişkisi [CURRICULUM-MAP.md](CURRICULUM-MAP.md) içindedir.
 
-> **Mevcut durum ve hedef.** Bu doküman **hedef mimariyi** anlatır. Faz 0–3'te yazılan kod henüz katmana göre ayrılmış modüllerde *(`bookstore-common`, `-domain`, `-application`, `-persistence`, `-infrastructure`, `-web`)* duruyor ve H2'nin MySQL modunda test ediliyor. Kod, Faz 4'te *([ROADMAP.md](ROADMAP.md))* aşağıdaki yapıya taşınacak. Bölüm 9, iki yapı arasındaki farkları listeler.
+> **Mevcut durum ve hedef.** Bu doküman **hedef mimariyi** anlatır. Faz 4.1 ile modül yapısı hedefe ulaştı: kod iş alanına göre modüllerde duruyor ve modüller birbirini yalnızca `api` paketleriyle kullanıyor. Henüz yapılmayanlar *(ArchUnit'in diğer kuralları, tipli kimlikler, web katmanı, PostgreSQL, uygulama sunucusu)* Faz 4.2–7'de; bölüm 9 kalan farkları listeler.
 
 ## 1. Genel bakış
 
@@ -33,7 +33,8 @@ graph TD
     sales["<b>sales</b><br/>sepet, sipariş, ödeme"]
     catalog["<b>catalog</b><br/>kitap, yazar, kategori, stok"]
     customer["<b>customer</b><br/>hesap, rol, adres"]
-    kernel["<b>shared-kernel</b><br/>Money, Specification, DomainException"]
+    kernel["<b>shared-kernel</b><br/>Money, Address, Entity, hatalar"]
+    jdbc["<b>shared-jdbc</b><br/>JDBC araç seti, modül migration'ları"]
     arch["<b>quality/architecture-tests</b><br/>ArchUnit"]
 
     app --> review
@@ -49,20 +50,36 @@ graph TD
     customer --> kernel
     sales --> kernel
     review --> kernel
+    catalog --> jdbc
+    customer --> jdbc
+    sales --> jdbc
+    review --> jdbc
+    jdbc --> kernel
     arch -. inceler .-> app
 ```
 
 | Modül | Sorumluluk | Örnek tipler |
 | --- | --- | --- |
-| `shared-kernel` | Hiçbir iş modülüne ait olmayan genel tipler | `Money`, `Specification<T>`, `DomainException`, `Page<T>`, `TextNormalizer`, `Guard` |
-| `catalog` | Satılan kitaplar ve stokları | `Book`, `Author`, `Category`, `Isbn`, `Stock`, `RatingSummary`, `CatalogFacade` |
-| `customer` | Kayıtlı kullanıcılar, roller, adres defteri | `Customer`, `Email`, `PersonName`, `Address`, `PasswordPolicy`, `AccountFacade` |
-| `sales` | Sepet, sipariş verme, ödeme, sipariş durumları | `Cart`, `Order`, `OrderStatus`, `OrderNumber`, `ShippingPolicy`, `CheckoutFacade` |
-| `review` | Yorum ve puanlama | `Review`, `Rating`, `RatingDistribution`, `ReviewFacade` |
-| `app` | Giriş noktası: nesneleri bağlar, migration'ları çalıştırır, arayüzü sunar | `BookstoreWiring`, `BookstoreStartup` |
-| `quality/architecture-tests` | Mimari kuralların ArchUnit testleri | `PackageDependencyRules`, `DomainModelRules` … |
+| `shared-kernel` | Hiçbir iş modülüne ait olmayan genel tipler | `Money`, `Address`, `Entity`, `DomainEvent`, `TransactionRunner`, `Page<T>`, `TextNormalizer`, `Guard`; ileride `Specification<T>`, `DomainException` |
+| `shared-jdbc` | İş modüllerinin `persistence` paketlerinin kullandığı teknik JDBC araç seti *(ADR-0018)* | `JdbcExecutor`, `JdbcTransactionRunner`, `RecordRowMapper`, `ModuleMigrations` |
+| `catalog` | Satılan kitaplar, stokları ve puan özetleri | `Book`, `Author`, `Category`, `Isbn`, `Stock`, `RatingSummary`; api: `StockFacade`, `RatingFacade`, `BookOffer` |
+| `customer` | Kayıtlı kullanıcılar, roller, adres defteri | `Customer`, `Email`, `PersonName`, `SavedAddress`, `PasswordPolicy`; api: `CustomerDirectory` |
+| `sales` | Sepet, sipariş verme, ödeme, sipariş durumları | `Cart`, `Order`, `OrderStatus`, `OrderNumber`, `ProductSnapshot`, `ShippingPolicy`; api: `PurchaseHistory` |
+| `review` | Yorum, puanlama ve puan dağılımı | `Review`, `Rating`, `RatingDistribution` |
+| `app` | Giriş noktası: nesneleri bağlar, migration'ları çalıştırır, arayüzü sunar | Bugün yalnızca uçtan uca testler *(`JdbcBookstore`)*; 4.4'te `BookstoreModule`, Faz 6'da `BookstoreWiring`, `BookstoreStartup` |
+| `quality/architecture-tests` | Mimari kuralların ArchUnit testleri | `ModuleBoundaryTest`; 4.2'de paket ve domain kuralları |
 
-İş modülleri arasındaki bağımlılıklar döngüsüzdür ve bir modül diğerinin yalnızca `api` paketini kullanır *(ADR-0002, ADR-0003)*.
+İş modülleri arasındaki bağımlılıklar döngüsüzdür ve bir modül diğerinin yalnızca `api` paketini kullanır *(ADR-0002, ADR-0003)*. Bugünkü modüller arası sözleşmeler:
+
+| Kullanan | Sözleşme | Ne için |
+| --- | --- | --- |
+| `sales` | `catalog.api.StockFacade` | Sepette ve siparişte güncel fiyat ve stok; stok ayırma ve iptalde geri bırakma |
+| `sales` | `customer.api.CustomerDirectory` | Siparişe kopyalanan teslimat adresi |
+| `review` | `catalog.api.RatingFacade` | Kitabın puan özetini yorumla aynı işlemde güncellemek |
+| `review` | `sales.api.PurchaseHistory` | Yalnızca kitabı teslim almış müşteri yorum yazabilir |
+| `review` | `customer.api.CustomerDirectory` | Yorumun yanında görünen kısa ad |
+
+`sales` modülü kitap bilgisini kendi `ProductSnapshot` değerine çevirerek kullanır *(Mapper: `sales.application.Products`)*; sepet ve sipariş `catalog`'un `Book` sınıfını görmez.
 
 ## 3. Bir iş modülünün içi
 
@@ -235,17 +252,18 @@ Ayrıntıları ve ArchUnit karşılıkları ADR-0004 ve ADR-0005'tedir:
 
 ## 9. Bugünkü kodla hedef arasındaki farklar
 
-| Konu | Bugün *(Faz 3 sonu)* | Hedef | Adım |
+| Konu | Bugün *(Faz 4.1 sonu)* | Hedef | Adım |
 | --- | --- | --- | --- |
-| Modüller | Katmana göre altı modül | İş alanına göre beş modül + `app` + mimari testler | 4.1 |
-| Ortak modül | `bookstore-common` | `shared-kernel` | 4.1 |
-| Web | Spring Boot iskeleti, Thymeleaf ana sayfası | Payara Micro, JAX-RS, statik arayüz | 4.1, 5, 6, 7 |
-| Mimari kurallar | Maven bağımlılıkları ve elle `grep` | ArchUnit | 4.2 |
+| Modüller | ✅ İş alanına göre modüller, `shared-kernel`, `shared-jdbc`, `app`, mimari testler | — | 4.1 |
+| Migration'lar | ✅ Modül başına dosya ve Flyway geçmişi | — | 4.1 |
+| Web | Web katmanı yok *(Spring Boot iskeleti kaldırıldı)* | JDK HTTP sunucusu, sonra Payara Micro, JAX-RS, statik arayüz | 5, 6, 7 |
+| Mimari kurallar | Modül sınırı kuralları *(`ModuleBoundaryTest`)* | ADR-0003–0008'deki paket ve domain kuralları | 4.2 |
 | Kimlikler | `long` | Tipli kimlikler | 4.3 |
 | Hatalar | `BookstoreException` alt türleri | `DomainException` + `Kind` + `code` | 4.3 |
 | Arama ölçütü | `Optional` bileşenli `BookSearchCriteria` | `Specification<Book>` | 4.2, 4.3 |
 | Servis sonuçları | Application paketinde okuma modeli `record`'ları | `api` paketinde DTO'lar, façade'lar, mapper'lar | 4.4 |
 | Bildirim | `Notifier` portu | `DomainEventPublisher` + gözlemciler | 4.5 |
-| Veritabanı | H2 MySQL modu, tek migration dosyası, `CHECK` içinde `CASE` | PostgreSQL 17, modül başına migration, referans tablolar | 4.6 |
+| Veritabanı | H2 MySQL modu, `CHECK` içinde `CASE` | PostgreSQL 17, referans tablolar | 4.6 |
+| Composition root | Yalnızca testte *(`app` modülünde `JdbcBookstore`)* | `BookstoreModule`, sonra CDI | 4.4, 6 |
 | Repository testleri | Implementasyon başına ayrı testler | Ortak sözleşme testleri | 4.6 |
 | Transaction | `TransactionRunner` portu, `JdbcTransactionRunner` | JTA `@Transactional` | 6 |

@@ -31,6 +31,7 @@ ADR-0003 ile ADR-0010 arası, ders notlarındaki aynı numaralı ADR'lerin konul
 | [0015](ADR-0015.md) | İyimser Kilitleme | 12, 14 | Kabul edildi |
 | [0016](ADR-0016.md) | Türkçe Duyarsız Arama İçin Normalleştirilmiş Anahtarlar | 4, 12 | Kabul edildi |
 | [0017](ADR-0017.md) | Doğrudan main Üzerinde Çalışma | 1, 2 | Kabul edildi |
+| [0018](ADR-0018.md) | Paylaşılan JDBC Modülü ve Modül Başına Migration Geçmişi | 9, 12 | Kabul edildi |
 
 ## Eski karar numaraları
 
