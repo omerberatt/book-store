@@ -6,12 +6,14 @@ import java.util.stream.Collectors;
 
 /**
  * Signals that input does not satisfy a business rule, for example a negative price or a malformed
- * e-mail address. Maps to HTTP 400.
+ * e-mail address. Its kind is
+ * {@link Kind#RULE_VIOLATION}: the value reached the domain and broke one of its rules. Format
+ * errors that never reach the domain are rejected earlier by Bean Validation (ADR-0009).
  *
  * <p>Carries one or more {@link Violation violations}, each naming the offending field, so that a
  * form can show the error next to the right input.
  */
-public class ValidationException extends BookstoreException {
+public class ValidationException extends DomainException {
 
     /** Default error code for validation failures. */
     public static final String CODE = "validation.failed";
@@ -34,7 +36,7 @@ public class ValidationException extends BookstoreException {
      * @param violations the individual problems, at least one
      */
     public ValidationException(List<Violation> violations) {
-        super(CODE, describe(violations));
+        super(Kind.RULE_VIOLATION, CODE, describe(violations));
         this.violations = List.copyOf(violations);
     }
 

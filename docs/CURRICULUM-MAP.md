@@ -58,7 +58,7 @@ Faz numaraları [ROADMAP.md](ROADMAP.md) içindeki aşamalardır; ADR'ler [docs/
 | Aggregate kökü ve parçaları | `Order` → `OrderLine`, `Customer` → `SavedAddress`, `Cart` → `CartItem` | ✅ | 1 |
 | Aggregate'ler arası kimlikle referans | `Order` ve `Review` müşteriye kimlikle bağlı; `Cart.add` ve `Order.place` artık `catalog`'un `Book` aggregate'ini değil, `sales`'in kendi `ProductSnapshot` değerini alıyor *(ADR-0002)*. Kimlikler henüz `long`. | ✅ | 4.1 |
 | `OrderStatus` state machine, `EnumSet`, final durumlar | `OrderStatus.allowedNext`, `canMoveTo`, `isFinal` | ✅ | 1 |
-| Domain exception hiyerarşisi | Bugün `BookstoreException` alt türleri; `DomainException` + `Kind` + `code` yapısına dönüştürülecek *(ADR-0004)* | 🔁 | 4 |
+| Domain exception hiyerarşisi | `shared-kernel`: `DomainException` + `Kind` + `code`; `NotFoundException`, `ConflictException`, `RuleViolationException`, `ValidationException`, `AccessDeniedException` *(ADR-0004)* | ✅ | 4.3 |
 | JUnit ve AssertJ ile birim testler | Tüm modüllerde; parametreli testler *(`@CsvSource`, `@EnumSource`)* | ✅ | 1 |
 | "Turkish I problem", `Locale.ROOT` | `Email`, `Isbn`, `TextNormalizer` | ✅ | 1 |
 
@@ -168,7 +168,7 @@ Faz numaraları [ROADMAP.md](ROADMAP.md) içindeki aşamalardır; ADR'ler [docs/
 | `rest` paketi, façade üzerinden erişim | Her iş modülünde *(ADR-0009)* | ⏳ | 5 |
 | Request DTO ve Bean Validation *(biçimsel doğrulama)* | `AddToCartRequest`, `PlaceOrderRequest`, `RegistrationRequest` … | ⏳ | 5 |
 | Doğrulamanın yeri: sınır mı domain mi? | Biçim sınırda, kural domain'de *(ADR-0009)* | ⏳ | 5 |
-| `DomainException.Kind` → durum kodu | 404 / 409 / 422 / 403, biçim hatası 400 | ⏳ | 4, 5 |
+| `DomainException.Kind` → durum kodu | `Kind` 4.3'te geldi; eşleme *(404 / 409 / 422 / 403, biçim hatası 400)* Faz 5'te | ⏳ | 4.3, 5 |
 | RFC 9457 Problem Details | `ProblemMapper`, `application/problem+json` | ⏳ | 5 |
 | JSON dönüşümleri | Faz 5'te Jackson, Faz 6'da JSON-B | ⏳ | 5, 6 |
 | JDK HTTP sunucusu *(`com.sun.net.httpserver`)* | Elle yönlendirme ve hata eşleme | ⏳ | 5 |

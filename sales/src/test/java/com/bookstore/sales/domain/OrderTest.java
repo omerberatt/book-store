@@ -11,6 +11,7 @@ import static com.bookstore.shared.kernel.testing.TestClock.NOW;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.bookstore.shared.kernel.error.RuleViolationException;
 import com.bookstore.shared.kernel.error.AccessDeniedException;
 import com.bookstore.shared.kernel.error.ConflictException;
 import com.bookstore.shared.kernel.error.NotFoundException;
@@ -120,7 +121,7 @@ class OrderTest {
     @Test
     void cannotPlaceAnEmptyCart() {
         assertThatThrownBy(this::place)
-                .isInstanceOfSatisfying(ConflictException.class, e -> assertThat(e.code()).isEqualTo(Order.EMPTY_CART));
+                .isInstanceOfSatisfying(RuleViolationException.class, e -> assertThat(e.code()).isEqualTo(Order.EMPTY_CART));
     }
 
     @Test

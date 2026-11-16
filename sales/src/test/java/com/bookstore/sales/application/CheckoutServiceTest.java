@@ -3,7 +3,7 @@ package com.bookstore.sales.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.bookstore.shared.kernel.error.ConflictException;
+import com.bookstore.shared.kernel.error.RuleViolationException;
 import com.bookstore.shared.kernel.error.NotFoundException;
 import com.bookstore.shared.kernel.money.Money;
 import com.bookstore.sales.domain.CartAdjustment;
@@ -106,7 +106,7 @@ class CheckoutServiceTest {
     @Test
     void emptyCartCannotBeOrdered() {
         assertThatThrownBy(() -> place(PaymentMethod.CREDIT_CARD))
-                .isInstanceOfSatisfying(ConflictException.class, e -> assertThat(e.code()).isEqualTo(Order.EMPTY_CART));
+                .isInstanceOfSatisfying(RuleViolationException.class, e -> assertThat(e.code()).isEqualTo(Order.EMPTY_CART));
     }
 
     @Test

@@ -1,9 +1,9 @@
 package com.bookstore.shared.kernel.error;
 
 /**
- * Signals that a requested record does not exist. Maps to HTTP 404.
+ * Signals that a requested record does not exist. Its kind is {@link Kind#NOT_FOUND}.
  */
-public class NotFoundException extends BookstoreException {
+public class NotFoundException extends DomainException {
 
     /** Default error code for missing records. */
     public static final String CODE = "not-found";
@@ -15,6 +15,6 @@ public class NotFoundException extends BookstoreException {
      * @param key  the identifier or key that was looked up
      */
     public NotFoundException(String type, Object key) {
-        super(CODE, type + " '" + key + "' was not found");
+        super(Kind.NOT_FOUND, CODE, type + " '" + key + "' was not found");
     }
 }

@@ -3,6 +3,7 @@ package com.bookstore.sales.domain;
 import com.bookstore.shared.kernel.error.AccessDeniedException;
 import com.bookstore.shared.kernel.error.ConflictException;
 import com.bookstore.shared.kernel.error.NotFoundException;
+import com.bookstore.shared.kernel.error.RuleViolationException;
 import com.bookstore.shared.kernel.money.Money;
 import com.bookstore.shared.kernel.validation.Guard;
 import com.bookstore.shared.kernel.domain.Entity;
@@ -81,7 +82,7 @@ public class Order extends Entity {
                               ShippingPolicy shippingPolicy, Clock clock) {
         Guard.requireNonNull(cart, "cart");
         if (cart.isEmpty()) {
-            throw new ConflictException(EMPTY_CART, "Cannot place an order with an empty cart");
+            throw new RuleViolationException(EMPTY_CART, "Cannot place an order with an empty cart");
         }
         if (cart.customerId().map(owner -> owner != customerId).orElse(true)) {
             throw new AccessDeniedException("The cart does not belong to customer " + customerId);

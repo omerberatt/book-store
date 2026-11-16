@@ -60,7 +60,7 @@ graph TD
 
 | Modül | Sorumluluk | Örnek tipler |
 | --- | --- | --- |
-| `shared-kernel` | Hiçbir iş modülüne ait olmayan genel tipler | `Money`, `Address`, `Entity`, `DomainEvent`, `TransactionRunner`, `Page<T>`, `TextNormalizer`, `Guard`; ileride `Specification<T>`, `DomainException` |
+| `shared-kernel` | Hiçbir iş modülüne ait olmayan genel tipler | `Money`, `Address`, `Entity`, `DomainEvent`, `TransactionRunner`, `Page<T>`, `TextNormalizer`, `Guard`, `DomainException`; ileride `Specification<T>` |
 | `shared-jdbc` | İş modüllerinin `persistence` paketlerinin kullandığı teknik JDBC araç seti *(ADR-0018)* | `JdbcExecutor`, `JdbcTransactionRunner`, `RecordRowMapper`, `ModuleMigrations` |
 | `catalog` | Satılan kitaplar, stokları ve puan özetleri | `Book`, `Author`, `Category`, `Isbn`, `Stock`, `RatingSummary`; api: `StockFacade`, `RatingFacade`, `BookOffer` |
 | `customer` | Kayıtlı kullanıcılar, roller, adres defteri | `Customer`, `Email`, `PersonName`, `SavedAddress`, `PasswordPolicy`; api: `CustomerDirectory` |
@@ -259,7 +259,7 @@ Ayrıntıları ve ArchUnit karşılıkları ADR-0004 ve ADR-0005'tedir:
 | Web | Web katmanı yok *(Spring Boot iskeleti kaldırıldı)* | JDK HTTP sunucusu, sonra Payara Micro, JAX-RS, statik arayüz | 5, 6, 7 |
 | Mimari kurallar | ✅ ADR-0003–0008'in ArchUnit kuralları *(`rest` kuralları Faz 5'te dolar)* | — | 4.2 |
 | Kimlikler | `long` | Tipli kimlikler | 4.3 |
-| Hatalar | `BookstoreException` alt türleri | `DomainException` + `Kind` + `code` | 4.3 |
+| Hatalar | ✅ `DomainException` + `Kind` + `code` | — | 4.3 |
 | Arama ölçütü | `BookSearchCriteria` *(boş olabilen alanlar, `Optional` erişimciler)* | `Specification<Book>` | 4.3 |
 | Servis sonuçları | Application paketinde okuma modeli `record`'ları | `api` paketinde DTO'lar, façade'lar, mapper'lar | 4.4 |
 | Bildirim | `Notifier` portu | `DomainEventPublisher` + gözlemciler | 4.5 |

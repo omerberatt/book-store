@@ -2,9 +2,9 @@ package com.bookstore.shared.kernel.error;
 
 /**
  * Signals that the current user may not access a record that does exist, for example another
- * customer's order. Maps to HTTP 403.
+ * customer's order. Its kind is {@link Kind#FORBIDDEN}.
  */
-public class AccessDeniedException extends BookstoreException {
+public class AccessDeniedException extends DomainException {
 
     /** Default error code for ownership violations. */
     public static final String CODE = "access-denied";
@@ -15,7 +15,7 @@ public class AccessDeniedException extends BookstoreException {
      * @param message what the user tried to access
      */
     public AccessDeniedException(String message) {
-        super(CODE, message);
+        super(Kind.FORBIDDEN, CODE, message);
     }
 
     /**
@@ -25,6 +25,6 @@ public class AccessDeniedException extends BookstoreException {
      * @param message what the user tried to do
      */
     public AccessDeniedException(String code, String message) {
-        super(code, message);
+        super(Kind.FORBIDDEN, code, message);
     }
 }

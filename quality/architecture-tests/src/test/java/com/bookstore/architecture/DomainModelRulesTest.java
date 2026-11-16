@@ -13,7 +13,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noFields;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noMethods;
 
-import com.bookstore.shared.kernel.error.BookstoreException;
+import com.bookstore.shared.kernel.error.DomainException;
 import com.tngtech.archunit.core.domain.JavaCodeUnit;
 import com.tngtech.archunit.core.domain.JavaModifier;
 import com.tngtech.archunit.core.importer.ImportOption;
@@ -64,7 +64,7 @@ class DomainModelRulesTest {
     static final ArchRule domain_exceptions_share_one_base = classes()
             .that().resideInAnyPackage(DOMAIN, APPLICATION, API)
             .and().areAssignableTo(Throwable.class)
-            .should().beAssignableTo(BookstoreException.class)
+            .should().beAssignableTo(DomainException.class)
             .because("ADR-0004: the HTTP layer maps one exception hierarchy to status codes");
 
     /** ADR-0004: only persistence rebuilds stored aggregates. */
