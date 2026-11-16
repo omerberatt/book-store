@@ -79,7 +79,7 @@ class StockAndRatingServiceTest {
         shop.ratings.removeRating(dune.id(), 5);
 
         assertThat(shop.books.findById(dune.id()).orElseThrow().ratings()).isEqualTo(new RatingSummary(1, 2));
-        assertThat(shop.catalog.book(dune.id()).averageRating()).contains(new BigDecimal("2.0"));
+        assertThat(shop.catalog.book(dune.id()).averageRating()).isEqualTo(new BigDecimal("2.0"));
         assertThat(shop.ratings.exists(dune.id())).isTrue();
         assertThat(shop.ratings.exists(999)).isFalse();
         assertThatThrownBy(() -> shop.ratings.addRating(999, 3)).isInstanceOf(NotFoundException.class);

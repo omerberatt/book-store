@@ -8,7 +8,6 @@ import com.bookstore.catalog.domain.Language;
 import java.math.BigDecimal;
 import java.time.Year;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Everything a book's detail page shows.
@@ -20,22 +19,22 @@ import java.util.Optional;
  * @param categoryId      the category's id
  * @param categoryPath    the category names from the root down, for breadcrumbs
  * @param publisher       the publisher, or an empty string
- * @param publicationYear the year of publication, if known
+ * @param publicationYear the year of publication; {@code null} if unknown
  * @param language        the language
  * @param pageCount       the number of pages, zero if unknown
  * @param description     the description, or an empty string
  * @param price           the current price
  * @param stock           copies available
  * @param inStock         whether at least one copy can be ordered
- * @param averageRating   the average rating, if anyone rated the book
+ * @param averageRating   the average rating; {@code null} if nobody rated the book
  * @param ratingCount     the number of ratings
- * @param coverImage      the storage key of the cover image, if any
+ * @param coverImage      the storage key of the cover image; {@code null} if there is none
  */
 public record BookDetails(long id, String isbn, String title, List<AuthorRef> authors, long categoryId,
-                          List<String> categoryPath, String publisher, Optional<Year> publicationYear,
+                          List<String> categoryPath, String publisher, Year publicationYear,
                           Language language, int pageCount, String description, Money price, int stock,
-                          boolean inStock, Optional<BigDecimal> averageRating, int ratingCount,
-                          Optional<String> coverImage) {
+                          boolean inStock, BigDecimal averageRating, int ratingCount,
+                          String coverImage) {
 
     /** Copies the lists. */
     public BookDetails {
@@ -52,9 +51,11 @@ public record BookDetails(long id, String isbn, String title, List<AuthorRef> au
     public static BookDetails of(Book book) {
         List<AuthorRef> authors = book.authors().stream().map(AuthorRef::of).toList();
         return new BookDetails(book.id(), book.isbn().value(), book.title(), authors, book.category().id(),
-                book.category().path(), book.publisher(), book.publicationYear(), book.language(), book.pageCount(),
+                book.category().path(), book.publisher(), book.publicationYear().orElse(null),
+                book.language(), book.pageCount(),
                 book.description(), book.price(), book.stock().quantity(), book.isAvailableForSale(),
-                book.ratings().average(), book.ratings().count(), book.coverImage());
+                book.ratings().average().orElse(null), book.ratings().count(),
+                book.coverImage().orElse(null));
     }
 
     /**

@@ -103,7 +103,7 @@ class CatalogServiceTest {
         BookSummary madonnaSummary = found.get(0);
         assertThat(madonnaSummary.title()).isEqualTo("Kürk Mantolu Madonna");
         assertThat(madonnaSummary.inStock()).isTrue();
-        assertThat(madonnaSummary.averageRating()).contains(new BigDecimal("4.5"));
+        assertThat(madonnaSummary.averageRating()).isEqualTo(new BigDecimal("4.5"));
         assertThat(madonnaSummary.ratingCount()).isEqualTo(2);
         assertThat(found.get(1).inStock()).as("Kuyucaklı Yusuf has no stock").isFalse();
     }

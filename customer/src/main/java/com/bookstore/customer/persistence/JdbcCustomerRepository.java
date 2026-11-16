@@ -167,8 +167,8 @@ public class JdbcCustomerRepository implements CustomerRepository {
 
         Customer toCustomer(List<AddressRow> addressRows) {
             List<SavedAddress> addresses = addressRows.stream().map(AddressRow::toSavedAddress).toList();
-            Optional<Long> defaultId = addressRows.stream().filter(AddressRow::isDefault).map(AddressRow::id)
-                    .findFirst();
+            Long defaultId = addressRows.stream().filter(AddressRow::isDefault).map(AddressRow::id)
+                    .findFirst().orElse(null);
             return Customer.restore(id, version, Email.of(email), new PersonName(firstName, lastName), passwordHash,
                     role, active, registeredAt, addresses, defaultId);
         }

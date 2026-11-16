@@ -6,7 +6,7 @@ Read before non-trivial work: `docs/SPEC.md` (what), `docs/ARCHITECTURE.md` (tar
 
 ## Current state vs target
 
-Phase 4.1 is done: the code lives in the business-area modules below, with a technical `shared-jdbc` module for the JDBC toolkit (ADR-0018), and modules use each other only through their `api` packages (`catalog.api.StockFacade`/`RatingFacade`, `customer.api.CustomerDirectory`, `sales.api.PurchaseHistory`). Still to come (`docs/ROADMAP.md`): the remaining ArchUnit rules (4.2), typed ids, `DomainException` and `Specification` (4.3), the `api` contract for the web layer and a composition root (4.4), the event publisher (4.5), PostgreSQL and contract tests (4.6). There is no web layer yet; tests run on H2 in MySQL mode. `docs/ARCHITECTURE.md` section 9 lists every remaining difference.
+Phases 4.1 and 4.2 are done: the code lives in the business-area modules below, with a technical `shared-jdbc` module for the JDBC toolkit (ADR-0018), and modules use each other only through their `api` packages (`catalog.api.StockFacade`/`RatingFacade`, `customer.api.CustomerDirectory`, `sales.api.PurchaseHistory`). The rules of ADR-0003 to ADR-0008 are ArchUnit tests in `quality/architecture-tests` (one class per ADR). Still to come (`docs/ROADMAP.md`): typed ids, `DomainException` and `Specification` (4.3), the `api` contract for the web layer and a composition root (4.4), the event publisher (4.5), PostgreSQL and contract tests (4.6). There is no web layer yet; tests run on H2 in MySQL mode. `docs/ARCHITECTURE.md` section 9 lists every remaining difference.
 
 Each module's migrations live in `src/main/resources/db/migration/<module>` with their own Flyway history table; `ModuleMigrations.ALL` gives the order (catalog, customer, sales, review). Each module shares its test fixtures as a `test-jar` (`CatalogDb`, `CustomerDb`, `SalesDb`, in-memory repositories, `TestDatabase`, `TestClock`).
 
@@ -37,7 +37,7 @@ Each module's migrations live in `src/main/resources/db/migration/<module>` with
 
 - Domain and shared-kernel depend on the JDK only: no `jakarta..`, `javax..`, `java.sql..`, no framework annotations.
 - No setters in the domain; state changes through intention-revealing methods.
-- `Optional` only as a return type, never as a field or record component.
+- `Optional` only as a return type, never as a field, record component or parameter. Keep a nullable field and offer an `Optional` accessor (a final class), or use a nullable record component in read models and requests.
 - Value objects are `record`s validated in the constructor. Aggregates use typed ids (`BookId`, `OrderId`, …) and refer to other aggregates by id only. Stored aggregates are rebuilt with `reconstitute(...)`, called only from persistence.
 - Domain exceptions extend `DomainException` and carry a `Kind` and a stable `code`.
 - Money is always `Money` (`BigDecimal`), never `double`. Time comes from an injected `Clock`; never call `Instant.now()`, `LocalDate.now()` or `System.currentTimeMillis()` directly.

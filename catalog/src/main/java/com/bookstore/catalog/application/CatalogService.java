@@ -45,12 +45,13 @@ public class CatalogService {
         BookSearchCriteria.Builder criteria = BookSearchCriteria.builder()
                 .inStockOnly(query.inStockOnly())
                 .sort(query.sort());
-        query.text().ifPresent(criteria::text);
-        query.categoryId().ifPresent(id -> criteria.categoryIds(categoryAndDescendantIds(id)));
-        query.authorId().ifPresent(criteria::authorId);
-        query.minPrice().ifPresent(criteria::minPrice);
-        query.maxPrice().ifPresent(criteria::maxPrice);
-        query.language().ifPresent(criteria::language);
+        criteria.text(query.text()).minPrice(query.minPrice()).maxPrice(query.maxPrice()).language(query.language());
+        if (query.categoryId() != null) {
+            criteria.categoryIds(categoryAndDescendantIds(query.categoryId()));
+        }
+        if (query.authorId() != null) {
+            criteria.authorId(query.authorId());
+        }
 
         return books.search(criteria.build(), page).map(BookSummary::of);
     }

@@ -11,7 +11,6 @@ import com.bookstore.shared.kernel.error.NotFoundException;
 import com.bookstore.shared.kernel.error.ValidationException;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
@@ -58,7 +57,7 @@ class CustomerTest {
     void addressesAreFoundByIdAndTheDefaultMovesWhenItIsRemoved() {
         Customer stored = Customer.restore(1, 0, Email.of("a@b.co"), new PersonName("A", "B"), "hash", Role.CUSTOMER,
                 true, NOW, List.of(SavedAddress.restore(10, 0, "Ev", home()),
-                        SavedAddress.restore(11, 0, "İş", home())), Optional.of(10L));
+                        SavedAddress.restore(11, 0, "İş", home())), 10L);
 
         assertThat(stored.defaultAddress()).map(SavedAddress::label).contains("Ev");
 

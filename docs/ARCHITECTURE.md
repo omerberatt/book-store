@@ -2,7 +2,7 @@
 
 Bu doküman sistemin **nasıl** kurulduğunu anlatır. **Ne** yaptığı [SPEC.md](SPEC.md), kararların gerekçeleri [docs/adr](adr/README.md), müfredatla ilişkisi [CURRICULUM-MAP.md](CURRICULUM-MAP.md) içindedir.
 
-> **Mevcut durum ve hedef.** Bu doküman **hedef mimariyi** anlatır. Faz 4.1 ile modül yapısı hedefe ulaştı: kod iş alanına göre modüllerde duruyor ve modüller birbirini yalnızca `api` paketleriyle kullanıyor. Henüz yapılmayanlar *(ArchUnit'in diğer kuralları, tipli kimlikler, web katmanı, PostgreSQL, uygulama sunucusu)* Faz 4.2–7'de; bölüm 9 kalan farkları listeler.
+> **Mevcut durum ve hedef.** Bu doküman **hedef mimariyi** anlatır. Faz 4.1 ile modül yapısı hedefe ulaştı: kod iş alanına göre modüllerde duruyor ve modüller birbirini yalnızca `api` paketleriyle kullanıyor. Faz 4.2 ile ADR-0003–0008'in kuralları ArchUnit testi oldu. Henüz yapılmayanlar *(tipli kimlikler, web katmanı, PostgreSQL, uygulama sunucusu)* Faz 4.3–7'de; bölüm 9 kalan farkları listeler.
 
 ## 1. Genel bakış
 
@@ -67,7 +67,7 @@ graph TD
 | `sales` | Sepet, sipariş verme, ödeme, sipariş durumları | `Cart`, `Order`, `OrderStatus`, `OrderNumber`, `ProductSnapshot`, `ShippingPolicy`; api: `PurchaseHistory` |
 | `review` | Yorum, puanlama ve puan dağılımı | `Review`, `Rating`, `RatingDistribution` |
 | `app` | Giriş noktası: nesneleri bağlar, migration'ları çalıştırır, arayüzü sunar | Bugün yalnızca uçtan uca testler *(`JdbcBookstore`)*; 4.4'te `BookstoreModule`, Faz 6'da `BookstoreWiring`, `BookstoreStartup` |
-| `quality/architecture-tests` | Mimari kuralların ArchUnit testleri | `ModuleBoundaryTest`; 4.2'de paket ve domain kuralları |
+| `quality/architecture-tests` | Mimari kuralların ArchUnit testleri | Modül sınırı, paket matrisi, domain, kodlama, application, olay ve persistence kuralları |
 
 İş modülleri arasındaki bağımlılıklar döngüsüzdür ve bir modül diğerinin yalnızca `api` paketini kullanır *(ADR-0002, ADR-0003)*. Bugünkü modüller arası sözleşmeler:
 
@@ -252,15 +252,15 @@ Ayrıntıları ve ArchUnit karşılıkları ADR-0004 ve ADR-0005'tedir:
 
 ## 9. Bugünkü kodla hedef arasındaki farklar
 
-| Konu | Bugün *(Faz 4.1 sonu)* | Hedef | Adım |
+| Konu | Bugün *(Faz 4.2 sonu)* | Hedef | Adım |
 | --- | --- | --- | --- |
 | Modüller | ✅ İş alanına göre modüller, `shared-kernel`, `shared-jdbc`, `app`, mimari testler | — | 4.1 |
 | Migration'lar | ✅ Modül başına dosya ve Flyway geçmişi | — | 4.1 |
 | Web | Web katmanı yok *(Spring Boot iskeleti kaldırıldı)* | JDK HTTP sunucusu, sonra Payara Micro, JAX-RS, statik arayüz | 5, 6, 7 |
-| Mimari kurallar | Modül sınırı kuralları *(`ModuleBoundaryTest`)* | ADR-0003–0008'deki paket ve domain kuralları | 4.2 |
+| Mimari kurallar | ✅ ADR-0003–0008'in ArchUnit kuralları *(`rest` kuralları Faz 5'te dolar)* | — | 4.2 |
 | Kimlikler | `long` | Tipli kimlikler | 4.3 |
 | Hatalar | `BookstoreException` alt türleri | `DomainException` + `Kind` + `code` | 4.3 |
-| Arama ölçütü | `Optional` bileşenli `BookSearchCriteria` | `Specification<Book>` | 4.2, 4.3 |
+| Arama ölçütü | `BookSearchCriteria` *(boş olabilen alanlar, `Optional` erişimciler)* | `Specification<Book>` | 4.3 |
 | Servis sonuçları | Application paketinde okuma modeli `record`'ları | `api` paketinde DTO'lar, façade'lar, mapper'lar | 4.4 |
 | Bildirim | `Notifier` portu | `DomainEventPublisher` + gözlemciler | 4.5 |
 | Veritabanı | H2 MySQL modu, `CHECK` içinde `CASE` | PostgreSQL 17, referans tablolar | 4.6 |

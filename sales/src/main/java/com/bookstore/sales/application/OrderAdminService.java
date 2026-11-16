@@ -13,7 +13,6 @@ import com.bookstore.shared.kernel.paging.PageRequest;
 import com.bookstore.shared.kernel.transaction.TransactionRunner;
 
 import java.time.Clock;
-import java.util.Optional;
 
 /**
  * Order management for administrators (ADM-5): listing every order and moving orders through
@@ -46,15 +45,24 @@ public class OrderAdminService {
     }
 
     /**
-     * Returns one page of all orders, optionally in one status, newest first.
+     * Returns one page of all orders, newest first.
      *
-     * @param status only orders in this status, or empty for all
+     * @param page which page to return
+     * @return the page
+     */
+    public Page<OrderSummary> orders(PageRequest page) {
+        return orders.findAll(page).map(OrderSummary::of);
+    }
+
+    /**
+     * Returns one page of the orders in one status, newest first.
+     *
+     * @param status the status
      * @param page   which page to return
      * @return the page
      */
-    public Page<OrderSummary> orders(Optional<OrderStatus> status, PageRequest page) {
-        Page<Order> found = status.map(s -> orders.findByStatus(s, page)).orElseGet(() -> orders.findAll(page));
-        return found.map(OrderSummary::of);
+    public Page<OrderSummary> ordersIn(OrderStatus status, PageRequest page) {
+        return orders.findByStatus(status, page).map(OrderSummary::of);
     }
 
     /**

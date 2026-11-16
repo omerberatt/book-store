@@ -25,26 +25,11 @@ import java.util.regex.Pattern;
  *         .build();
  * }</pre>
  *
- * @param text            words to find in the title, an author's name or the ISBN
- * @param categoryIds     categories to include; empty means every category
- * @param authorId        only books by this author
- * @param minPrice        lowest price, inclusive
- * @param maxPrice        highest price, inclusive
- * @param language        required language
- * @param inStockOnly     whether to leave out books with no stock
- * @param includeInactive whether to include deactivated books (administrators only)
- * @param sort            the order of the results
+ * <p>A final class rather than a record: the optional parts are kept in nullable fields and
+ * handed out through {@link Optional} accessors, because {@code Optional} is only a return type
+ * (ADR-0004).
  */
-public record BookSearchCriteria(
-        Optional<String> text,
-        Set<Long> categoryIds,
-        Optional<Long> authorId,
-        Optional<Money> minPrice,
-        Optional<Money> maxPrice,
-        Optional<Language> language,
-        boolean inStockOnly,
-        boolean includeInactive,
-        BookSort sort) {
+public final class BookSearchCriteria {
 
     /** Longest accepted search text. */
     public static final int MAX_TEXT_LENGTH = 200;
@@ -52,20 +37,30 @@ public record BookSearchCriteria(
     /** At least four digits are needed before a query is also matched against ISBNs. */
     private static final Pattern ISBN_FRAGMENT = Pattern.compile("\\d{4,13}");
 
+    private final String text;
+    private final Set<Long> categoryIds;
+    private final Long authorId;
+    private final Money minPrice;
+    private final Money maxPrice;
+    private final Language language;
+    private final boolean inStockOnly;
+    private final boolean includeInactive;
+    private final BookSort sort;
+
     /** Normalises the text, copies the category ids and checks the price range. */
-    public BookSearchCriteria {
-        text = Guard.requireNonNull(text, "text")
-                .map(String::strip)
-                .filter(t -> !t.isEmpty())
-                .map(t -> Guard.requireMaxLength(t, "text", MAX_TEXT_LENGTH));
-        categoryIds = Set.copyOf(Guard.requireNonNull(categoryIds, "categoryIds"));
-        Guard.requireNonNull(authorId, "authorId");
-        Guard.requireNonNull(minPrice, "minPrice");
-        Guard.requireNonNull(maxPrice, "maxPrice");
-        Guard.requireNonNull(language, "language");
-        Guard.requireNonNull(sort, "sort");
-        if (minPrice.isPresent() && maxPrice.isPresent()) {
-            Guard.require(maxPrice.get().isAtLeast(minPrice.get()), "maxPrice", "must not be below the minimum price");
+    private BookSearchCriteria(Builder builder) {
+        String stripped = builder.text == null ? "" : builder.text.strip();
+        this.text = stripped.isEmpty() ? null : Guard.requireMaxLength(stripped, "text", MAX_TEXT_LENGTH);
+        this.categoryIds = Set.copyOf(builder.categoryIds);
+        this.authorId = builder.authorId;
+        this.minPrice = builder.minPrice;
+        this.maxPrice = builder.maxPrice;
+        this.language = builder.language;
+        this.inStockOnly = builder.inStockOnly;
+        this.includeInactive = builder.includeInactive;
+        this.sort = Guard.requireNonNull(builder.sort, "sort");
+        if (minPrice != null && maxPrice != null) {
+            Guard.require(maxPrice.isAtLeast(minPrice), "maxPrice", "must not be below the minimum price");
         }
     }
 
@@ -87,6 +82,51 @@ public record BookSearchCriteria(
         return new Builder();
     }
 
+    /** @return words to find in the title, an author's name or the ISBN */
+    public Optional<String> text() {
+        return Optional.ofNullable(text);
+    }
+
+    /** @return categories to include; empty means every category */
+    public Set<Long> categoryIds() {
+        return categoryIds;
+    }
+
+    /** @return only books by this author */
+    public Optional<Long> authorId() {
+        return Optional.ofNullable(authorId);
+    }
+
+    /** @return lowest price, inclusive */
+    public Optional<Money> minPrice() {
+        return Optional.ofNullable(minPrice);
+    }
+
+    /** @return highest price, inclusive */
+    public Optional<Money> maxPrice() {
+        return Optional.ofNullable(maxPrice);
+    }
+
+    /** @return required language */
+    public Optional<Language> language() {
+        return Optional.ofNullable(language);
+    }
+
+    /** @return whether to leave out books with no stock */
+    public boolean inStockOnly() {
+        return inStockOnly;
+    }
+
+    /** @return whether to include deactivated books (administrators only) */
+    public boolean includeInactive() {
+        return includeInactive;
+    }
+
+    /** @return the order of the results */
+    public BookSort sort() {
+        return sort;
+    }
+
     /**
      * Turns the criteria into a test that can be applied to a single book. Used by in-memory
      * repositories; the JDBC repository translates the same criteria into SQL instead.
@@ -101,25 +141,25 @@ public record BookSearchCriteria(
         if (!categoryIds.isEmpty()) {
             predicate = predicate.and(book -> !book.category().isNew() && categoryIds.contains(book.category().id()));
         }
-        if (authorId.isPresent()) {
-            long required = authorId.get();
+        if (authorId != null) {
+            long required = authorId;
             predicate = predicate.and(book -> book.authors().stream()
                     .anyMatch(author -> !author.isNew() && author.id() == required));
         }
-        if (minPrice.isPresent()) {
-            Money min = minPrice.get();
+        if (minPrice != null) {
+            Money min = minPrice;
             predicate = predicate.and(book -> book.price().isAtLeast(min));
         }
-        if (maxPrice.isPresent()) {
-            Money max = maxPrice.get();
+        if (maxPrice != null) {
+            Money max = maxPrice;
             predicate = predicate.and(book -> max.isAtLeast(book.price()));
         }
-        if (language.isPresent()) {
-            Language required = language.get();
+        if (language != null) {
+            Language required = language;
             predicate = predicate.and(book -> book.language() == required);
         }
-        if (text.isPresent()) {
-            predicate = predicate.and(matchesText(text.get()));
+        if (text != null) {
+            predicate = predicate.and(matchesText(text));
         }
         return predicate;
     }
@@ -211,9 +251,7 @@ public record BookSearchCriteria(
          * @return the criteria
          */
         public BookSearchCriteria build() {
-            return new BookSearchCriteria(Optional.ofNullable(text), categoryIds, Optional.ofNullable(authorId),
-                    Optional.ofNullable(minPrice),
-                    Optional.ofNullable(maxPrice), Optional.ofNullable(language), inStockOnly, includeInactive, sort);
+            return new BookSearchCriteria(this);
         }
     }
 }

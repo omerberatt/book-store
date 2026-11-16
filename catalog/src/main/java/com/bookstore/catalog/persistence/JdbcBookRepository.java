@@ -190,16 +190,16 @@ public class JdbcBookRepository implements BookRepository {
 
     /** The columns of one {@code books} row, before the authors and category are attached. */
     private record BookRow(long id, int version, String isbn, String title, long categoryId, String publisher,
-                           Optional<Year> publicationYear, String language, int pageCount,
-                           String description, BigDecimal price, int stock, Optional<String> coverImage,
+                           Year publicationYear, String language, int pageCount,
+                           String description, BigDecimal price, int stock, String coverImage,
                            boolean active, int ratingCount, int ratingSum) {
 
         static BookRow read(ResultSet row) throws SQLException {
             return new BookRow(row.getLong("id"), row.getInt("version"), row.getString("isbn"),
                     row.getString("title"), row.getLong("category_id"), row.getString("publisher"),
-                    Columns.year(row, "publication_year"), row.getString("language"), row.getInt("page_count"),
+                    Columns.year(row, "publication_year").orElse(null), row.getString("language"), row.getInt("page_count"),
                     row.getString("description"), row.getBigDecimal("price"), row.getInt("stock"),
-                    Columns.optionalString(row, "cover_image"), row.getBoolean("active"), row.getInt("rating_count"),
+                    row.getString("cover_image"), row.getBoolean("active"), row.getInt("rating_count"),
                     row.getInt("rating_sum"));
         }
 
@@ -215,13 +215,13 @@ public class JdbcBookRepository implements BookRepository {
                     .authors(authors)
                     .category(category)
                     .publisher(publisher)
-                    .publicationYear(publicationYear.orElse(null))
+                    .publicationYear(publicationYear)
                     .language(Language.fromCode(language))
                     .pageCount(pageCount)
                     .description(description)
                     .price(Money.of(price))
                     .stock(Stock.of(stock))
-                    .coverImage(coverImage.orElse(null))
+                    .coverImage(coverImage)
                     .active(active)
                     .ratings(new RatingSummary(ratingCount, ratingSum))
                     .build();

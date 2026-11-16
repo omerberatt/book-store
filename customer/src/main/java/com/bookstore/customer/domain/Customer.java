@@ -82,16 +82,18 @@ public class Customer extends Entity {
      * @param active           whether the account is active
      * @param registeredAt     when the customer registered
      * @param addresses        the saved addresses
-     * @param defaultAddressId id of the default address among {@code addresses}, if any
+     * @param defaultAddressId id of the default address among {@code addresses}, or {@code null}
      * @return the customer
      */
     public static Customer restore(long id, int version, Email email, PersonName name, String passwordHash,
                                    Role role, boolean active, Instant registeredAt, List<SavedAddress> addresses,
-                                   Optional<Long> defaultAddressId) {
+                                   Long defaultAddressId) {
         Customer customer = new Customer(email, name, passwordHash, role, active, registeredAt);
         customer.markPersisted(id, version);
         customer.addresses.addAll(addresses);
-        defaultAddressId.ifPresent(addressId -> customer.defaultAddress = customer.address(addressId));
+        if (defaultAddressId != null) {
+            customer.defaultAddress = customer.address(defaultAddressId);
+        }
         return customer;
     }
 

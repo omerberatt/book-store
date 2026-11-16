@@ -15,7 +15,6 @@ import com.bookstore.sales.domain.OrderPlaced;
 import com.bookstore.sales.domain.OrderStatusChanged;
 import com.bookstore.sales.domain.OrderStatus;
 
-import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
@@ -88,9 +87,9 @@ class OrderManagementTest {
         shop.buy(mehmet, dune, 1);
         shop.orderAdmin.changeStatus(shipped, OrderStatus.SHIPPED);
 
-        assertThat(shop.orderAdmin.orders(Optional.of(OrderStatus.SHIPPED), PageRequest.first()).content())
+        assertThat(shop.orderAdmin.ordersIn(OrderStatus.SHIPPED, PageRequest.first()).content())
                 .extracting(OrderSummary::orderNumber).containsExactly(shipped);
-        assertThat(shop.orderAdmin.orders(Optional.empty(), PageRequest.first()).totalElements()).isEqualTo(2);
+        assertThat(shop.orderAdmin.orders(PageRequest.first()).totalElements()).isEqualTo(2);
     }
 
     private static OrderStatus newStatus(DomainEvent event) {

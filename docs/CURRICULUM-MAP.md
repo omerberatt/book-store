@@ -67,7 +67,7 @@ Faz numaraları [ROADMAP.md](ROADMAP.md) içindeki aşamalardır; ADR'ler [docs/
 | Konu | Kitap mağazasında | Durum | Faz |
 | --- | --- | --- | --- |
 | `Optional` dönüş tipi sözleşmesi | `findBy…` metotları, `Book.publicationYear()`, `Customer.defaultAddress()` | ✅ | 1 |
-| `Optional` alan olarak kullanılmaz | `BookSearchCriteria` ve `BookSearchQuery` record bileşenleri `Optional`; kural ihlali *(ADR-0004)* | 🔁 | 4 |
+| `Optional` alan ya da parametre olarak kullanılmaz | `BookSearchCriteria` boş olabilen alanlı `final` sınıf; `BookSearchQuery`, `BookSummary`, `BookDetails` boş olabilen bileşenli record'lar; `optional_is_not_a_field_type`, `optional_is_not_a_parameter_type` *(ADR-0004)* | ✅ | 4.2 |
 | Stream API, `reduce(Money::plus)` | `Money.sum`, `Cart.subtotal`, `Order` toplamları | ✅ | 1 |
 | `Collectors.groupingBy`, `toMap`, `mapping` | `RatingDistribution`, repository'lerde kimliğe göre gruplama | ✅ | 1, 3 |
 | Bellek içi sorgu nesnesi *(OrderBook)* | Test çiftleri: `InMemoryBookRepository` … `InMemoryStore<T>` | ✅ | 2 |
@@ -113,7 +113,7 @@ Faz numaraları [ROADMAP.md](ROADMAP.md) içindeki aşamalardır; ADR'ler [docs/
 | `shared-kernel` | `Money`, `Address`, `Entity`, `DomainEvent`, `TransactionRunner`, sayfalama, metin ve hatalar; hiçbir iş modülüne bağımlı değil *(ArchUnit ile korunuyor)* | ✅ | 4.1 |
 | Test fixture'ını `test-jar` ile paylaşmak | `shared-kernel` *(`InMemoryStore`, `DirectTransactions`, `TestClock`)*, `shared-jdbc` *(`TestDatabase`)*, `catalog` *(`CatalogDb`)*, `customer` *(`CustomerDb`)*, `sales` *(`SalesDb`)* | ✅ | 4.1 |
 | Uçtan uca smoke test | `app` modülünde dört modülü gerçek JDBC ile kuran `JdbcBookstore`; `CheckoutWithDatabaseTest`, `ReviewFlowTest` | ✅ | 4.1 |
-| ArchUnit ile mimari testler | `quality/architecture-tests`: modül sınırı kuralları *(`ModuleBoundaryTest`)* ✅; ADR-0003–0008'in paket ve domain kuralları ⏳; kasıtlı ihlal denemesiyle doğrulandı | 🔁 | 4.1, 4.2 |
+| ArchUnit ile mimari testler | `quality/architecture-tests`: modül sınırı *(`ModuleBoundaryTest`)*, paket matrisi *(`LayerDependencyTest`)*, domain *(`DomainModelRulesTest`)*, kodlama *(`CodingRulesTest`)*, application *(`ApplicationRulesTest`)*, olay *(`DomainEventRulesTest`)* ve persistence *(`PersistenceRulesTest`)* kuralları; kasıtlı ihlallerle doğrulandı | ✅ | 4.1, 4.2 |
 | `no_standard_streams`, `no_dumping_ground_packages` | [ADR-0005](adr/ADR-0005.md) | ⏳ | 4 |
 
 ## Bölüm 10 — Uygulama Servisleri ve Manuel Dependency Injection

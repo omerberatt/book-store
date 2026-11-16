@@ -39,7 +39,7 @@ class ReviewFlowTest {
 
         assertThat(review(4).authorName()).isEqualTo("Ayşe Y.");
 
-        assertThat(store.catalog.book(dune.id()).averageRating()).contains(new BigDecimal("4.0"));
+        assertThat(store.catalog.book(dune.id()).averageRating()).isEqualTo(new BigDecimal("4.0"));
         assertThat(store.catalog.book(dune.id()).ratingCount()).isEqualTo(1);
         assertThat(store.reviews.ratingDistribution(dune.id()).count(Rating.of(4))).isEqualTo(1);
     }
@@ -54,7 +54,7 @@ class ReviewFlowTest {
         store.reviews.delete(ayse.id(), dune.id());
 
         assertThat(store.catalog.book(dune.id()).ratingCount()).isZero();
-        assertThat(store.catalog.book(dune.id()).averageRating()).isEmpty();
+        assertThat(store.catalog.book(dune.id()).averageRating()).isNull();
     }
 
     private String buy() {

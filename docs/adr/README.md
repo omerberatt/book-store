@@ -40,7 +40,7 @@ Bu klasörden önce kararlar `docs/DECISIONS.md` içinde **K-xx** numaralarıyla
 | Eski | Yeni | Değişiklik |
 | --- | --- | --- |
 | K-01 Çok modüllü katmanlı monolit | ADR-0002 | Katmana göre modüller yerine iş alanına göre modüller |
-| K-02 İş katmanlarında framework yok | ADR-0004, ADR-0006 | Korundu; ArchUnit ile doğrulanacak |
+| K-02 İş katmanlarında framework yok | ADR-0004, ADR-0006 | Korundu; ArchUnit ile doğrulanıyor *(Faz 4.2)* |
 | K-03 Veri erişimi elle JDBC ile | ADR-0008 | Korundu; JPA ileri bir faza bırakıldı |
 | K-04 MySQL; testlerde H2 | ADR-0008 | MySQL yerine PostgreSQL 17 |
 | K-05 Thymeleaf + REST API | ADR-0009, ADR-0011 | Thymeleaf yerine REST API üzerinde HTML ve JavaScript |
