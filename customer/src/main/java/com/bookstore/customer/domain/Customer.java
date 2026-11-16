@@ -1,5 +1,6 @@
 package com.bookstore.customer.domain;
 
+import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.kernel.address.Address;
 import com.bookstore.shared.kernel.error.NotFoundException;
 import com.bookstore.shared.kernel.validation.Guard;
@@ -20,7 +21,7 @@ import java.util.Optional;
  * is the job of the application layer's password hasher, after {@link PasswordPolicy} has accepted
  * it.
  */
-public class Customer extends Entity {
+public class Customer extends Entity<CustomerId> {
 
     /** How many addresses a customer may save. */
     public static final int MAX_ADDRESSES = 10;
@@ -85,9 +86,9 @@ public class Customer extends Entity {
      * @param defaultAddressId id of the default address among {@code addresses}, or {@code null}
      * @return the customer
      */
-    public static Customer reconstitute(long id, int version, Email email, PersonName name, String passwordHash,
+    public static Customer reconstitute(CustomerId id, int version, Email email, PersonName name, String passwordHash,
                                    Role role, boolean active, Instant registeredAt, List<SavedAddress> addresses,
-                                   Long defaultAddressId) {
+                                   AddressId defaultAddressId) {
         Customer customer = new Customer(email, name, passwordHash, role, active, registeredAt);
         customer.markPersisted(id, version);
         customer.addresses.addAll(addresses);
@@ -151,9 +152,9 @@ public class Customer extends Entity {
      * @return the address
      * @throws NotFoundException if the customer has no such address
      */
-    public SavedAddress address(long addressId) {
+    public SavedAddress address(AddressId addressId) {
         return addresses.stream()
-                .filter(a -> !a.isNew() && a.id() == addressId)
+                .filter(a -> !a.isNew() && a.id().equals(addressId))
                 .findFirst()
                 .orElseThrow(() -> new NotFoundException("Address", addressId));
     }
@@ -223,7 +224,7 @@ public class Customer extends Entity {
      * @param newLabel   the new label
      * @param newAddress the new address
      */
-    public void changeAddress(long addressId, String newLabel, Address newAddress) {
+    public void changeAddress(AddressId addressId, String newLabel, Address newAddress) {
         address(addressId).change(newLabel, newAddress);
     }
 
@@ -232,7 +233,7 @@ public class Customer extends Entity {
      *
      * @param addressId the address id
      */
-    public void makeDefault(long addressId) {
+    public void makeDefault(AddressId addressId) {
         defaultAddress = address(addressId);
     }
 
@@ -242,7 +243,7 @@ public class Customer extends Entity {
      *
      * @param addressId the address id
      */
-    public void removeAddress(long addressId) {
+    public void removeAddress(AddressId addressId) {
         SavedAddress removed = address(addressId);
         addresses.remove(removed);
         if (removed.equals(defaultAddress)) {

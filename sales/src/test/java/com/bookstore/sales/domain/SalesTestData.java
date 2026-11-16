@@ -1,5 +1,7 @@
 package com.bookstore.sales.domain;
 
+import com.bookstore.shared.kernel.identity.CustomerId;
+import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.money.Money;
 
 /**
@@ -9,14 +11,14 @@ import com.bookstore.shared.kernel.money.Money;
 public final class SalesTestData {
 
     /** A customer id used as the owner of carts and orders. */
-    public static final long CUSTOMER_ID = 7;
+    public static final CustomerId CUSTOMER_ID = CustomerId.of(7);
 
     private SalesTestData() {
     }
 
     /** @return an active product with the given price and stock, by "Author {id}" */
     public static ProductSnapshot product(long id, String title, String price, int stock) {
-        return new ProductSnapshot(id, title, "Author " + id, Money.of(price), stock, true);
+        return new ProductSnapshot(BookId.of(id), title, "Author " + id, Money.of(price), stock, true);
     }
 
     /** @return the same product with a new price */

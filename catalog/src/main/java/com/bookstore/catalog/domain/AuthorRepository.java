@@ -15,7 +15,7 @@ public interface AuthorRepository {
      * @param id the id
      * @return the author, or empty
      */
-    Optional<Author> findById(long id);
+    Optional<Author> findById(AuthorId id);
 
     /**
      * Finds several authors at once. Ids with no author are skipped.
@@ -23,7 +23,7 @@ public interface AuthorRepository {
      * @param ids the ids
      * @return the authors found, in no particular order
      */
-    List<Author> findAllById(Collection<Long> ids);
+    List<Author> findAllById(Collection<AuthorId> ids);
 
     /**
      * Returns every author, sorted by name.

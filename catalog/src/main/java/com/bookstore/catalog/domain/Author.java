@@ -6,7 +6,7 @@ import com.bookstore.shared.kernel.domain.Entity;
 /**
  * A person who wrote one or more books.
  */
-public class Author extends Entity {
+public class Author extends Entity<AuthorId> {
 
     /** Longest allowed name. */
     public static final int MAX_NAME_LENGTH = 200;
@@ -17,7 +17,7 @@ public class Author extends Entity {
         this.name = validName(name);
     }
 
-    private Author(long id, int version, String name) {
+    private Author(AuthorId id, int version, String name) {
         super(id, version);
         this.name = validName(name);
     }
@@ -40,7 +40,7 @@ public class Author extends Entity {
      * @param name    the stored name
      * @return the author
      */
-    public static Author reconstitute(long id, int version, String name) {
+    public static Author reconstitute(AuthorId id, int version, String name) {
         return new Author(id, version, name);
     }
 

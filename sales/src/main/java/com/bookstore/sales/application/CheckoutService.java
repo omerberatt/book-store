@@ -1,5 +1,7 @@
 package com.bookstore.sales.application;
 
+import com.bookstore.shared.kernel.identity.BookId;
+import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.catalog.api.StockFacade;
 import com.bookstore.customer.api.CustomerDirectory;
 import com.bookstore.sales.domain.Cart;
@@ -109,7 +111,7 @@ public class CheckoutService {
         return OrderDetails.of(order);
     }
 
-    private List<CartAdjustment> reconcileCart(long customerId) {
+    private List<CartAdjustment> reconcileCart(CustomerId customerId) {
         Cart cart = cartOf(customerId);
         List<CartAdjustment> adjustments = cart.reconcile(Products.load(stock, cart.bookIds()));
         if (!adjustments.isEmpty()) {
@@ -121,7 +123,7 @@ public class CheckoutService {
     private Order place(PlaceOrderCommand command) {
         Address address = customers.shippingAddress(command.customerId(), command.addressId());
         Cart cart = cartOf(command.customerId());
-        Map<Long, ProductSnapshot> products = Products.load(stock, cart.bookIds());
+        Map<BookId, ProductSnapshot> products = Products.load(stock, cart.bookIds());
 
         // Something may have changed since the first transaction; never charge a price the customer has not seen.
         List<CartAdjustment> lateChanges = cart.reconcile(products);
@@ -147,7 +149,7 @@ public class CheckoutService {
         return order;
     }
 
-    private Cart cartOf(long customerId) {
+    private Cart cartOf(CustomerId customerId) {
         return carts.findByCustomerId(customerId).orElseGet(() -> Cart.forCustomer(customerId));
     }
 }

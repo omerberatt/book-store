@@ -1,5 +1,6 @@
 package com.bookstore.customer.application;
 
+import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.customer.domain.Customer;
 import com.bookstore.customer.domain.Role;
 
@@ -13,7 +14,7 @@ import com.bookstore.customer.domain.Role;
  * @param role         the role
  * @param active       whether the customer may sign in (ACC-7)
  */
-public record LoginAccount(long customerId, String email, String passwordHash, Role role, boolean active) {
+public record LoginAccount(CustomerId customerId, String email, String passwordHash, Role role, boolean active) {
 
     /**
      * Copies a customer.

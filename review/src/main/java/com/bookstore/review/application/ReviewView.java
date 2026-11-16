@@ -1,5 +1,8 @@
 package com.bookstore.review.application;
 
+import com.bookstore.review.domain.ReviewId;
+import com.bookstore.shared.kernel.identity.BookId;
+import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.review.domain.Review;
 
 import java.time.Instant;
@@ -16,7 +19,7 @@ import java.time.Instant;
  * @param createdAt  when it was written
  * @param edited     whether it was changed after it was written
  */
-public record ReviewView(long id, long bookId, long customerId, String authorName, int stars, String comment,
+public record ReviewView(ReviewId id, BookId bookId, CustomerId customerId, String authorName, int stars, String comment,
                          Instant createdAt, boolean edited) {
 
     /**

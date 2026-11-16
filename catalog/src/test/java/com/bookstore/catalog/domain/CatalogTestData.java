@@ -1,5 +1,6 @@
 package com.bookstore.catalog.domain;
 
+import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.money.Money;
 
 /**
@@ -12,13 +13,13 @@ public final class CatalogTestData {
 
     /** @return a stored root category "Literature" (id 1) with a stored child "Novel" (id 2) */
     public static Category novels() {
-        Category literature = Category.reconstituteRoot(1, 0, "Literature");
-        return Category.reconstituteChild(2, 0, "Novel", literature);
+        Category literature = Category.reconstituteRoot(CategoryId.of(1), 0, "Literature");
+        return Category.reconstituteChild(CategoryId.of(2), 0, "Novel", literature);
     }
 
     /** @return a stored author */
     public static Author author(long id, String name) {
-        return Author.reconstitute(id, 0, name);
+        return Author.reconstitute(AuthorId.of(id), 0, name);
     }
 
     /**
@@ -44,7 +45,7 @@ public final class CatalogTestData {
     /** @return a builder for a stored, active book, for tests that need to change more attributes */
     public static Book.Builder bookBuilder(long id, String title, String price, int stock) {
         return Book.builder()
-                .persisted(id, 0)
+                .persisted(BookId.of(id), 0)
                 .isbn(isbn(id))
                 .title(title)
                 .author(author(100 + id, "Author " + id))

@@ -1,5 +1,6 @@
 package com.bookstore.catalog.application;
 
+import com.bookstore.catalog.domain.CategoryId;
 import com.bookstore.catalog.domain.Category;
 
 import java.util.List;
@@ -11,7 +12,7 @@ import java.util.List;
  * @param name     the category's name
  * @param children the subcategories, in order
  */
-public record CategoryNode(long id, String name, List<CategoryNode> children) {
+public record CategoryNode(CategoryId id, String name, List<CategoryNode> children) {
 
     /** Copies the children. */
     public CategoryNode {

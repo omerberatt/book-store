@@ -1,5 +1,6 @@
 package com.bookstore.customer.domain;
 
+import com.bookstore.shared.kernel.identity.CustomerId;
 import static com.bookstore.shared.kernel.testing.TestClock.CLOCK;
 import static com.bookstore.shared.kernel.testing.TestClock.NOW;
 import static com.bookstore.shared.kernel.testing.TestAddresses.home;
@@ -55,21 +56,21 @@ class CustomerTest {
 
     @Test
     void addressesAreFoundByIdAndTheDefaultMovesWhenItIsRemoved() {
-        Customer stored = Customer.reconstitute(1, 0, Email.of("a@b.co"), new PersonName("A", "B"), "hash", Role.CUSTOMER,
-                true, NOW, List.of(SavedAddress.reconstitute(10, 0, "Ev", home()),
-                        SavedAddress.reconstitute(11, 0, "İş", home())), 10L);
+        Customer stored = Customer.reconstitute(CustomerId.of(1), 0, Email.of("a@b.co"), new PersonName("A", "B"), "hash", Role.CUSTOMER,
+                true, NOW, List.of(SavedAddress.reconstitute(AddressId.of(10), 0, "Ev", home()),
+                        SavedAddress.reconstitute(AddressId.of(11), 0, "İş", home())), AddressId.of(10));
 
         assertThat(stored.defaultAddress()).map(SavedAddress::label).contains("Ev");
 
-        stored.makeDefault(11);
+        stored.makeDefault(AddressId.of(11));
         assertThat(stored.defaultAddress()).map(SavedAddress::label).contains("İş");
 
-        stored.removeAddress(11);
+        stored.removeAddress(AddressId.of(11));
         assertThat(stored.defaultAddress()).map(SavedAddress::label).contains("Ev");
 
-        stored.removeAddress(10);
+        stored.removeAddress(AddressId.of(10));
         assertThat(stored.defaultAddress()).isEmpty();
-        assertThatThrownBy(() -> stored.makeDefault(10)).isInstanceOf(NotFoundException.class);
+        assertThatThrownBy(() -> stored.makeDefault(AddressId.of(10))).isInstanceOf(NotFoundException.class);
     }
 
     @Test

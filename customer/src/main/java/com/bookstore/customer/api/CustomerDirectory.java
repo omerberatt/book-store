@@ -1,5 +1,6 @@
 package com.bookstore.customer.api;
 
+import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.kernel.address.Address;
 
 import java.util.Collection;
@@ -21,7 +22,7 @@ public interface CustomerDirectory {
      * @throws com.bookstore.shared.kernel.error.NotFoundException if there is no such customer, or
      *                                                             the address belongs to someone else
      */
-    Address shippingAddress(long customerId, long addressId);
+    Address shippingAddress(CustomerId customerId, long addressId);
 
     /**
      * Returns the public names of several customers, for example {@code "Ayşe Y."}. Ids with no
@@ -30,5 +31,5 @@ public interface CustomerDirectory {
      * @param customerIds the customers' ids
      * @return the names keyed by customer id
      */
-    Map<Long, String> publicNames(Collection<Long> customerIds);
+    Map<CustomerId, String> publicNames(Collection<CustomerId> customerIds);
 }

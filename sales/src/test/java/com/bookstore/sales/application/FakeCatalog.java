@@ -1,5 +1,6 @@
 package com.bookstore.sales.application;
 
+import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.catalog.api.BookOffer;
 import com.bookstore.catalog.api.StockFacade;
 import com.bookstore.shared.kernel.error.ConflictException;
@@ -19,7 +20,7 @@ import java.util.Objects;
  */
 public final class FakeCatalog implements StockFacade {
 
-    private final Map<Long, Item> items = new LinkedHashMap<>();
+    private final Map<BookId, Item> items = new LinkedHashMap<>();
     private long nextId = 1;
 
     /**
@@ -31,7 +32,7 @@ public final class FakeCatalog implements StockFacade {
      * @return the book, which tests can change like a catalog administrator would
      */
     public Item add(String title, String price, int stock) {
-        Item item = new Item(nextId++, title, Money.of(price), stock);
+        Item item = new Item(BookId.of(nextId++), title, Money.of(price), stock);
         items.put(item.id, item);
         return item;
     }
@@ -42,17 +43,17 @@ public final class FakeCatalog implements StockFacade {
      * @param bookId the book's id
      * @return copies on hand
      */
-    public int stockOf(long bookId) {
+    public int stockOf(BookId bookId) {
         return items.get(bookId).stock;
     }
 
     @Override
-    public List<BookOffer> offers(Collection<Long> bookIds) {
+    public List<BookOffer> offers(Collection<BookId> bookIds) {
         return bookIds.stream().distinct().map(items::get).filter(Objects::nonNull).map(Item::offer).toList();
     }
 
     @Override
-    public void reserve(Map<Long, Integer> quantities) {
+    public void reserve(Map<BookId, Integer> quantities) {
         quantities.forEach((bookId, quantity) -> {
             Item item = require(bookId);
             if (!item.active) {
@@ -66,11 +67,11 @@ public final class FakeCatalog implements StockFacade {
     }
 
     @Override
-    public void release(Map<Long, Integer> quantities) {
+    public void release(Map<BookId, Integer> quantities) {
         quantities.forEach((bookId, quantity) -> require(bookId).stock += quantity);
     }
 
-    private Item require(long bookId) {
+    private Item require(BookId bookId) {
         Item item = items.get(bookId);
         if (item == null) {
             throw new NotFoundException("Book", bookId);
@@ -81,13 +82,13 @@ public final class FakeCatalog implements StockFacade {
     /** One book in the fake catalog. */
     public static final class Item {
 
-        private final long id;
+        private final BookId id;
         private final String title;
         private Money price;
         private int stock;
         private boolean active = true;
 
-        private Item(long id, String title, Money price, int stock) {
+        private Item(BookId id, String title, Money price, int stock) {
             this.id = id;
             this.title = title;
             this.price = price;
@@ -95,7 +96,7 @@ public final class FakeCatalog implements StockFacade {
         }
 
         /** @return the book's id */
-        public long id() {
+        public BookId id() {
             return id;
         }
 

@@ -22,7 +22,7 @@ public interface CategoryRepository {
      * @param id the id
      * @return the category with its parent and children attached, or empty
      */
-    Optional<Category> findById(long id);
+    Optional<Category> findById(CategoryId id);
 
     /**
      * Inserts a new category or updates a stored one. A new subcategory requires its parent to be

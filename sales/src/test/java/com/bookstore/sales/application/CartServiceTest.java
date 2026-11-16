@@ -1,5 +1,7 @@
 package com.bookstore.sales.application;
 
+import com.bookstore.shared.kernel.identity.BookId;
+import com.bookstore.shared.kernel.identity.CustomerId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -17,7 +19,7 @@ class CartServiceTest {
     private final SalesShop shop = new SalesShop();
     private final FakeCatalog.Item dune = shop.book("Dune", "100.00", 20);
     private final FakeCatalog.Item madonna = shop.book("Kürk Mantolu Madonna", "45.50", 3);
-    private final long customerId = shop.customer("ayse@example.com");
+    private final CustomerId customerId = shop.customer("ayse@example.com");
 
     @Test
     void guestCartIsChangedInPlaceAndPricedWithShipping() {
@@ -87,7 +89,7 @@ class CartServiceTest {
 
         assertThatThrownBy(() -> shop.cart.add(ref, dune.id(), 21)).isInstanceOf(Exception.class);
         assertThatThrownBy(() -> shop.cart.add(ref, madonna.id(), 1)).isInstanceOf(NotFoundException.class);
-        assertThatThrownBy(() -> shop.cart.add(ref, 999, 1)).isInstanceOf(NotFoundException.class);
+        assertThatThrownBy(() -> shop.cart.add(ref, BookId.of(999), 1)).isInstanceOf(NotFoundException.class);
     }
 
     @Test

@@ -1,6 +1,7 @@
 package com.bookstore.shared.jdbc;
 
 import com.bookstore.shared.kernel.error.ConflictException;
+import com.bookstore.shared.kernel.identity.Identifier;
 import com.bookstore.shared.kernel.money.Money;
 
 import java.sql.Connection;
@@ -29,7 +30,7 @@ import java.util.StringJoiner;
  *
  * <p>Parameters are always bound, never concatenated into the SQL, so user input cannot change
  * the meaning of a query (SQL injection). Values are converted on the way in: {@link Instant} to a
- * UTC {@code DATETIME}, {@link Money} to its amount, enums to their name, {@link Year} to an
+ * UTC {@code DATETIME}, a typed {@link Identifier} to its value, {@link Money} to its amount, enums to their name, {@link Year} to an
  * integer.
  */
 public class JdbcExecutor {
@@ -239,6 +240,7 @@ public class JdbcExecutor {
         return switch (value) {
             case null -> null;
             case Instant instant -> LocalDateTime.ofInstant(instant, ZoneOffset.UTC);
+            case Identifier id -> id.value();
             case Money money -> money.amount();
             case Year year -> year.getValue();
             case Enum<?> constant -> constant.name();

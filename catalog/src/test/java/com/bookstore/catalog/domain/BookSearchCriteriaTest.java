@@ -66,15 +66,15 @@ class BookSearchCriteriaTest {
                 .containsExactlyInAnyOrder(madonna, dune);
         assertThat(search(criteria().language(Language.ENGLISH))).containsExactly(dune);
         assertThat(search(criteria().inStockOnly(true))).containsExactlyInAnyOrder(madonna, calikusu);
-        assertThat(search(criteria().categoryIds(Set.of(2L)))).hasSize(3);
-        assertThat(search(criteria().categoryIds(Set.of(99L)))).isEmpty();
+        assertThat(search(criteria().categoryIds(Set.of(CategoryId.of(2))))).hasSize(3);
+        assertThat(search(criteria().categoryIds(Set.of(CategoryId.of(99))))).isEmpty();
     }
 
     @Test
     void filtersByAuthor() {
-        assertThat(search(criteria().authorId(10))).containsExactly(madonna);
-        assertThat(search(criteria().authorId(102))).containsExactly(dune);
-        assertThat(search(criteria().authorId(999))).isEmpty();
+        assertThat(search(criteria().authorId(AuthorId.of(10)))).containsExactly(madonna);
+        assertThat(search(criteria().authorId(AuthorId.of(102)))).containsExactly(dune);
+        assertThat(search(criteria().authorId(AuthorId.of(999)))).isEmpty();
     }
 
     @Test

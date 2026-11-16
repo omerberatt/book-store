@@ -59,7 +59,7 @@ class ReviewFlowTest {
 
     private String buy() {
         store.cart.add(CartRef.customer(ayse.id()), dune.id(), 1);
-        long addressId = ayse.defaultAddress().orElseThrow().id();
+        long addressId = ayse.defaultAddress().orElseThrow().id().value();
         return store.checkout.placeOrder(new PlaceOrderCommand(ayse.id(), addressId, PaymentMethod.CREDIT_CARD))
                 .orderNumber();
     }

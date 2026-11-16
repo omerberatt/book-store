@@ -1,5 +1,6 @@
 package com.bookstore.sales.domain;
 
+import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.money.Money;
 
 /**
@@ -13,7 +14,7 @@ public sealed interface CartAdjustment {
      *
      * @return the id
      */
-    long bookId();
+    BookId bookId();
 
     /**
      * Returns the affected book's title, for the message.
@@ -28,7 +29,7 @@ public sealed interface CartAdjustment {
      * @param bookId    the book's id
      * @param bookTitle the title, or {@code "#id"} if the book no longer exists
      */
-    record Removed(long bookId, String bookTitle) implements CartAdjustment {
+    record Removed(BookId bookId, String bookTitle) implements CartAdjustment {
     }
 
     /**
@@ -39,7 +40,7 @@ public sealed interface CartAdjustment {
      * @param from      the quantity before
      * @param to        the quantity now, equal to the stock
      */
-    record QuantityReduced(long bookId, String bookTitle, int from, int to) implements CartAdjustment {
+    record QuantityReduced(BookId bookId, String bookTitle, int from, int to) implements CartAdjustment {
     }
 
     /**
@@ -50,6 +51,6 @@ public sealed interface CartAdjustment {
      * @param from      the price the customer saw
      * @param to        the current price
      */
-    record PriceChanged(long bookId, String bookTitle, Money from, Money to) implements CartAdjustment {
+    record PriceChanged(BookId bookId, String bookTitle, Money from, Money to) implements CartAdjustment {
     }
 }

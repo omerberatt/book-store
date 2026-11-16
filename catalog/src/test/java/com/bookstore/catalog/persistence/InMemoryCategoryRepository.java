@@ -1,5 +1,6 @@
 package com.bookstore.catalog.persistence;
 
+import com.bookstore.catalog.domain.CategoryId;
 import com.bookstore.catalog.domain.Category;
 import com.bookstore.catalog.domain.CategoryRepository;
 
@@ -21,10 +22,10 @@ public class InMemoryCategoryRepository implements CategoryRepository {
     }
 
     @Override
-    public Optional<Category> findById(long id) {
+    public Optional<Category> findById(CategoryId id) {
         return roots.stream()
                 .flatMap(root -> root.selfAndDescendants().stream())
-                .filter(category -> category.id() == id)
+                .filter(category -> category.id().equals(id))
                 .findFirst();
     }
 
@@ -36,7 +37,7 @@ public class InMemoryCategoryRepository implements CategoryRepository {
             }
         });
         if (category.isNew()) {
-            category.markPersisted(sequence.incrementAndGet(), 0);
+            category.markPersisted(CategoryId.of(sequence.incrementAndGet()), 0);
             if (category.isRoot()) {
                 roots.add(category);
             }

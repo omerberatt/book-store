@@ -1,5 +1,6 @@
 package com.bookstore.sales.domain;
 
+import com.bookstore.shared.kernel.identity.CustomerId;
 
 import java.time.Instant;
 import java.util.Objects;
@@ -14,7 +15,7 @@ import java.util.Objects;
  * @param occurredAt  when the change happened
  */
 public record OrderStatusChanged(
-        OrderNumber orderNumber, long customerId, OrderStatus from, OrderStatus to, Instant occurredAt)
+        OrderNumber orderNumber, CustomerId customerId, OrderStatus from, OrderStatus to, Instant occurredAt)
         implements OrderEvent {
 
     /** Rejects missing parts. */

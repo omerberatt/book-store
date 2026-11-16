@@ -1,5 +1,8 @@
 package com.bookstore.sales.persistence;
 
+import com.bookstore.sales.domain.OrderId;
+import com.bookstore.shared.kernel.identity.BookId;
+import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.kernel.money.Money;
 import com.bookstore.shared.kernel.paging.Page;
 import com.bookstore.shared.kernel.paging.PageRequest;
@@ -49,7 +52,7 @@ public class JdbcOrderRepository implements OrderRepository {
     // ---------------------------------------------------------------- queries
 
     @Override
-    public Optional<Order> findById(long id) {
+    public Optional<Order> findById(OrderId id) {
         return load("SELECT " + COLUMNS + " FROM orders o WHERE o.id = ?", id).stream().findFirst();
     }
 
@@ -60,7 +63,7 @@ public class JdbcOrderRepository implements OrderRepository {
     }
 
     @Override
-    public Page<Order> findByCustomerId(long customerId, PageRequest page) {
+    public Page<Order> findByCustomerId(CustomerId customerId, PageRequest page) {
         return page(" WHERE o.user_id = ?", page, customerId);
     }
 
@@ -75,7 +78,7 @@ public class JdbcOrderRepository implements OrderRepository {
     }
 
     @Override
-    public boolean hasDeliveredBook(long customerId, long bookId) {
+    public boolean hasDeliveredBook(CustomerId customerId, BookId bookId) {
         return jdbc.exists("SELECT 1 FROM orders o JOIN order_lines l ON l.order_id = o.id "
                 + "WHERE o.user_id = ? AND o.status = ? AND l.book_id = ? LIMIT 1",
                 customerId, OrderStatus.DELIVERED, bookId);
@@ -105,7 +108,7 @@ public class JdbcOrderRepository implements OrderRepository {
                 order.number().value(), order.customerId(), order.status(), order.paymentMethod(),
                 order.shippingCost(), order.placedAt(), order.statusChangedAt(), a.recipient(), a.phone(), a.line(),
                 a.district(), a.city(), a.postalCode());
-        order.markPersisted(id, 0);
+        order.markPersisted(OrderId.of(id), 0);
 
         List<Object[]> rows = new ArrayList<>();
         int lineNo = 1;
@@ -153,7 +156,7 @@ public class JdbcOrderRepository implements OrderRepository {
 
         Order toOrder(List<OrderLine> lines) {
             Address address = new Address(shipRecipient, shipPhone, shipLine, shipDistrict, shipCity, shipPostalCode);
-            return Order.reconstitute(id, version, new OrderNumber(orderNumber), userId, lines, address, paymentMethod,
+            return Order.reconstitute(OrderId.of(id), version, new OrderNumber(orderNumber), CustomerId.of(userId), lines, address, paymentMethod,
                     shippingCost, status, placedAt, statusChangedAt);
         }
     }
@@ -162,7 +165,7 @@ public class JdbcOrderRepository implements OrderRepository {
     private record LineRow(long orderId, int lineNo, long bookId, String bookTitle, Money unitPrice, int quantity) {
 
         OrderLine toLine() {
-            return new OrderLine(bookId, bookTitle, unitPrice, quantity);
+            return new OrderLine(BookId.of(bookId), bookTitle, unitPrice, quantity);
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.bookstore.sales.persistence;
 
+import com.bookstore.shared.kernel.identity.BookId;
 import static com.bookstore.sales.persistence.SalesDb.snapshotOf;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -183,7 +184,7 @@ class JdbcSalesRepositoriesTest {
         private Order place(Customer customer, Clock clock, Map<ProductSnapshot, Integer> lines) {
             Cart cart = Cart.forCustomer(customer.id());
             lines.forEach(cart::add);
-            Map<Long, ProductSnapshot> products = new LinkedHashMap<>();
+            Map<BookId, ProductSnapshot> products = new LinkedHashMap<>();
             lines.keySet().forEach(product -> products.put(product.bookId(), product));
             Order order = Order.place(db.orderNumbers.next(Year.of(2026)), customer.id(), cart, products,
                     TestAddresses.home(), PaymentMethod.BANK_TRANSFER, ShippingPolicy.standard(), clock);

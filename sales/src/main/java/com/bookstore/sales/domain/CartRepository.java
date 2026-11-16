@@ -1,5 +1,6 @@
 package com.bookstore.sales.domain;
 
+import com.bookstore.shared.kernel.identity.CustomerId;
 import java.util.Optional;
 
 /**
@@ -14,7 +15,7 @@ public interface CartRepository {
      * @param customerId the customer's id
      * @return the cart, or empty if the customer never had one
      */
-    Optional<Cart> findByCustomerId(long customerId);
+    Optional<Cart> findByCustomerId(CustomerId customerId);
 
     /**
      * Stores a customer's cart, replacing all of its stored lines.

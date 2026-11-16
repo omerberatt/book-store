@@ -1,5 +1,6 @@
 package com.bookstore.customer.domain;
 
+import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.kernel.paging.Page;
 import com.bookstore.shared.kernel.paging.PageRequest;
 
@@ -18,7 +19,7 @@ public interface CustomerRepository {
      * @param id the id
      * @return the customer with their addresses, or empty
      */
-    Optional<Customer> findById(long id);
+    Optional<Customer> findById(CustomerId id);
 
     /**
      * Finds a customer by e-mail address, for signing in.
@@ -35,7 +36,7 @@ public interface CustomerRepository {
      * @param ids the ids
      * @return the customers found, in no particular order
      */
-    List<Customer> findAllById(Collection<Long> ids);
+    List<Customer> findAllById(Collection<CustomerId> ids);
 
     /**
      * Tells whether an e-mail address is already registered.

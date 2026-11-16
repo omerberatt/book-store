@@ -1,5 +1,7 @@
 package com.bookstore.review.application;
 
+import com.bookstore.shared.kernel.identity.BookId;
+import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.catalog.api.RatingFacade;
 import com.bookstore.customer.api.CustomerDirectory;
 import com.bookstore.review.domain.Rating;
@@ -115,7 +117,7 @@ public class ReviewService {
      * @param bookId     the reviewed book
      * @throws NotFoundException if the customer has not reviewed the book
      */
-    public void delete(long customerId, long bookId) {
+    public void delete(CustomerId customerId, BookId bookId) {
         transactions.run(() -> {
             Review review = requireOwnReview(customerId, bookId);
             ratings.removeRating(bookId, review.rating().stars());
@@ -130,10 +132,10 @@ public class ReviewService {
      * @param page   which page to return
      * @return the page
      */
-    public Page<ReviewView> reviewsOf(long bookId, PageRequest page) {
+    public Page<ReviewView> reviewsOf(BookId bookId, PageRequest page) {
         Page<Review> found = reviews.findByBookId(bookId, page);
-        Set<Long> authorIds = found.content().stream().map(Review::customerId).collect(Collectors.toSet());
-        Map<Long, String> names = customers.publicNames(authorIds);
+        Set<CustomerId> authorIds = found.content().stream().map(Review::customerId).collect(Collectors.toSet());
+        Map<CustomerId, String> names = customers.publicNames(authorIds);
         return found.map(review -> ReviewView.of(review, names.getOrDefault(review.customerId(), UNKNOWN_AUTHOR)));
     }
 
@@ -143,7 +145,7 @@ public class ReviewService {
      * @param bookId the book's id
      * @return the distribution, empty if nobody rated the book
      */
-    public RatingDistribution ratingDistribution(long bookId) {
+    public RatingDistribution ratingDistribution(BookId bookId) {
         return RatingDistribution.of(reviews.findRatingsByBookId(bookId));
     }
 
@@ -154,7 +156,7 @@ public class ReviewService {
      * @param bookId     the book's id
      * @return the review, or empty if the customer has not reviewed the book
      */
-    public Optional<ReviewView> myReview(long customerId, long bookId) {
+    public Optional<ReviewView> myReview(CustomerId customerId, BookId bookId) {
         return reviews.findByBookIdAndCustomerId(bookId, customerId).map(this::view);
     }
 
@@ -165,7 +167,7 @@ public class ReviewService {
      * @param bookId     the book's id
      * @return {@code true} if the customer received the book and has not reviewed it yet
      */
-    public boolean canReview(long customerId, long bookId) {
+    public boolean canReview(CustomerId customerId, BookId bookId) {
         return purchases.hasReceived(customerId, bookId)
                 && reviews.findByBookIdAndCustomerId(bookId, customerId).isEmpty();
     }
@@ -176,12 +178,12 @@ public class ReviewService {
         return ReviewView.of(review, name);
     }
 
-    private Review requireOwnReview(long customerId, long bookId) {
+    private Review requireOwnReview(CustomerId customerId, BookId bookId) {
         return reviews.findByBookIdAndCustomerId(bookId, customerId)
                 .orElseThrow(() -> new NotFoundException("Review", "book " + bookId + " by customer " + customerId));
     }
 
-    private void requireBook(long bookId) {
+    private void requireBook(BookId bookId) {
         if (!ratings.exists(bookId)) {
             throw new NotFoundException("Book", bookId);
         }

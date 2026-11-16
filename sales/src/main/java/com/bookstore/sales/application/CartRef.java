@@ -1,5 +1,6 @@
 package com.bookstore.sales.application;
 
+import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.kernel.validation.Guard;
 import com.bookstore.sales.domain.Cart;
 
@@ -26,7 +27,7 @@ public sealed interface CartRef {
      * @param customerId the customer's id
      * @return the reference
      */
-    static CartRef customer(long customerId) {
+    static CartRef customer(CustomerId customerId) {
         return new Customer(customerId);
     }
 
@@ -49,11 +50,11 @@ public sealed interface CartRef {
      *
      * @param customerId the customer's id
      */
-    record Customer(long customerId) implements CartRef {
+    record Customer(CustomerId customerId) implements CartRef {
 
         /** Requires a stored customer. */
         public Customer {
-            Guard.require(customerId > 0, "customerId", "must be a stored customer");
+            Guard.requireNonNull(customerId, "customerId");
         }
     }
 }

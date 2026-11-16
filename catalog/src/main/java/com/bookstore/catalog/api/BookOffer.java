@@ -1,5 +1,6 @@
 package com.bookstore.catalog.api;
 
+import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.money.Money;
 
 /**
@@ -13,6 +14,6 @@ import com.bookstore.shared.kernel.money.Money;
  * @param availableStock copies that can be ordered now
  * @param active         whether the book is still sold
  */
-public record BookOffer(long bookId, String title, String authorNames, Money price, int availableStock,
+public record BookOffer(BookId bookId, String title, String authorNames, Money price, int availableStock,
                         boolean active) {
 }

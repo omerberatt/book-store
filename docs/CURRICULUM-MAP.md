@@ -87,7 +87,7 @@ Faz numaraları [ROADMAP.md](ROADMAP.md) içindeki aşamalardır; ADR'ler [docs/
 
 | Konu | Kitap mağazasında | Durum | Faz |
 | --- | --- | --- | --- |
-| Tipli kimlikler *(`CustomerId`, `OrderId`)* | `BookId`, `AuthorId`, `CategoryId`, `CustomerId`, `OrderId`, `ReviewId` *(ADR-0004)*; bugün `long` | ⏳ | 4 |
+| Tipli kimlikler *(`CustomerId`, `OrderId`)* | `shared-kernel`: `Identifier`, `BookId`, `CustomerId`; modüllerde `AuthorId`, `CategoryId`, `AddressId`, `OrderId`, `ReviewId`; `Entity<I extends Identifier>` *(ADR-0004)* | ✅ | 4.3 |
 | Static factory metotları | `Money.of`, `Customer.register`, `Cart.guest`, `OrderNumber.of`, `Rating.of` | ✅ | 1 |
 | Factory ve kimlik üreteci arayüzü | `Order.place` + `OrderNumberSequence` portu *(bellek içi ve JDBC uygulamaları)* | ✅ | 1, 3 |
 | Builder | `Book.Builder`, `BookSearchCriteria.Builder` | ✅ | 1 |

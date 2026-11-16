@@ -1,5 +1,7 @@
 package com.bookstore.customer.application;
 
+import com.bookstore.customer.domain.AddressId;
+import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.kernel.address.Address;
 import com.bookstore.customer.domain.Customer;
 import com.bookstore.customer.domain.Role;
@@ -19,7 +21,7 @@ import java.util.List;
  * @param registeredAt when the customer registered
  * @param addresses    the saved addresses
  */
-public record CustomerView(long id, String email, String firstName, String lastName, Role role,
+public record CustomerView(CustomerId id, String email, String firstName, String lastName, Role role,
                            Instant registeredAt, List<AddressView> addresses) {
 
     /** Copies the addresses. */
@@ -49,7 +51,7 @@ public record CustomerView(long id, String email, String firstName, String lastN
      * @param address   the address
      * @param isDefault whether it is pre-selected at checkout
      */
-    public record AddressView(long id, String label, Address address, boolean isDefault) {
+    public record AddressView(AddressId id, String label, Address address, boolean isDefault) {
 
         /**
          * Copies a saved address.

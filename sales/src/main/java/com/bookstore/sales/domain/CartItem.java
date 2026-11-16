@@ -1,5 +1,6 @@
 package com.bookstore.sales.domain;
 
+import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.money.Money;
 import com.bookstore.shared.kernel.validation.Guard;
 
@@ -15,11 +16,11 @@ import java.io.Serializable;
  * @param quantity       copies, from 1 to {@link Cart#MAX_QUANTITY_PER_LINE}
  * @param priceWhenAdded the unit price the customer last saw
  */
-public record CartItem(long bookId, int quantity, Money priceWhenAdded) implements Serializable {
+public record CartItem(BookId bookId, int quantity, Money priceWhenAdded) implements Serializable {
 
     /** Validates every part. */
     public CartItem {
-        Guard.require(bookId > 0, "bookId", "must be a stored book");
+        Guard.requireNonNull(bookId, "bookId");
         Guard.requireBetween(quantity, 1, Cart.MAX_QUANTITY_PER_LINE, "quantity");
         Guard.requireNonNull(priceWhenAdded, "priceWhenAdded");
         Guard.require(priceWhenAdded.isPositive(), "priceWhenAdded", "must be greater than zero");

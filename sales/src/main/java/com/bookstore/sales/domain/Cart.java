@@ -1,5 +1,7 @@
 package com.bookstore.sales.domain;
 
+import com.bookstore.shared.kernel.identity.BookId;
+import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.kernel.error.ConflictException;
 import com.bookstore.shared.kernel.money.Money;
 import com.bookstore.shared.kernel.validation.Guard;
@@ -36,10 +38,10 @@ public final class Cart implements Iterable<CartItem>, Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final Long customerId;
-    private final LinkedHashMap<Long, CartItem> items = new LinkedHashMap<>();
+    private final CustomerId customerId;
+    private final LinkedHashMap<BookId, CartItem> items = new LinkedHashMap<>();
 
-    private Cart(Long customerId) {
+    private Cart(CustomerId customerId) {
         this.customerId = customerId;
     }
 
@@ -58,8 +60,8 @@ public final class Cart implements Iterable<CartItem>, Serializable {
      * @param customerId the customer's id
      * @return the cart
      */
-    public static Cart forCustomer(long customerId) {
-        Guard.require(customerId > 0, "customerId", "must be a stored customer");
+    public static Cart forCustomer(CustomerId customerId) {
+        Guard.requireNonNull(customerId, "customerId");
         return new Cart(customerId);
     }
 
@@ -70,7 +72,7 @@ public final class Cart implements Iterable<CartItem>, Serializable {
      * @param items      the stored lines, in order
      * @return the cart
      */
-    public static Cart reconstitute(long customerId, List<CartItem> items) {
+    public static Cart reconstitute(CustomerId customerId, List<CartItem> items) {
         Cart cart = forCustomer(customerId);
         for (CartItem item : items) {
             cart.items.put(item.bookId(), item);
@@ -85,7 +87,7 @@ public final class Cart implements Iterable<CartItem>, Serializable {
      *
      * @return the customer's id, or empty for a guest cart
      */
-    public Optional<Long> customerId() {
+    public Optional<CustomerId> customerId() {
         return Optional.ofNullable(customerId);
     }
 
@@ -95,7 +97,7 @@ public final class Cart implements Iterable<CartItem>, Serializable {
     }
 
     /** @return the ids of the books in the cart */
-    public Set<Long> bookIds() {
+    public Set<BookId> bookIds() {
         return Set.copyOf(items.keySet());
     }
 
@@ -105,7 +107,7 @@ public final class Cart implements Iterable<CartItem>, Serializable {
      * @param bookId the book's id
      * @return the quantity, zero if the book is not in the cart
      */
-    public int quantityOf(long bookId) {
+    public int quantityOf(BookId bookId) {
         CartItem item = items.get(bookId);
         return item == null ? 0 : item.quantity();
     }
@@ -127,7 +129,7 @@ public final class Cart implements Iterable<CartItem>, Serializable {
      * @param unitPrice returns the current price of a book given its id
      * @return the sum of price times quantity over all lines
      */
-    public Money subtotal(Function<Long, Money> unitPrice) {
+    public Money subtotal(Function<BookId, Money> unitPrice) {
         return Money.sum(items.values().stream()
                 .map(item -> unitPrice.apply(item.bookId()).times(item.quantity())));
     }
@@ -178,7 +180,7 @@ public final class Cart implements Iterable<CartItem>, Serializable {
      *
      * @param bookId the book's id
      */
-    public void remove(long bookId) {
+    public void remove(BookId bookId) {
         items.remove(bookId);
     }
 
@@ -214,11 +216,11 @@ public final class Cart implements Iterable<CartItem>, Serializable {
      *              as no longer sold
      * @return what was changed, in cart order; empty if nothing changed
      */
-    public List<CartAdjustment> reconcile(Map<Long, ProductSnapshot> products) {
+    public List<CartAdjustment> reconcile(Map<BookId, ProductSnapshot> products) {
         List<CartAdjustment> adjustments = new ArrayList<>();
-        Iterator<Map.Entry<Long, CartItem>> entries = items.entrySet().iterator();
+        Iterator<Map.Entry<BookId, CartItem>> entries = items.entrySet().iterator();
         while (entries.hasNext()) {
-            Map.Entry<Long, CartItem> entry = entries.next();
+            Map.Entry<BookId, CartItem> entry = entries.next();
             CartItem item = entry.getValue();
             ProductSnapshot book = products.get(item.bookId());
 

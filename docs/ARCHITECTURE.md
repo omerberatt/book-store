@@ -2,7 +2,7 @@
 
 Bu doküman sistemin **nasıl** kurulduğunu anlatır. **Ne** yaptığı [SPEC.md](SPEC.md), kararların gerekçeleri [docs/adr](adr/README.md), müfredatla ilişkisi [CURRICULUM-MAP.md](CURRICULUM-MAP.md) içindedir.
 
-> **Mevcut durum ve hedef.** Bu doküman **hedef mimariyi** anlatır. Faz 4.1 ile modül yapısı hedefe ulaştı: kod iş alanına göre modüllerde duruyor ve modüller birbirini yalnızca `api` paketleriyle kullanıyor. Faz 4.2 ile ADR-0003–0008'in kuralları ArchUnit testi oldu. Henüz yapılmayanlar *(tipli kimlikler, web katmanı, PostgreSQL, uygulama sunucusu)* Faz 4.3–7'de; bölüm 9 kalan farkları listeler.
+> **Mevcut durum ve hedef.** Bu doküman **hedef mimariyi** anlatır. Faz 4.1 ile modül yapısı hedefe ulaştı: kod iş alanına göre modüllerde duruyor ve modüller birbirini yalnızca `api` paketleriyle kullanıyor. Faz 4.2 ile ADR-0003–0008'in kuralları ArchUnit testi oldu. Henüz yapılmayanlar *(web katmanı, PostgreSQL, uygulama sunucusu)* Faz 4.3–7'de; bölüm 9 kalan farkları listeler.
 
 ## 1. Genel bakış
 
@@ -60,7 +60,7 @@ graph TD
 
 | Modül | Sorumluluk | Örnek tipler |
 | --- | --- | --- |
-| `shared-kernel` | Hiçbir iş modülüne ait olmayan genel tipler | `Money`, `Address`, `Entity`, `DomainEvent`, `TransactionRunner`, `Page<T>`, `TextNormalizer`, `Guard`, `DomainException`; ileride `Specification<T>` |
+| `shared-kernel` | Hiçbir iş modülüne ait olmayan genel tipler | `Money`, `Address`, `Entity`, `DomainEvent`, `TransactionRunner`, `Page<T>`, `TextNormalizer`, `Guard`, `DomainException`, `Identifier`, `BookId`, `CustomerId`; ileride `Specification<T>` |
 | `shared-jdbc` | İş modüllerinin `persistence` paketlerinin kullandığı teknik JDBC araç seti *(ADR-0018)* | `JdbcExecutor`, `JdbcTransactionRunner`, `RecordRowMapper`, `ModuleMigrations` |
 | `catalog` | Satılan kitaplar, stokları ve puan özetleri | `Book`, `Author`, `Category`, `Isbn`, `Stock`, `RatingSummary`; api: `StockFacade`, `RatingFacade`, `BookOffer` |
 | `customer` | Kayıtlı kullanıcılar, roller, adres defteri | `Customer`, `Email`, `PersonName`, `SavedAddress`, `PasswordPolicy`; api: `CustomerDirectory` |
@@ -258,7 +258,7 @@ Ayrıntıları ve ArchUnit karşılıkları ADR-0004 ve ADR-0005'tedir:
 | Migration'lar | ✅ Modül başına dosya ve Flyway geçmişi | — | 4.1 |
 | Web | Web katmanı yok *(Spring Boot iskeleti kaldırıldı)* | JDK HTTP sunucusu, sonra Payara Micro, JAX-RS, statik arayüz | 5, 6, 7 |
 | Mimari kurallar | ✅ ADR-0003–0008'in ArchUnit kuralları *(`rest` kuralları Faz 5'te dolar)* | — | 4.2 |
-| Kimlikler | `long` | Tipli kimlikler | 4.3 |
+| Kimlikler | ✅ Tipli kimlikler *(`BookId`, `CustomerId` shared-kernel'de)* | — | 4.3 |
 | Hatalar | ✅ `DomainException` + `Kind` + `code` | — | 4.3 |
 | Arama ölçütü | `BookSearchCriteria` *(boş olabilen alanlar, `Optional` erişimciler)* | `Specification<Book>` | 4.3 |
 | Servis sonuçları | Application paketinde okuma modeli `record`'ları | `api` paketinde DTO'lar, façade'lar, mapper'lar | 4.4 |

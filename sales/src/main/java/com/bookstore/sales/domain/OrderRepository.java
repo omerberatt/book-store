@@ -1,5 +1,7 @@
 package com.bookstore.sales.domain;
 
+import com.bookstore.shared.kernel.identity.BookId;
+import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.kernel.paging.Page;
 import com.bookstore.shared.kernel.paging.PageRequest;
 
@@ -16,7 +18,7 @@ public interface OrderRepository {
      * @param id the id
      * @return the order with its lines, or empty
      */
-    Optional<Order> findById(long id);
+    Optional<Order> findById(OrderId id);
 
     /**
      * Finds an order by its number.
@@ -33,7 +35,7 @@ public interface OrderRepository {
      * @param page       which page to return
      * @return the page
      */
-    Page<Order> findByCustomerId(long customerId, PageRequest page);
+    Page<Order> findByCustomerId(CustomerId customerId, PageRequest page);
 
     /**
      * Returns one page of all orders, newest first.
@@ -60,7 +62,7 @@ public interface OrderRepository {
      * @return {@code true} if a {@link OrderStatus#DELIVERED delivered} order of the customer
      *         contains the book
      */
-    boolean hasDeliveredBook(long customerId, long bookId);
+    boolean hasDeliveredBook(CustomerId customerId, BookId bookId);
 
     /**
      * Inserts a new order or updates a stored one's status.

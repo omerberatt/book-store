@@ -1,5 +1,6 @@
 package com.bookstore.catalog.application;
 
+import com.bookstore.shared.kernel.identity.BookId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -28,7 +29,7 @@ class StockAndRatingServiceTest {
     void offersCopyTheCurrentPriceStockAndStatus() {
         madonna.deactivate();
 
-        List<BookOffer> offers = shop.stock.offers(List.of(dune.id(), madonna.id(), 999L));
+        List<BookOffer> offers = shop.stock.offers(List.of(dune.id(), madonna.id(), BookId.of(999)));
 
         assertThat(offers).containsExactlyInAnyOrder(
                 new BookOffer(dune.id(), "Dune", "Author of Dune", Money.of("100.00"), 10, true),
@@ -60,7 +61,7 @@ class StockAndRatingServiceTest {
 
         assertThatThrownBy(() -> shop.stock.reserve(Map.of(madonna.id(), 1)))
                 .isInstanceOfSatisfying(ConflictException.class, e -> assertThat(e.code()).isEqualTo("book.inactive"));
-        assertThatThrownBy(() -> shop.stock.reserve(Map.of(999L, 1))).isInstanceOf(NotFoundException.class);
+        assertThatThrownBy(() -> shop.stock.reserve(Map.of(BookId.of(999), 1))).isInstanceOf(NotFoundException.class);
     }
 
     @Test
@@ -81,8 +82,8 @@ class StockAndRatingServiceTest {
         assertThat(shop.books.findById(dune.id()).orElseThrow().ratings()).isEqualTo(new RatingSummary(1, 2));
         assertThat(shop.catalog.book(dune.id()).averageRating()).isEqualTo(new BigDecimal("2.0"));
         assertThat(shop.ratings.exists(dune.id())).isTrue();
-        assertThat(shop.ratings.exists(999)).isFalse();
-        assertThatThrownBy(() -> shop.ratings.addRating(999, 3)).isInstanceOf(NotFoundException.class);
+        assertThat(shop.ratings.exists(BookId.of(999))).isFalse();
+        assertThatThrownBy(() -> shop.ratings.addRating(BookId.of(999), 3)).isInstanceOf(NotFoundException.class);
     }
 
     private int stockOf(Book book) {

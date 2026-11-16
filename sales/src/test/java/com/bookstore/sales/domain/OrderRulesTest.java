@@ -1,5 +1,6 @@
 package com.bookstore.sales.domain;
 
+import com.bookstore.shared.kernel.identity.BookId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -78,10 +79,10 @@ class OrderRulesTest {
 
     @Test
     void orderLineRejectsInvalidParts() {
-        assertThat(new OrderLine(1, "Dune", Money.of("12.50"), 4).lineTotal()).isEqualTo(Money.of("50.00"));
+        assertThat(new OrderLine(BookId.of(1), "Dune", Money.of("12.50"), 4).lineTotal()).isEqualTo(Money.of("50.00"));
 
-        assertThatThrownBy(() -> new OrderLine(1, "Dune", Money.ZERO, 1)).isInstanceOf(ValidationException.class);
-        assertThatThrownBy(() -> new OrderLine(1, "Dune", Money.of("1"), 0)).isInstanceOf(ValidationException.class);
-        assertThatThrownBy(() -> new OrderLine(0, "Dune", Money.of("1"), 1)).isInstanceOf(ValidationException.class);
+        assertThatThrownBy(() -> new OrderLine(BookId.of(1), "Dune", Money.ZERO, 1)).isInstanceOf(ValidationException.class);
+        assertThatThrownBy(() -> new OrderLine(BookId.of(1), "Dune", Money.of("1"), 0)).isInstanceOf(ValidationException.class);
+        assertThatThrownBy(() -> new OrderLine(null, "Dune", Money.of("1"), 1)).isInstanceOf(ValidationException.class);
     }
 }

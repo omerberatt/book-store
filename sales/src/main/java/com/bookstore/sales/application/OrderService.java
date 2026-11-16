@@ -1,5 +1,6 @@
 package com.bookstore.sales.application;
 
+import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.kernel.error.AccessDeniedException;
 import com.bookstore.shared.kernel.error.NotFoundException;
 import com.bookstore.shared.kernel.paging.Page;
@@ -31,7 +32,7 @@ public class OrderService {
      * @param page       which page to return
      * @return the page
      */
-    public Page<OrderSummary> myOrders(long customerId, PageRequest page) {
+    public Page<OrderSummary> myOrders(CustomerId customerId, PageRequest page) {
         return orders.findByCustomerId(customerId, page).map(OrderSummary::of);
     }
 
@@ -44,7 +45,7 @@ public class OrderService {
      * @throws NotFoundException     if there is no such order
      * @throws AccessDeniedException if the order belongs to someone else
      */
-    public OrderDetails myOrder(long customerId, String orderNumber) {
+    public OrderDetails myOrder(CustomerId customerId, String orderNumber) {
         OrderNumber number = new OrderNumber(orderNumber);
         Order order = orders.findByNumber(number).orElseThrow(() -> new NotFoundException("Order", number));
         if (!order.isOwnedBy(customerId)) {

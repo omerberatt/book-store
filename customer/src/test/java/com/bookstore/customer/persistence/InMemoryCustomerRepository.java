@@ -1,5 +1,7 @@
 package com.bookstore.customer.persistence;
 
+import com.bookstore.customer.domain.AddressId;
+import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.kernel.testing.InMemoryStore;
 import com.bookstore.shared.kernel.error.ConflictException;
 import com.bookstore.shared.kernel.paging.Page;
@@ -16,10 +18,15 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 
 /** Customers in a map, with an extra index by e-mail address. Saved addresses get their own ids. */
-public class InMemoryCustomerRepository extends InMemoryStore<Customer> implements CustomerRepository {
+public class InMemoryCustomerRepository extends InMemoryStore<CustomerId, Customer> implements CustomerRepository {
 
-    private final Map<Email, Long> idByEmail = new HashMap<>();
+    private final Map<Email, CustomerId> idByEmail = new HashMap<>();
     private final AtomicLong addressSequence = new AtomicLong(1000);
+
+    /** Creates an empty repository. */
+    public InMemoryCustomerRepository() {
+        super(CustomerId::new);
+    }
 
     @Override
     public Optional<Customer> findByEmail(Email email) {
@@ -34,25 +41,25 @@ public class InMemoryCustomerRepository extends InMemoryStore<Customer> implemen
     @Override
     public Page<Customer> findAll(PageRequest page) {
         return Page.fromList(all().stream()
-                .sorted(Comparator.comparing(Customer::registeredAt).thenComparing(Customer::id).reversed())
+                .sorted(Comparator.comparing(Customer::registeredAt).thenComparing(customer -> customer.id().value()).reversed())
                 .toList(), page);
     }
 
     @Override
     protected void beforeSave(Customer customer) {
-        Long owner = idByEmail.get(customer.email());
-        if (owner != null && (customer.isNew() || owner != customer.id())) {
+        CustomerId owner = idByEmail.get(customer.email());
+        if (owner != null && (customer.isNew() || !owner.equals(customer.id()))) {
             throw new ConflictException("email.taken", customer.email() + " is already registered");
         }
     }
 
     @Override
     protected void afterSave(Customer customer) {
-        idByEmail.values().removeIf(id -> id == customer.id());
+        idByEmail.values().removeIf(id -> id.equals(customer.id()));
         idByEmail.put(customer.email(), customer.id());
         for (SavedAddress address : customer.addresses()) {
             if (address.isNew()) {
-                address.markPersisted(addressSequence.incrementAndGet(), 0);
+                address.markPersisted(AddressId.of(addressSequence.incrementAndGet()), 0);
             }
         }
     }

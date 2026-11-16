@@ -1,5 +1,8 @@
 package com.bookstore.catalog.persistence;
 
+import com.bookstore.catalog.domain.CategoryId;
+import com.bookstore.catalog.domain.AuthorId;
+import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.testing.InMemoryStore;
 import com.bookstore.shared.kernel.error.ConflictException;
 import com.bookstore.shared.kernel.paging.Page;
@@ -15,9 +18,14 @@ import java.util.Map;
 import java.util.Optional;
 
 /** Books in a map, with an extra index by ISBN. */
-public class InMemoryBookRepository extends InMemoryStore<Book> implements BookRepository {
+public class InMemoryBookRepository extends InMemoryStore<BookId, Book> implements BookRepository {
 
-    private final Map<Isbn, Long> idByIsbn = new HashMap<>();
+    private final Map<Isbn, BookId> idByIsbn = new HashMap<>();
+
+    /** Creates an empty repository. */
+    public InMemoryBookRepository() {
+        super(BookId::new);
+    }
 
     @Override
     public Optional<Book> findByIsbn(Isbn isbn) {
@@ -34,19 +42,19 @@ public class InMemoryBookRepository extends InMemoryStore<Book> implements BookR
     }
 
     @Override
-    public boolean existsByAuthorId(long authorId) {
-        return all().stream().flatMap(book -> book.authors().stream()).anyMatch(a -> a.id() == authorId);
+    public boolean existsByAuthorId(AuthorId authorId) {
+        return all().stream().flatMap(book -> book.authors().stream()).anyMatch(a -> a.id().equals(authorId));
     }
 
     @Override
-    public boolean existsByCategoryId(long categoryId) {
-        return all().stream().anyMatch(book -> book.category().id() == categoryId);
+    public boolean existsByCategoryId(CategoryId categoryId) {
+        return all().stream().anyMatch(book -> book.category().id().equals(categoryId));
     }
 
     @Override
     protected void beforeSave(Book book) {
-        Long owner = idByIsbn.get(book.isbn());
-        if (owner != null && (book.isNew() || owner != book.id())) {
+        BookId owner = idByIsbn.get(book.isbn());
+        if (owner != null && (book.isNew() || !owner.equals(book.id()))) {
             throw new ConflictException("book.isbn-taken", "ISBN " + book.isbn() + " is already used");
         }
     }

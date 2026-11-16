@@ -1,6 +1,7 @@
 package com.bookstore.shared.kernel.domain;
 
 import com.bookstore.shared.kernel.event.DomainEvent;
+import com.bookstore.shared.kernel.identity.Identifier;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,19 +10,22 @@ import java.util.Objects;
 /**
  * Base class for objects that have an identity which outlives changes to their state.
  *
- * <p>A new entity has no id until a repository stores it and calls
- * {@link #markPersisted(long, int)}. Two entities are equal when they are of the same class and
- * have the same id; an entity without an id is only equal to itself.
+ * <p>The identity is a typed id (ADR-0004), for example a {@code BookId}. A new entity has no id
+ * until a repository stores it and calls {@link #markPersisted(Identifier, int)}. Two entities are
+ * equal when they are of the same class and have the same id; an entity without an id is only
+ * equal to itself.
  *
  * <p>The {@link #version() version} is used by repositories for optimistic locking: an update
  * succeeds only if the stored version still matches the version that was loaded.
  *
  * <p>Entities can also record {@link DomainEvent domain events}. The application layer
  * {@link #pullEvents() collects} them after a successful save and publishes them.
+ *
+ * @param <I> the type of the id
  */
-public abstract class Entity {
+public abstract class Entity<I extends Identifier> {
 
-    private Long id;
+    private I id;
     private int version;
     private final List<DomainEvent> events = new ArrayList<>();
 
@@ -32,10 +36,10 @@ public abstract class Entity {
     /**
      * Reconstitutes an entity that was loaded from storage.
      *
-     * @param id      the stored id, greater than zero
+     * @param id      the stored id
      * @param version the stored version, zero or greater
      */
-    protected Entity(long id, int version) {
+    protected Entity(I id, int version) {
         markPersisted(id, version);
     }
 
@@ -54,7 +58,7 @@ public abstract class Entity {
      * @return the id
      * @throws IllegalStateException if the entity has not been stored yet
      */
-    public final long id() {
+    public final I id() {
         if (id == null) {
             throw new IllegalStateException(getClass().getSimpleName() + " has not been stored yet");
         }
@@ -73,17 +77,15 @@ public abstract class Entity {
     /**
      * Records the id and version after the entity has been stored. Intended for repositories only.
      *
-     * @param id      the id, greater than zero; cannot change once assigned
+     * @param id      the id; cannot change once assigned
      * @param version the new version, zero or greater
      */
-    public final void markPersisted(long id, int version) {
-        if (id <= 0) {
-            throw new IllegalArgumentException("id must be greater than zero");
-        }
+    public final void markPersisted(I id, int version) {
+        Objects.requireNonNull(id, "id");
         if (version < 0) {
             throw new IllegalArgumentException("version must not be negative");
         }
-        if (this.id != null && this.id != id) {
+        if (this.id != null && !this.id.equals(id)) {
             throw new IllegalStateException("id is already " + this.id + ", cannot change it to " + id);
         }
         this.id = id;
@@ -118,7 +120,7 @@ public abstract class Entity {
         if (other == null || getClass() != other.getClass()) {
             return false;
         }
-        Entity that = (Entity) other;
+        Entity<?> that = (Entity<?>) other;
         return id != null && id.equals(that.id);
     }
 

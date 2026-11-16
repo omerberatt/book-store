@@ -1,5 +1,6 @@
 package com.bookstore.catalog.domain;
 
+import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.paging.Page;
 import com.bookstore.shared.kernel.paging.PageRequest;
 
@@ -18,7 +19,7 @@ public interface BookRepository {
      * @param id the id
      * @return the book, or empty
      */
-    Optional<Book> findById(long id);
+    Optional<Book> findById(BookId id);
 
     /**
      * Finds a book by ISBN, active or not.
@@ -34,7 +35,7 @@ public interface BookRepository {
      * @param ids the ids
      * @return the books found, in no particular order
      */
-    List<Book> findAllById(Collection<Long> ids);
+    List<Book> findAllById(Collection<BookId> ids);
 
     /**
      * Returns one page of the books matching the criteria, in the criteria's order.
@@ -51,7 +52,7 @@ public interface BookRepository {
      * @param authorId the author's id
      * @return {@code true} if the author has books
      */
-    boolean existsByAuthorId(long authorId);
+    boolean existsByAuthorId(AuthorId authorId);
 
     /**
      * Tells whether any book, active or not, is in the category.
@@ -59,7 +60,7 @@ public interface BookRepository {
      * @param categoryId the category's id
      * @return {@code true} if the category has books
      */
-    boolean existsByCategoryId(long categoryId);
+    boolean existsByCategoryId(CategoryId categoryId);
 
     /**
      * Inserts a new book or updates a stored one.

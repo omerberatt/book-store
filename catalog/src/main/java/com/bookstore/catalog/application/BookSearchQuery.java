@@ -1,5 +1,7 @@
 package com.bookstore.catalog.application;
 
+import com.bookstore.catalog.domain.AuthorId;
+import com.bookstore.catalog.domain.CategoryId;
 import com.bookstore.shared.kernel.money.Money;
 import com.bookstore.shared.kernel.validation.Guard;
 import com.bookstore.catalog.domain.BookSort;
@@ -22,7 +24,7 @@ import com.bookstore.catalog.domain.Language;
  * @param inStockOnly whether to leave out books with no stock
  * @param sort        the order of the results
  */
-public record BookSearchQuery(String text, Long categoryId, Long authorId, Money minPrice, Money maxPrice,
+public record BookSearchQuery(String text, CategoryId categoryId, AuthorId authorId, Money minPrice, Money maxPrice,
                               Language language, boolean inStockOnly, BookSort sort) {
 
     /** Rejects a missing order. */
@@ -55,7 +57,7 @@ public record BookSearchQuery(String text, Long categoryId, Long authorId, Money
      * @param value the category's id
      * @return the new query
      */
-    public BookSearchQuery inCategory(long value) {
+    public BookSearchQuery inCategory(CategoryId value) {
         return new BookSearchQuery(text, value, authorId, minPrice, maxPrice, language, inStockOnly, sort);
     }
 
@@ -65,7 +67,7 @@ public record BookSearchQuery(String text, Long categoryId, Long authorId, Money
      * @param value the author's id
      * @return the new query
      */
-    public BookSearchQuery byAuthor(long value) {
+    public BookSearchQuery byAuthor(AuthorId value) {
         return new BookSearchQuery(text, categoryId, value, minPrice, maxPrice, language, inStockOnly, sort);
     }
 

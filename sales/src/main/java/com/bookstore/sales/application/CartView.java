@@ -1,5 +1,6 @@
 package com.bookstore.sales.application;
 
+import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.money.Money;
 import com.bookstore.sales.domain.CartAdjustment;
 
@@ -44,7 +45,7 @@ public record CartView(List<Line> lines, Money subtotal, Money shippingCost, Mon
      * @param lineTotal      unit price times quantity
      * @param availableStock copies that could be ordered, to limit the quantity selector
      */
-    public record Line(long bookId, String title, String authorNames, Money unitPrice, int quantity, Money lineTotal,
+    public record Line(BookId bookId, String title, String authorNames, Money unitPrice, int quantity, Money lineTotal,
                        int availableStock) {
     }
 }

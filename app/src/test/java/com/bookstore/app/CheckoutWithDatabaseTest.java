@@ -113,7 +113,7 @@ class CheckoutWithDatabaseTest {
     }
 
     private OrderDetails place(Customer customer) {
-        long addressId = customer.defaultAddress().orElseThrow().id();
+        long addressId = customer.defaultAddress().orElseThrow().id().value();
         return store.checkout.placeOrder(new PlaceOrderCommand(customer.id(), addressId, PaymentMethod.CREDIT_CARD));
     }
 

@@ -1,5 +1,8 @@
 package com.bookstore.sales.persistence;
 
+import com.bookstore.shared.kernel.identity.CustomerId;
+import com.bookstore.shared.kernel.identity.BookId;
+import com.bookstore.sales.domain.OrderId;
 import com.bookstore.shared.kernel.testing.InMemoryStore;
 import com.bookstore.shared.kernel.paging.Page;
 import com.bookstore.shared.kernel.paging.PageRequest;
@@ -14,10 +17,15 @@ import java.util.Optional;
 import java.util.function.Predicate;
 
 /** Orders in a map. Lists are sorted newest first. */
-public class InMemoryOrderRepository extends InMemoryStore<Order> implements OrderRepository {
+public class InMemoryOrderRepository extends InMemoryStore<OrderId, Order> implements OrderRepository {
+
+    /** Creates an empty repository. */
+    public InMemoryOrderRepository() {
+        super(OrderId::new);
+    }
 
     private static final Comparator<Order> NEWEST_FIRST =
-            Comparator.comparing(Order::placedAt).thenComparing(Order::id).reversed();
+            Comparator.comparing(Order::placedAt).thenComparing(order -> order.id().value()).reversed();
 
     @Override
     public Optional<Order> findByNumber(OrderNumber number) {
@@ -25,7 +33,7 @@ public class InMemoryOrderRepository extends InMemoryStore<Order> implements Ord
     }
 
     @Override
-    public Page<Order> findByCustomerId(long customerId, PageRequest page) {
+    public Page<Order> findByCustomerId(CustomerId customerId, PageRequest page) {
         return newestFirst(order -> order.isOwnedBy(customerId), page);
     }
 
@@ -40,7 +48,7 @@ public class InMemoryOrderRepository extends InMemoryStore<Order> implements Ord
     }
 
     @Override
-    public boolean hasDeliveredBook(long customerId, long bookId) {
+    public boolean hasDeliveredBook(CustomerId customerId, BookId bookId) {
         return all().stream().anyMatch(order -> order.isOwnedBy(customerId)
                 && order.status() == OrderStatus.DELIVERED
                 && order.contains(bookId));

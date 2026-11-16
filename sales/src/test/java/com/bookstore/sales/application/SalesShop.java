@@ -1,5 +1,6 @@
 package com.bookstore.sales.application;
 
+import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.sales.domain.OrderNumber;
 import com.bookstore.sales.domain.OrderNumberSequence;
 import com.bookstore.sales.domain.OrderStatus;
@@ -55,24 +56,24 @@ public final class SalesShop {
     }
 
     /** Registers a customer with one address and returns the customer's id. The e-mail is ignored. */
-    public long customer(String email) {
+    public CustomerId customer(String email) {
         return customers.register();
     }
 
     /** Returns the id of a customer's address. */
-    public long defaultAddressId(long customerId) {
+    public long defaultAddressId(CustomerId customerId) {
         return customers.addressIdOf(customerId);
     }
 
     /** Puts a book in a customer's cart and pays by card. */
-    public OrderDetails buy(long customerId, FakeCatalog.Item book, int quantity) {
+    public OrderDetails buy(CustomerId customerId, FakeCatalog.Item book, int quantity) {
         cart.add(CartRef.customer(customerId), book.id(), quantity);
         return checkout.placeOrder(new PlaceOrderCommand(customerId, defaultAddressId(customerId),
                 PaymentMethod.CREDIT_CARD));
     }
 
     /** Buys a book and has the order shipped and delivered. */
-    public OrderDetails buyAndReceive(long customerId, FakeCatalog.Item book) {
+    public OrderDetails buyAndReceive(CustomerId customerId, FakeCatalog.Item book) {
         OrderDetails order = buy(customerId, book, 1);
         orderAdmin.changeStatus(order.orderNumber(), OrderStatus.SHIPPED);
         return orderAdmin.changeStatus(order.orderNumber(), OrderStatus.DELIVERED);

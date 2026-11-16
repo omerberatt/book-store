@@ -4,6 +4,7 @@ import com.bookstore.shared.kernel.error.ConflictException;
 import com.bookstore.shared.kernel.money.Money;
 import com.bookstore.shared.kernel.validation.Guard;
 import com.bookstore.shared.kernel.domain.Entity;
+import com.bookstore.shared.kernel.identity.BookId;
 
 import java.time.Year;
 import java.util.Collection;
@@ -32,7 +33,7 @@ import java.util.Set;
  * <p>A book is never deleted, because past orders refer to it. Instead it is
  * {@link #deactivate() deactivated}, which hides it from customers.
  */
-public class Book extends Entity {
+public class Book extends Entity<BookId> {
 
     /** Longest allowed title. */
     public static final int MAX_TITLE_LENGTH = 300;
@@ -349,7 +350,7 @@ public class Book extends Entity {
      */
     public static final class Builder {
 
-        private Long id;
+        private BookId id;
         private int version;
         private Isbn isbn;
         private String title;
@@ -376,7 +377,7 @@ public class Book extends Entity {
          * @param storedVersion the stored version
          * @return this builder
          */
-        public Builder persisted(long storedId, int storedVersion) {
+        public Builder persisted(BookId storedId, int storedVersion) {
             this.id = storedId;
             this.version = storedVersion;
             return this;

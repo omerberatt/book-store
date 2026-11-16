@@ -1,5 +1,7 @@
 package com.bookstore.customer.application;
 
+import com.bookstore.customer.domain.AddressId;
+import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.customer.api.CustomerDirectory;
 import com.bookstore.customer.domain.Customer;
 import com.bookstore.customer.domain.CustomerRepository;
@@ -27,14 +29,14 @@ public class CustomerDirectoryService implements CustomerDirectory {
     }
 
     @Override
-    public Address shippingAddress(long customerId, long addressId) {
+    public Address shippingAddress(CustomerId customerId, long addressId) {
         Customer customer = customers.findById(customerId)
                 .orElseThrow(() -> new NotFoundException("Customer", customerId));
-        return customer.address(addressId).address();
+        return customer.address(AddressId.of(addressId)).address();
     }
 
     @Override
-    public Map<Long, String> publicNames(Collection<Long> customerIds) {
+    public Map<CustomerId, String> publicNames(Collection<CustomerId> customerIds) {
         if (customerIds.isEmpty()) {
             return Map.of();
         }

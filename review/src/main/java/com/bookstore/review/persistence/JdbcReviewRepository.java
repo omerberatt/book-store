@@ -1,5 +1,8 @@
 package com.bookstore.review.persistence;
 
+import com.bookstore.review.domain.ReviewId;
+import com.bookstore.shared.kernel.identity.BookId;
+import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.kernel.error.ConflictException;
 import com.bookstore.shared.kernel.paging.Page;
 import com.bookstore.shared.kernel.paging.PageRequest;
@@ -36,18 +39,18 @@ public class JdbcReviewRepository implements ReviewRepository {
     }
 
     @Override
-    public Optional<Review> findById(long id) {
+    public Optional<Review> findById(ReviewId id) {
         return jdbc.queryOne("SELECT " + COLUMNS + " FROM reviews WHERE id = ?", ROWS, id).map(ReviewRow::toReview);
     }
 
     @Override
-    public Optional<Review> findByBookIdAndCustomerId(long bookId, long customerId) {
+    public Optional<Review> findByBookIdAndCustomerId(BookId bookId, CustomerId customerId) {
         return jdbc.queryOne("SELECT " + COLUMNS + " FROM reviews WHERE book_id = ? AND user_id = ?", ROWS, bookId,
                 customerId).map(ReviewRow::toReview);
     }
 
     @Override
-    public Page<Review> findByBookId(long bookId, PageRequest page) {
+    public Page<Review> findByBookId(BookId bookId, PageRequest page) {
         long total = jdbc.queryForLong("SELECT COUNT(*) FROM reviews WHERE book_id = ?", bookId);
         List<Review> reviews = jdbc.query("SELECT " + COLUMNS + " FROM reviews WHERE book_id = ?" + NEWEST_FIRST
                 + " LIMIT ? OFFSET ?", ROWS, bookId, page.size(), page.offset())
@@ -56,7 +59,7 @@ public class JdbcReviewRepository implements ReviewRepository {
     }
 
     @Override
-    public List<Rating> findRatingsByBookId(long bookId) {
+    public List<Rating> findRatingsByBookId(BookId bookId) {
         return jdbc.query("SELECT rating FROM reviews WHERE book_id = ?", row -> Rating.of(row.getInt(1)), bookId);
     }
 
@@ -76,7 +79,7 @@ public class JdbcReviewRepository implements ReviewRepository {
                                 + "updated_at) VALUES (?, ?, ?, ?, ?, ?)",
                         review.bookId(), review.customerId(), review.rating().stars(), review.comment(),
                         review.createdAt(), review.updatedAt());
-                review.markPersisted(id, 0);
+                review.markPersisted(ReviewId.of(id), 0);
             } catch (DataAccessException e) {
                 if (e.violates("uq_reviews_user_book")) {
                     throw new ConflictException("review.duplicate", "The customer has already reviewed this book");
@@ -103,7 +106,8 @@ public class JdbcReviewRepository implements ReviewRepository {
                              Instant createdAt, Instant updatedAt) {
 
         Review toReview() {
-            return Review.reconstitute(id, version, bookId, userId, Rating.of(rating), commentText, createdAt, updatedAt);
+            return Review.reconstitute(ReviewId.of(id), version, BookId.of(bookId), CustomerId.of(userId),
+                    Rating.of(rating), commentText, createdAt, updatedAt);
         }
     }
 }

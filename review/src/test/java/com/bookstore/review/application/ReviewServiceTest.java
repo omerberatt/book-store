@@ -1,5 +1,7 @@
 package com.bookstore.review.application;
 
+import com.bookstore.shared.kernel.identity.CustomerId;
+import com.bookstore.shared.kernel.identity.BookId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -32,9 +34,9 @@ import org.junit.jupiter.api.Test;
 
 class ReviewServiceTest {
 
-    private static final long DUNE = 1;
-    private static final long AYSE = 10;
-    private static final long MEHMET = 11;
+    private static final BookId DUNE = BookId.of(1);
+    private static final CustomerId AYSE = CustomerId.of(10);
+    private static final CustomerId MEHMET = CustomerId.of(11);
 
     private final InMemoryReviewRepository reviews = new InMemoryReviewRepository();
     private final FakeRatings ratings = new FakeRatings(DUNE);
@@ -55,9 +57,9 @@ class ReviewServiceTest {
 
     @Test
     void unknownBookIsReported() {
-        purchases.received(AYSE, 99);
+        purchases.received(AYSE, BookId.of(99));
 
-        assertThatThrownBy(() -> service.write(new ReviewCommand(AYSE, 99, 4, null)))
+        assertThatThrownBy(() -> service.write(new ReviewCommand(AYSE, BookId.of(99), 4, null)))
                 .isInstanceOf(NotFoundException.class);
     }
 
@@ -141,49 +143,49 @@ class ReviewServiceTest {
         assertThat(transactions.started()).isZero();
     }
 
-    private ReviewView write(long customerId, int stars) {
+    private ReviewView write(CustomerId customerId, int stars) {
         return service.write(new ReviewCommand(customerId, DUNE, stars, null));
     }
 
     /** The catalog's rating totals, kept per book. */
     private static final class FakeRatings implements RatingFacade {
 
-        private final Map<Long, int[]> totals = new HashMap<>();
+        private final Map<BookId, int[]> totals = new HashMap<>();
 
-        FakeRatings(long... bookIds) {
-            for (long bookId : bookIds) {
+        FakeRatings(BookId... bookIds) {
+            for (BookId bookId : bookIds) {
                 totals.put(bookId, new int[2]);
             }
         }
 
-        int count(long bookId) {
+        int count(BookId bookId) {
             return totals.get(bookId)[0];
         }
 
-        int sum(long bookId) {
+        int sum(BookId bookId) {
             return totals.get(bookId)[1];
         }
 
         @Override
-        public boolean exists(long bookId) {
+        public boolean exists(BookId bookId) {
             return totals.containsKey(bookId);
         }
 
         @Override
-        public void addRating(long bookId, int stars) {
+        public void addRating(BookId bookId, int stars) {
             int[] t = require(bookId);
             t[0]++;
             t[1] += stars;
         }
 
         @Override
-        public void removeRating(long bookId, int stars) {
+        public void removeRating(BookId bookId, int stars) {
             int[] t = require(bookId);
             t[0]--;
             t[1] -= stars;
         }
 
-        private int[] require(long bookId) {
+        private int[] require(BookId bookId) {
             int[] t = totals.get(bookId);
             if (t == null) {
                 throw new NotFoundException("Book", bookId);
@@ -195,28 +197,28 @@ class ReviewServiceTest {
     /** Which customer received which book. */
     private static final class FakePurchases implements PurchaseHistory {
 
-        private final Set<List<Long>> received = new HashSet<>();
+        private final Set<List<Object>> received = new HashSet<>();
 
-        void received(long customerId, long bookId) {
+        void received(CustomerId customerId, BookId bookId) {
             received.add(List.of(customerId, bookId));
         }
 
         @Override
-        public boolean hasReceived(long customerId, long bookId) {
+        public boolean hasReceived(CustomerId customerId, BookId bookId) {
             return received.contains(List.of(customerId, bookId));
         }
     }
 
     /** Fixed public names. */
-    private record FakeNames(Map<Long, String> names) implements CustomerDirectory {
+    private record FakeNames(Map<CustomerId, String> names) implements CustomerDirectory {
 
         @Override
-        public Address shippingAddress(long customerId, long addressId) {
+        public Address shippingAddress(CustomerId customerId, long addressId) {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public Map<Long, String> publicNames(Collection<Long> customerIds) {
+        public Map<CustomerId, String> publicNames(Collection<CustomerId> customerIds) {
             return customerIds.stream().filter(names::containsKey).collect(Collectors.toMap(id -> id, names::get));
         }
     }

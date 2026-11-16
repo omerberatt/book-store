@@ -1,5 +1,6 @@
 package com.bookstore.catalog.application;
 
+import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.catalog.api.RatingFacade;
 import com.bookstore.catalog.domain.Book;
 import com.bookstore.catalog.domain.BookRepository;
@@ -28,21 +29,21 @@ public class RatingService implements RatingFacade {
     }
 
     @Override
-    public boolean exists(long bookId) {
+    public boolean exists(BookId bookId) {
         return books.findById(bookId).isPresent();
     }
 
     @Override
-    public void addRating(long bookId, int stars) {
+    public void addRating(BookId bookId, int stars) {
         change(bookId, book -> book.addRating(stars));
     }
 
     @Override
-    public void removeRating(long bookId, int stars) {
+    public void removeRating(BookId bookId, int stars) {
         change(bookId, book -> book.removeRating(stars));
     }
 
-    private void change(long bookId, Consumer<Book> operation) {
+    private void change(BookId bookId, Consumer<Book> operation) {
         transactions.run(() -> {
             Book book = books.findById(bookId).orElseThrow(() -> new NotFoundException("Book", bookId));
             operation.accept(book);

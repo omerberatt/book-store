@@ -1,5 +1,6 @@
 package com.bookstore.catalog.persistence;
 
+import com.bookstore.catalog.domain.AuthorId;
 import com.bookstore.shared.kernel.text.TextNormalizer;
 import com.bookstore.catalog.domain.Author;
 import com.bookstore.catalog.domain.AuthorRepository;
@@ -17,7 +18,7 @@ import java.util.Optional;
 public class JdbcAuthorRepository implements AuthorRepository {
 
     static final RowMapper<Author> MAPPER =
-            row -> Author.reconstitute(row.getLong("id"), row.getInt("version"), row.getString("name"));
+            row -> Author.reconstitute(new AuthorId(row.getLong("id")), row.getInt("version"), row.getString("name"));
 
     private final JdbcExecutor jdbc;
 
@@ -31,12 +32,12 @@ public class JdbcAuthorRepository implements AuthorRepository {
     }
 
     @Override
-    public Optional<Author> findById(long id) {
+    public Optional<Author> findById(AuthorId id) {
         return jdbc.queryOne("SELECT id, version, name FROM authors WHERE id = ?", MAPPER, id);
     }
 
     @Override
-    public List<Author> findAllById(Collection<Long> ids) {
+    public List<Author> findAllById(Collection<AuthorId> ids) {
         if (ids.isEmpty()) {
             return List.of();
         }
@@ -54,7 +55,7 @@ public class JdbcAuthorRepository implements AuthorRepository {
         String key = TextNormalizer.searchKey(author.name());
         if (author.isNew()) {
             long id = jdbc.insert("INSERT INTO authors (name, name_key) VALUES (?, ?)", author.name(), key);
-            author.markPersisted(id, 0);
+            author.markPersisted(new AuthorId(id), 0);
         } else {
             jdbc.updateVersioned("Author " + author.id(),
                     "UPDATE authors SET name = ?, name_key = ?, version = version + 1 WHERE id = ? AND version = ?",

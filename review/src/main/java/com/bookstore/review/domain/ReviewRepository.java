@@ -1,5 +1,7 @@
 package com.bookstore.review.domain;
 
+import com.bookstore.shared.kernel.identity.BookId;
+import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.kernel.paging.Page;
 import com.bookstore.shared.kernel.paging.PageRequest;
 
@@ -17,7 +19,7 @@ public interface ReviewRepository {
      * @param id the id
      * @return the review, or empty
      */
-    Optional<Review> findById(long id);
+    Optional<Review> findById(ReviewId id);
 
     /**
      * Finds a customer's review of a book.
@@ -26,7 +28,7 @@ public interface ReviewRepository {
      * @param customerId the customer's id
      * @return the review, or empty if the customer has not reviewed the book
      */
-    Optional<Review> findByBookIdAndCustomerId(long bookId, long customerId);
+    Optional<Review> findByBookIdAndCustomerId(BookId bookId, CustomerId customerId);
 
     /**
      * Returns one page of a book's reviews, newest first.
@@ -35,7 +37,7 @@ public interface ReviewRepository {
      * @param page   which page to return
      * @return the page
      */
-    Page<Review> findByBookId(long bookId, PageRequest page);
+    Page<Review> findByBookId(BookId bookId, PageRequest page);
 
     /**
      * Returns every rating given to a book, for its rating distribution.
@@ -43,7 +45,7 @@ public interface ReviewRepository {
      * @param bookId the book's id
      * @return the ratings, in no particular order
      */
-    List<Rating> findRatingsByBookId(long bookId);
+    List<Rating> findRatingsByBookId(BookId bookId);
 
     /**
      * Returns one page of all reviews, newest first, for moderation.

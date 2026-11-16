@@ -1,5 +1,6 @@
 package com.bookstore.sales.application;
 
+import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.customer.api.CustomerDirectory;
 import com.bookstore.shared.kernel.address.Address;
 import com.bookstore.shared.kernel.error.NotFoundException;
@@ -16,7 +17,7 @@ import java.util.stream.Collectors;
  */
 public final class FakeCustomers implements CustomerDirectory {
 
-    private final Map<Long, Long> addressIdByCustomer = new HashMap<>();
+    private final Map<CustomerId, Long> addressIdByCustomer = new HashMap<>();
     private final Map<Long, Address> addressById = new HashMap<>();
     private long nextCustomerId = 1;
     private long nextAddressId = 1001;
@@ -26,8 +27,8 @@ public final class FakeCustomers implements CustomerDirectory {
      *
      * @return the customer's id
      */
-    public long register() {
-        long customerId = nextCustomerId++;
+    public CustomerId register() {
+        CustomerId customerId = CustomerId.of(nextCustomerId++);
         long addressId = nextAddressId++;
         addressIdByCustomer.put(customerId, addressId);
         addressById.put(addressId, TestAddresses.home());
@@ -40,12 +41,12 @@ public final class FakeCustomers implements CustomerDirectory {
      * @param customerId the customer's id
      * @return the address id
      */
-    public long addressIdOf(long customerId) {
+    public long addressIdOf(CustomerId customerId) {
         return addressIdByCustomer.get(customerId);
     }
 
     @Override
-    public Address shippingAddress(long customerId, long addressId) {
+    public Address shippingAddress(CustomerId customerId, long addressId) {
         Long own = addressIdByCustomer.get(customerId);
         if (own == null) {
             throw new NotFoundException("Customer", customerId);
@@ -57,7 +58,7 @@ public final class FakeCustomers implements CustomerDirectory {
     }
 
     @Override
-    public Map<Long, String> publicNames(Collection<Long> customerIds) {
+    public Map<CustomerId, String> publicNames(Collection<CustomerId> customerIds) {
         return customerIds.stream().filter(addressIdByCustomer::containsKey)
                 .collect(Collectors.toMap(id -> id, id -> "Ayşe Y."));
     }

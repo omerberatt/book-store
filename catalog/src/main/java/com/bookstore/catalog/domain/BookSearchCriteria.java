@@ -38,8 +38,8 @@ public final class BookSearchCriteria {
     private static final Pattern ISBN_FRAGMENT = Pattern.compile("\\d{4,13}");
 
     private final String text;
-    private final Set<Long> categoryIds;
-    private final Long authorId;
+    private final Set<CategoryId> categoryIds;
+    private final AuthorId authorId;
     private final Money minPrice;
     private final Money maxPrice;
     private final Language language;
@@ -88,12 +88,12 @@ public final class BookSearchCriteria {
     }
 
     /** @return categories to include; empty means every category */
-    public Set<Long> categoryIds() {
+    public Set<CategoryId> categoryIds() {
         return categoryIds;
     }
 
     /** @return only books by this author */
-    public Optional<Long> authorId() {
+    public Optional<AuthorId> authorId() {
         return Optional.ofNullable(authorId);
     }
 
@@ -142,9 +142,9 @@ public final class BookSearchCriteria {
             predicate = predicate.and(book -> !book.category().isNew() && categoryIds.contains(book.category().id()));
         }
         if (authorId != null) {
-            long required = authorId;
+            AuthorId required = authorId;
             predicate = predicate.and(book -> book.authors().stream()
-                    .anyMatch(author -> !author.isNew() && author.id() == required));
+                    .anyMatch(author -> !author.isNew() && author.id().equals(required)));
         }
         if (minPrice != null) {
             Money min = minPrice;
@@ -179,8 +179,8 @@ public final class BookSearchCriteria {
     public static final class Builder {
 
         private String text;
-        private final Set<Long> categoryIds = new HashSet<>();
-        private Long authorId;
+        private final Set<CategoryId> categoryIds = new HashSet<>();
+        private AuthorId authorId;
         private Money minPrice;
         private Money maxPrice;
         private Language language;
@@ -198,13 +198,13 @@ public final class BookSearchCriteria {
         }
 
         /** @param ids categories to include @return this builder */
-        public Builder categoryIds(Set<Long> ids) {
+        public Builder categoryIds(Set<CategoryId> ids) {
             this.categoryIds.addAll(ids);
             return this;
         }
 
         /** @param value only books by this author @return this builder */
-        public Builder authorId(long value) {
+        public Builder authorId(AuthorId value) {
             this.authorId = value;
             return this;
         }

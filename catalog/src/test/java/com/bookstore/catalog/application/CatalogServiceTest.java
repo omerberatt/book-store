@@ -1,5 +1,7 @@
 package com.bookstore.catalog.application;
 
+import com.bookstore.catalog.domain.CategoryId;
+import com.bookstore.shared.kernel.identity.BookId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -57,7 +59,7 @@ class CatalogServiceTest {
 
     @Test
     void unknownCategoryIsReported() {
-        assertThatThrownBy(() -> shop.catalog.search(BookSearchQuery.everything().inCategory(999), PageRequest.first()))
+        assertThatThrownBy(() -> shop.catalog.search(BookSearchQuery.everything().inCategory(CategoryId.of(999)), PageRequest.first()))
                 .isInstanceOf(NotFoundException.class);
     }
 
@@ -120,7 +122,7 @@ class CatalogServiceTest {
 
     @Test
     void unknownBookIsReported() {
-        assertThatThrownBy(() -> shop.catalog.book(999)).isInstanceOf(NotFoundException.class);
+        assertThatThrownBy(() -> shop.catalog.book(BookId.of(999))).isInstanceOf(NotFoundException.class);
     }
 
     @Test

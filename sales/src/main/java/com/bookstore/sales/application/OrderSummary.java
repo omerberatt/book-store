@@ -1,5 +1,6 @@
 package com.bookstore.sales.application;
 
+import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.kernel.money.Money;
 import com.bookstore.sales.domain.Order;
 import com.bookstore.sales.domain.OrderStatus;
@@ -18,7 +19,7 @@ import java.time.Instant;
  * @param total         the amount to pay
  * @param totalQuantity the number of copies
  */
-public record OrderSummary(String orderNumber, long customerId, Instant placedAt, OrderStatus status,
+public record OrderSummary(String orderNumber, CustomerId customerId, Instant placedAt, OrderStatus status,
                            PaymentMethod paymentMethod, Money total, int totalQuantity) {
 
     /**

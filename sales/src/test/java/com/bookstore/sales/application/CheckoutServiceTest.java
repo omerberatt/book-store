@@ -1,5 +1,6 @@
 package com.bookstore.sales.application;
 
+import com.bookstore.shared.kernel.identity.CustomerId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -21,7 +22,7 @@ class CheckoutServiceTest {
     private final SalesShop shop = new SalesShop();
     private final FakeCatalog.Item dune = shop.book("Dune", "100.00", 10);
     private final FakeCatalog.Item madonna = shop.book("Kürk Mantolu Madonna", "45.50", 3);
-    private final long customerId = shop.customer("ayse@example.com");
+    private final CustomerId customerId = shop.customer("ayse@example.com");
     private final CartRef cart = CartRef.customer(customerId);
 
     @Test
@@ -111,7 +112,7 @@ class CheckoutServiceTest {
 
     @Test
     void addressMustBelongToTheCustomer() {
-        long other = shop.customer("mehmet@example.com");
+        CustomerId other = shop.customer("mehmet@example.com");
         shop.cart.add(cart, dune.id(), 1);
 
         assertThatThrownBy(() -> shop.checkout.placeOrder(

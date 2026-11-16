@@ -1,5 +1,6 @@
 package com.bookstore.sales.application;
 
+import com.bookstore.shared.kernel.identity.CustomerId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -23,8 +24,8 @@ class OrderManagementTest {
 
     private final SalesShop shop = new SalesShop();
     private final FakeCatalog.Item dune = shop.book("Dune", "100.00", 10);
-    private final long ayse = shop.customer("ayse@example.com");
-    private final long mehmet = shop.customer("mehmet@example.com");
+    private final CustomerId ayse = shop.customer("ayse@example.com");
+    private final CustomerId mehmet = shop.customer("mehmet@example.com");
 
     @Test
     void customersSeeOnlyTheirOwnOrders() {

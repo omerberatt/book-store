@@ -1,5 +1,6 @@
 package com.bookstore.sales.domain;
 
+import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.kernel.event.DomainEvent;
 
 /**
@@ -20,5 +21,5 @@ public sealed interface OrderEvent extends DomainEvent permits OrderPlaced, Orde
      *
      * @return the customer's id
      */
-    long customerId();
+    CustomerId customerId();
 }

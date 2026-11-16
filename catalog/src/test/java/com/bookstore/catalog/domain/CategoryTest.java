@@ -52,8 +52,8 @@ class CategoryTest {
 
     @Test
     void restoringAChildAttachesItToTheParent() {
-        Category literature = Category.reconstituteRoot(1, 0, "Literature");
-        Category novel = Category.reconstituteChild(2, 0, "Novel", literature);
+        Category literature = Category.reconstituteRoot(CategoryId.of(1), 0, "Literature");
+        Category novel = Category.reconstituteChild(CategoryId.of(2), 0, "Novel", literature);
 
         assertThat(literature.children()).containsExactly(novel);
         assertThat(literature.children()).isUnmodifiable();

@@ -1,5 +1,6 @@
 package com.bookstore.catalog.application;
 
+import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.money.Money;
 import com.bookstore.catalog.domain.Book;
 
@@ -19,7 +20,7 @@ import java.math.BigDecimal;
  * @param ratingCount   the number of ratings
  * @param coverImage    the storage key of the cover image; {@code null} if there is none
  */
-public record BookSummary(long id, String isbn, String title, String authorNames, Money price, boolean inStock,
+public record BookSummary(BookId id, String isbn, String title, String authorNames, Money price, boolean inStock,
                           BigDecimal averageRating, int ratingCount, String coverImage) {
 
     /**

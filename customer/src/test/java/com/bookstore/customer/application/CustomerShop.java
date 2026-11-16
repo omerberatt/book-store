@@ -1,5 +1,7 @@
 package com.bookstore.customer.application;
 
+import com.bookstore.customer.domain.AddressId;
+import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.customer.domain.PasswordHasher;
 import com.bookstore.customer.persistence.InMemoryCustomerRepository;
 import com.bookstore.shared.kernel.address.Address;
@@ -28,14 +30,14 @@ public final class CustomerShop {
     public final CustomerDirectoryService directory = new CustomerDirectoryService(customers);
 
     /** Registers a customer with one saved default address and returns the customer's id. */
-    public long customer(String email) {
+    public CustomerId customer(String email) {
         CustomerView registered = accounts.register(new RegistrationCommand(email, "Ayşe", "Yılmaz", PASSWORD));
         accounts.addAddress(registered.id(), "Ev", address(), true);
         return registered.id();
     }
 
     /** Returns the id of a customer's default address. */
-    public long defaultAddressId(long customerId) {
+    public AddressId defaultAddressId(CustomerId customerId) {
         return accounts.profile(customerId).addresses().stream()
                 .filter(CustomerView.AddressView::isDefault)
                 .findFirst()

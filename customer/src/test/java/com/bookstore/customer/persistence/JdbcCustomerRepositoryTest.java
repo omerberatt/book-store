@@ -1,5 +1,7 @@
 package com.bookstore.customer.persistence;
 
+import com.bookstore.customer.domain.AddressId;
+import com.bookstore.shared.kernel.identity.CustomerId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -45,7 +47,7 @@ class JdbcCustomerRepositoryTest {
     @Test
     void addressBookChangesAreStored() {
         Customer customer = db.customer("ayse@example.com");
-        long home = customer.addresses().getFirst().id();
+        AddressId home = customer.addresses().getFirst().id();
 
         customer.addAddress("İş", TestAddresses.work(), true);
         db.customers.save(customer);
@@ -94,7 +96,7 @@ class JdbcCustomerRepositoryTest {
         Page<Customer> page = db.customers.findAll(PageRequest.first());
 
         assertThat(page.content()).extracting(c -> c.email().value()).containsExactly("b@example.com", "a@example.com");
-        assertThat(db.customers.findAllById(List.of(a.id(), b.id(), 999L))).hasSize(2);
+        assertThat(db.customers.findAllById(List.of(a.id(), b.id(), CustomerId.of(999)))).hasSize(2);
     }
 
     @Test

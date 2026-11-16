@@ -1,5 +1,8 @@
 package com.bookstore.catalog.application;
 
+import com.bookstore.catalog.domain.CategoryId;
+import com.bookstore.catalog.domain.AuthorId;
+import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.money.Money;
 import com.bookstore.catalog.domain.Author;
 import com.bookstore.catalog.domain.Book;
@@ -30,7 +33,7 @@ import java.util.List;
  * @param ratingCount     the number of ratings
  * @param coverImage      the storage key of the cover image; {@code null} if there is none
  */
-public record BookDetails(long id, String isbn, String title, List<AuthorRef> authors, long categoryId,
+public record BookDetails(BookId id, String isbn, String title, List<AuthorRef> authors, CategoryId categoryId,
                           List<String> categoryPath, String publisher, Year publicationYear,
                           Language language, int pageCount, String description, Money price, int stock,
                           boolean inStock, BigDecimal averageRating, int ratingCount,
@@ -64,7 +67,7 @@ public record BookDetails(long id, String isbn, String title, List<AuthorRef> au
      * @param id   the author's id
      * @param name the author's name
      */
-    public record AuthorRef(long id, String name) {
+    public record AuthorRef(AuthorId id, String name) {
 
         /**
          * Copies an author.

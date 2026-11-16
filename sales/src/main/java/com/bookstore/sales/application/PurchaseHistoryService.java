@@ -1,5 +1,7 @@
 package com.bookstore.sales.application;
 
+import com.bookstore.shared.kernel.identity.BookId;
+import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.sales.api.PurchaseHistory;
 import com.bookstore.sales.domain.OrderRepository;
 
@@ -20,7 +22,7 @@ public class PurchaseHistoryService implements PurchaseHistory {
     }
 
     @Override
-    public boolean hasReceived(long customerId, long bookId) {
+    public boolean hasReceived(CustomerId customerId, BookId bookId) {
         return orders.hasDeliveredBook(customerId, bookId);
     }
 }

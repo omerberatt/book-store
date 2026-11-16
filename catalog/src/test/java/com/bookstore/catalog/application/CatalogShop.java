@@ -1,5 +1,6 @@
 package com.bookstore.catalog.application;
 
+import com.bookstore.catalog.domain.AuthorId;
 import com.bookstore.catalog.domain.Author;
 import com.bookstore.catalog.domain.Book;
 import com.bookstore.catalog.domain.Category;
@@ -44,7 +45,7 @@ public final class CatalogShop {
     /** Returns an author with a new id. */
     public Author author(String name) {
         Author author = Author.create(name);
-        author.markPersisted(500 + counter.incrementAndGet(), 0);
+        author.markPersisted(AuthorId.of(500 + counter.incrementAndGet()), 0);
         return author;
     }
 

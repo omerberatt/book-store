@@ -1,5 +1,6 @@
 package com.bookstore.sales.application;
 
+import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.kernel.money.Money;
 import com.bookstore.shared.kernel.address.Address;
 import com.bookstore.sales.domain.Order;
@@ -27,7 +28,7 @@ import java.util.Set;
  * @param shippingCost    the shipping cost
  * @param total           the amount to pay
  */
-public record OrderDetails(String orderNumber, long customerId, Instant placedAt, Instant statusChangedAt,
+public record OrderDetails(String orderNumber, CustomerId customerId, Instant placedAt, Instant statusChangedAt,
                            OrderStatus status, Set<OrderStatus> nextStatuses, List<OrderLine> lines,
                            Address shippingAddress, PaymentMethod paymentMethod, Money subtotal, Money shippingCost,
                            Money total) {

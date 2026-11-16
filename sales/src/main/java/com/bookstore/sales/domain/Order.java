@@ -1,5 +1,7 @@
 package com.bookstore.sales.domain;
 
+import com.bookstore.shared.kernel.identity.BookId;
+import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.kernel.error.AccessDeniedException;
 import com.bookstore.shared.kernel.error.ConflictException;
 import com.bookstore.shared.kernel.error.NotFoundException;
@@ -25,13 +27,13 @@ import java.util.Map;
  * catalog's job; the application layer asks for it in the same transaction. After that only the
  * order's {@link OrderStatus status} changes, following the allowed transitions.
  */
-public class Order extends Entity {
+public class Order extends Entity<OrderId> {
 
     /** Error code for checking out an empty cart. */
     public static final String EMPTY_CART = "cart.empty";
 
     private final OrderNumber number;
-    private final long customerId;
+    private final CustomerId customerId;
     private final List<OrderLine> lines;
     private final Address shippingAddress;
     private final PaymentMethod paymentMethod;
@@ -41,11 +43,11 @@ public class Order extends Entity {
     private final Instant placedAt;
     private Instant statusChangedAt;
 
-    private Order(OrderNumber number, long customerId, List<OrderLine> lines, Address shippingAddress,
+    private Order(OrderNumber number, CustomerId customerId, List<OrderLine> lines, Address shippingAddress,
                   PaymentMethod paymentMethod, Money shippingCost, OrderStatus status, Instant placedAt,
                   Instant statusChangedAt) {
         this.number = Guard.requireNonNull(number, "orderNumber");
-        Guard.require(customerId > 0, "customerId", "must be a stored customer");
+        Guard.requireNonNull(customerId, "customerId");
         this.customerId = customerId;
         this.lines = List.copyOf(Guard.requireNotEmpty(lines, "lines"));
         this.shippingAddress = Guard.requireNonNull(shippingAddress, "shippingAddress");
@@ -77,14 +79,14 @@ public class Order extends Entity {
      * @throws StockShortageException if a book does not have enough stock
      * @throws AccessDeniedException  if the cart belongs to someone else
      */
-    public static Order place(OrderNumber number, long customerId, Cart cart, Map<Long, ProductSnapshot> products,
+    public static Order place(OrderNumber number, CustomerId customerId, Cart cart, Map<BookId, ProductSnapshot> products,
                               Address shippingAddress, PaymentMethod paymentMethod,
                               ShippingPolicy shippingPolicy, Clock clock) {
         Guard.requireNonNull(cart, "cart");
         if (cart.isEmpty()) {
             throw new RuleViolationException(EMPTY_CART, "Cannot place an order with an empty cart");
         }
-        if (cart.customerId().map(owner -> owner != customerId).orElse(true)) {
+        if (cart.customerId().map(owner -> !owner.equals(customerId)).orElse(true)) {
             throw new AccessDeniedException("The cart does not belong to customer " + customerId);
         }
 
@@ -123,7 +125,7 @@ public class Order extends Entity {
      * @param statusChangedAt when the status last changed
      * @return the order
      */
-    public static Order reconstitute(long id, int version, OrderNumber number, long customerId, List<OrderLine> lines,
+    public static Order reconstitute(OrderId id, int version, OrderNumber number, CustomerId customerId, List<OrderLine> lines,
                                 Address shippingAddress, PaymentMethod paymentMethod, Money shippingCost,
                                 OrderStatus status, Instant placedAt, Instant statusChangedAt) {
         Order order = new Order(number, customerId, lines, shippingAddress, paymentMethod, shippingCost, status,
@@ -140,7 +142,7 @@ public class Order extends Entity {
     }
 
     /** @return the id of the customer who placed the order */
-    public long customerId() {
+    public CustomerId customerId() {
         return customerId;
     }
 
@@ -195,8 +197,8 @@ public class Order extends Entity {
      * @param someCustomerId the customer's id
      * @return {@code true} if that customer placed the order
      */
-    public boolean isOwnedBy(long someCustomerId) {
-        return customerId == someCustomerId;
+    public boolean isOwnedBy(CustomerId someCustomerId) {
+        return customerId.equals(someCustomerId);
     }
 
     /**
@@ -205,8 +207,8 @@ public class Order extends Entity {
      * @param bookId the book's id
      * @return {@code true} if one of the lines is for that book
      */
-    public boolean contains(long bookId) {
-        return lines.stream().anyMatch(line -> line.bookId() == bookId);
+    public boolean contains(BookId bookId) {
+        return lines.stream().anyMatch(line -> line.bookId().equals(bookId));
     }
 
     /** @return the number of copies across all lines */
@@ -259,8 +261,8 @@ public class Order extends Entity {
      *
      * @return quantities keyed by book id, in line order
      */
-    public Map<Long, Integer> quantitiesByBook() {
-        Map<Long, Integer> quantities = new LinkedHashMap<>();
+    public Map<BookId, Integer> quantitiesByBook() {
+        Map<BookId, Integer> quantities = new LinkedHashMap<>();
         lines.forEach(line -> quantities.merge(line.bookId(), line.quantity(), Integer::sum));
         return Collections.unmodifiableMap(quantities);
     }

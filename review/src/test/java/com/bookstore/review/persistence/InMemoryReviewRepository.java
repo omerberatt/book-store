@@ -1,5 +1,8 @@
 package com.bookstore.review.persistence;
 
+import com.bookstore.review.domain.ReviewId;
+import com.bookstore.shared.kernel.identity.CustomerId;
+import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.testing.InMemoryStore;
 import com.bookstore.shared.kernel.error.ConflictException;
 import com.bookstore.shared.kernel.paging.Page;
@@ -13,26 +16,31 @@ import java.util.List;
 import java.util.Optional;
 
 /** Reviews in a map, enforcing one review per customer and book like a unique key would. */
-public class InMemoryReviewRepository extends InMemoryStore<Review> implements ReviewRepository {
+public class InMemoryReviewRepository extends InMemoryStore<ReviewId, Review> implements ReviewRepository {
+
+    /** Creates an empty repository. */
+    public InMemoryReviewRepository() {
+        super(ReviewId::new);
+    }
 
     private static final Comparator<Review> NEWEST_FIRST =
-            Comparator.comparing(Review::createdAt).thenComparing(Review::id).reversed();
+            Comparator.comparing(Review::createdAt).thenComparing(review -> review.id().value()).reversed();
 
     @Override
-    public Optional<Review> findByBookIdAndCustomerId(long bookId, long customerId) {
+    public Optional<Review> findByBookIdAndCustomerId(BookId bookId, CustomerId customerId) {
         return all().stream()
-                .filter(review -> review.bookId() == bookId && review.isWrittenBy(customerId))
+                .filter(review -> review.bookId().equals(bookId) && review.isWrittenBy(customerId))
                 .findFirst();
     }
 
     @Override
-    public Page<Review> findByBookId(long bookId, PageRequest page) {
-        return Page.fromList(where(review -> review.bookId() == bookId).stream().sorted(NEWEST_FIRST).toList(), page);
+    public Page<Review> findByBookId(BookId bookId, PageRequest page) {
+        return Page.fromList(where(review -> review.bookId().equals(bookId)).stream().sorted(NEWEST_FIRST).toList(), page);
     }
 
     @Override
-    public List<Rating> findRatingsByBookId(long bookId) {
-        return where(review -> review.bookId() == bookId).stream().map(Review::rating).toList();
+    public List<Rating> findRatingsByBookId(BookId bookId) {
+        return where(review -> review.bookId().equals(bookId)).stream().map(Review::rating).toList();
     }
 
     @Override

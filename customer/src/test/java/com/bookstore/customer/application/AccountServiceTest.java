@@ -1,5 +1,7 @@
 package com.bookstore.customer.application;
 
+import com.bookstore.customer.domain.AddressId;
+import com.bookstore.shared.kernel.identity.CustomerId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -57,7 +59,7 @@ class AccountServiceTest {
 
     @Test
     void findsTheLoginAccountByEmail() {
-        long id = shop.customer("ayse@example.com");
+        CustomerId id = shop.customer("ayse@example.com");
 
         assertThat(shop.accounts.findLoginAccount("AYSE@example.com")).hasValueSatisfying(account -> {
             assertThat(account.customerId()).isEqualTo(id);
@@ -70,7 +72,7 @@ class AccountServiceTest {
 
     @Test
     void loginAccountShowsDeactivatedCustomers() {
-        long id = shop.customer("ayse@example.com");
+        CustomerId id = shop.customer("ayse@example.com");
         var customer = shop.customers.findById(id).orElseThrow();
         customer.deactivate();
         shop.customers.save(customer);
@@ -81,7 +83,7 @@ class AccountServiceTest {
 
     @Test
     void updatesTheProfileAndRefusesATakenEmail() {
-        long ayse = shop.customer("ayse@example.com");
+        CustomerId ayse = shop.customer("ayse@example.com");
         shop.customer("mehmet@example.com");
 
         CustomerView updated = shop.accounts.updateProfile(ayse, "Ayşe Nur", "Yılmaz", "ayse.nur@example.com");
@@ -95,7 +97,7 @@ class AccountServiceTest {
 
     @Test
     void keepingTheSameEmailIsNotAConflict() {
-        long ayse = shop.customer("ayse@example.com");
+        CustomerId ayse = shop.customer("ayse@example.com");
 
         assertThat(shop.accounts.updateProfile(ayse, "Ayşe", "Kaya", "AYSE@example.com").lastName())
                 .isEqualTo("Kaya");
@@ -103,7 +105,7 @@ class AccountServiceTest {
 
     @Test
     void changingThePasswordRequiresTheCurrentOne() {
-        long id = shop.customer("ayse@example.com");
+        CustomerId id = shop.customer("ayse@example.com");
 
         assertThatThrownBy(() -> shop.accounts.changePassword(id, "wrong-password1", "yeniSifre1"))
                 .isInstanceOfSatisfying(ValidationException.class, e -> assertThat(e.violations())
@@ -117,13 +119,13 @@ class AccountServiceTest {
 
     @Test
     void manageTheAddressBook() {
-        long id = shop.customer("ayse@example.com");
-        long home = shop.defaultAddressId(id);
+        CustomerId id = shop.customer("ayse@example.com");
+        AddressId home = shop.defaultAddressId(id);
         Address work = new Address("Ayşe Yılmaz", "+90 212 000 00 00", "Büyükdere Cad. 100", "Şişli", "İstanbul",
                 "34394");
 
         CustomerView withWork = shop.accounts.addAddress(id, "İş", work, false);
-        long workId = withWork.addresses().get(1).id();
+        AddressId workId = withWork.addresses().get(1).id();
 
         assertThat(withWork.addresses()).extracting(CustomerView.AddressView::label).containsExactly("Ev", "İş");
         assertThat(shop.accounts.makeDefaultAddress(id, workId).addresses().get(1).isDefault()).isTrue();
@@ -138,6 +140,6 @@ class AccountServiceTest {
 
     @Test
     void unknownCustomerIsReported() {
-        assertThatThrownBy(() -> shop.accounts.profile(999)).isInstanceOf(NotFoundException.class);
+        assertThatThrownBy(() -> shop.accounts.profile(CustomerId.of(999))).isInstanceOf(NotFoundException.class);
     }
 }

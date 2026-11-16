@@ -1,6 +1,7 @@
 package com.bookstore.shared.kernel.testing;
 
 import com.bookstore.shared.kernel.domain.Entity;
+import com.bookstore.shared.kernel.identity.Identifier;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -10,6 +11,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.LongFunction;
 import java.util.function.Predicate;
 
 /**
@@ -19,20 +21,31 @@ import java.util.function.Predicate;
  * <p>Lookups by id use a {@link LinkedHashMap}, so they take constant time instead of scanning
  * every entity.
  *
+ * @param <I> the id type
  * @param <T> the entity type
  */
-public abstract class InMemoryStore<T extends Entity> {
+public abstract class InMemoryStore<I extends Identifier, T extends Entity<I>> {
 
-    private final Map<Long, T> byId = new LinkedHashMap<>();
+    private final Map<I, T> byId = new LinkedHashMap<>();
     private final AtomicLong sequence = new AtomicLong();
+    private final LongFunction<I> newId;
+
+    /**
+     * Creates an empty store.
+     *
+     * @param newId turns the next sequence number into an id, for example {@code BookId::new}
+     */
+    protected InMemoryStore(LongFunction<I> newId) {
+        this.newId = Objects.requireNonNull(newId, "newId");
+    }
 
     /** Returns the entity with an id, if stored. */
-    public Optional<T> findById(long id) {
+    public Optional<T> findById(I id) {
         return Optional.ofNullable(byId.get(id));
     }
 
     /** Returns the stored entities among some ids. */
-    public List<T> findAllById(Collection<Long> ids) {
+    public List<T> findAllById(Collection<I> ids) {
         return ids.stream().distinct().map(byId::get).filter(Objects::nonNull).toList();
     }
 
@@ -40,7 +53,7 @@ public abstract class InMemoryStore<T extends Entity> {
     public T save(T entity) {
         beforeSave(entity);
         if (entity.isNew()) {
-            entity.markPersisted(sequence.incrementAndGet(), 0);
+            entity.markPersisted(newId.apply(sequence.incrementAndGet()), 0);
         } else {
             entity.markPersisted(entity.id(), entity.version() + 1);
         }

@@ -1,5 +1,6 @@
 package com.bookstore.catalog.persistence;
 
+import com.bookstore.catalog.domain.AuthorId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -90,7 +91,7 @@ class JdbcCatalogRepositoryTest {
             pamuk.rename("Ferit Orhan Pamuk");
             db.authors.save(pamuk);
             assertThat(db.authors.findById(pamuk.id())).map(Author::name).contains("Ferit Orhan Pamuk");
-            assertThat(db.authors.findAllById(List.of(pamuk.id(), 999L))).hasSize(1);
+            assertThat(db.authors.findAllById(List.of(pamuk.id(), AuthorId.of(999)))).hasSize(1);
             assertThat(db.authors.findAllById(List.of())).isEmpty();
         }
     }

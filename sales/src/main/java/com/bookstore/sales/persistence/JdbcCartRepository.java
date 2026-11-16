@@ -1,5 +1,7 @@
 package com.bookstore.sales.persistence;
 
+import com.bookstore.shared.kernel.identity.BookId;
+import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.sales.domain.Cart;
 import com.bookstore.sales.domain.CartItem;
 import com.bookstore.sales.domain.CartRepository;
@@ -28,13 +30,13 @@ public class JdbcCartRepository implements CartRepository {
     }
 
     @Override
-    public Optional<Cart> findByCustomerId(long customerId) {
+    public Optional<Cart> findByCustomerId(CustomerId customerId) {
         if (!jdbc.exists("SELECT 1 FROM carts WHERE user_id = ?", customerId)) {
             return Optional.empty();
         }
         List<CartItem> items = jdbc.query(
                 "SELECT book_id, quantity, price_when_added FROM cart_items WHERE user_id = ? ORDER BY sort_order",
-                row -> new CartItem(row.getLong("book_id"), row.getInt("quantity"),
+                row -> new CartItem(BookId.of(row.getLong("book_id")), row.getInt("quantity"),
                         Columns.money(row, "price_when_added")),
                 customerId);
         return Optional.of(Cart.reconstitute(customerId, items));
@@ -42,7 +44,7 @@ public class JdbcCartRepository implements CartRepository {
 
     @Override
     public Cart save(Cart cart) {
-        long customerId = cart.customerId()
+        CustomerId customerId = cart.customerId()
                 .orElseThrow(() -> new IllegalArgumentException("Guest carts are kept in the session, not stored"));
         if (!jdbc.exists("SELECT 1 FROM carts WHERE user_id = ?", customerId)) {
             jdbc.update("INSERT INTO carts (user_id) VALUES (?)", customerId);

@@ -1,5 +1,6 @@
 package com.bookstore.catalog.persistence;
 
+import com.bookstore.catalog.domain.CategoryId;
 import com.bookstore.shared.kernel.error.ConflictException;
 import com.bookstore.catalog.domain.Category;
 import com.bookstore.catalog.domain.CategoryRepository;
@@ -38,7 +39,7 @@ public class JdbcCategoryRepository implements CategoryRepository {
     }
 
     @Override
-    public Optional<Category> findById(long id) {
+    public Optional<Category> findById(CategoryId id) {
         return Optional.ofNullable(loadTree().get(id));
     }
 
@@ -47,7 +48,7 @@ public class JdbcCategoryRepository implements CategoryRepository {
      *
      * @return every category, keyed by id
      */
-    Map<Long, Category> loadTree() {
+    Map<CategoryId, Category> loadTree() {
         List<CategoryRow> rows = jdbc.query(
                 "SELECT id, version, parent_id, name FROM categories "
                         + "ORDER BY CASE WHEN parent_id IS NULL THEN 0 ELSE 1 END, name, id",
@@ -58,11 +59,12 @@ public class JdbcCategoryRepository implements CategoryRepository {
                     return new CategoryRow(row.getLong("id"), row.getInt("version"), parentId, row.getString("name"));
                 });
 
-        Map<Long, Category> byId = new HashMap<>();
+        Map<CategoryId, Category> byId = new HashMap<>();
         for (CategoryRow row : rows) {
             Category category = row.parentId() == null
-                    ? Category.reconstituteRoot(row.id(), row.version(), row.name())
-                    : Category.reconstituteChild(row.id(), row.version(), row.name(), byId.get(row.parentId()));
+                    ? Category.reconstituteRoot(new CategoryId(row.id()), row.version(), row.name())
+                    : Category.reconstituteChild(new CategoryId(row.id()), row.version(), row.name(),
+                            byId.get(new CategoryId(row.parentId())));
             byId.put(category.id(), category);
         }
         return byId;
@@ -70,7 +72,7 @@ public class JdbcCategoryRepository implements CategoryRepository {
 
     @Override
     public Category save(Category category) {
-        Long parentId = category.parent().map(parent -> {
+        CategoryId parentId = category.parent().map(parent -> {
             if (parent.isNew()) {
                 throw new IllegalStateException("Store the parent category first");
             }
@@ -80,7 +82,7 @@ public class JdbcCategoryRepository implements CategoryRepository {
             if (category.isNew()) {
                 long id = jdbc.insert("INSERT INTO categories (parent_id, name) VALUES (?, ?)", parentId,
                         category.name());
-                category.markPersisted(id, 0);
+                category.markPersisted(new CategoryId(id), 0);
             } else {
                 jdbc.updateVersioned("Category " + category.id(),
                         "UPDATE categories SET name = ?, version = version + 1 WHERE id = ? AND version = ?",

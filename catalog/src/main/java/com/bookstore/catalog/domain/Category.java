@@ -18,7 +18,7 @@ import java.util.Optional;
  * may not. Subcategories are created through their parent with {@link #addSubcategory(String)}, so
  * the links in both directions always agree.
  */
-public class Category extends Entity {
+public class Category extends Entity<CategoryId> {
 
     /** Longest allowed name. */
     public static final int MAX_NAME_LENGTH = 100;
@@ -35,7 +35,7 @@ public class Category extends Entity {
         this.parent = parent;
     }
 
-    private Category(long id, int version, String name, Category parent) {
+    private Category(CategoryId id, int version, String name, Category parent) {
         super(id, version);
         this.name = validName(name);
         this.parent = parent;
@@ -59,7 +59,7 @@ public class Category extends Entity {
      * @param name    the stored name
      * @return the category, without children until they are restored
      */
-    public static Category reconstituteRoot(long id, int version, String name) {
+    public static Category reconstituteRoot(CategoryId id, int version, String name) {
         return new Category(id, version, name, null);
     }
 
@@ -72,7 +72,7 @@ public class Category extends Entity {
      * @param parent  the already restored parent, which must be a root
      * @return the subcategory
      */
-    public static Category reconstituteChild(long id, int version, String name, Category parent) {
+    public static Category reconstituteChild(CategoryId id, int version, String name, Category parent) {
         requireCanHaveChildren(parent);
         Category child = new Category(id, version, name, parent);
         parent.children.add(child);

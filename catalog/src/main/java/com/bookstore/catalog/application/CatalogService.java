@@ -1,9 +1,10 @@
 package com.bookstore.catalog.application;
 
+import com.bookstore.catalog.domain.CategoryId;
+import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.error.NotFoundException;
 import com.bookstore.shared.kernel.paging.Page;
 import com.bookstore.shared.kernel.paging.PageRequest;
-import com.bookstore.shared.kernel.domain.Entity;
 import com.bookstore.catalog.domain.Book;
 import com.bookstore.catalog.domain.BookRepository;
 import com.bookstore.catalog.domain.BookSearchCriteria;
@@ -64,7 +65,7 @@ public class CatalogService {
      * @return the details
      * @throws NotFoundException if the book does not exist or is deactivated (CAT-7)
      */
-    public BookDetails book(long bookId) {
+    public BookDetails book(BookId bookId) {
         Book book = books.findById(bookId)
                 .filter(Book::isActive)
                 .orElseThrow(() -> new NotFoundException("Book", bookId));
@@ -80,9 +81,9 @@ public class CatalogService {
         return categories.findRoots().stream().map(CategoryNode::of).toList();
     }
 
-    private Set<Long> categoryAndDescendantIds(long categoryId) {
+    private Set<CategoryId> categoryAndDescendantIds(CategoryId categoryId) {
         Category category = categories.findById(categoryId)
                 .orElseThrow(() -> new NotFoundException("Category", categoryId));
-        return category.selfAndDescendants().stream().map(Entity::id).collect(Collectors.toSet());
+        return category.selfAndDescendants().stream().map(Category::id).collect(Collectors.toSet());
     }
 }

@@ -1,5 +1,6 @@
 package com.bookstore.sales.domain;
 
+import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.money.Money;
 import com.bookstore.shared.kernel.validation.Guard;
 
@@ -14,11 +15,11 @@ import com.bookstore.shared.kernel.validation.Guard;
  * @param unitPrice the price of one copy at the time of the order
  * @param quantity  copies ordered
  */
-public record OrderLine(long bookId, String bookTitle, Money unitPrice, int quantity) {
+public record OrderLine(BookId bookId, String bookTitle, Money unitPrice, int quantity) {
 
     /** Validates every part. */
     public OrderLine {
-        Guard.require(bookId > 0, "bookId", "must be a stored book");
+        Guard.requireNonNull(bookId, "bookId");
         bookTitle = Guard.requireText(bookTitle, "bookTitle", ProductSnapshot.MAX_TITLE_LENGTH);
         Guard.requireNonNull(unitPrice, "unitPrice");
         Guard.require(unitPrice.isPositive(), "unitPrice", "must be greater than zero");

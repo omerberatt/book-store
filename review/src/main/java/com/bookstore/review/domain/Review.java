@@ -1,5 +1,7 @@
 package com.bookstore.review.domain;
 
+import com.bookstore.shared.kernel.identity.BookId;
+import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.kernel.validation.Guard;
 import com.bookstore.shared.kernel.domain.Entity;
 
@@ -13,22 +15,22 @@ import java.time.Instant;
  * <p>Whether the customer is allowed to review the book (they must have received it) is checked by
  * the application layer, because it needs the customer's orders.
  */
-public class Review extends Entity {
+public class Review extends Entity<ReviewId> {
 
     /** Longest allowed comment. */
     public static final int MAX_COMMENT_LENGTH = 2000;
 
-    private final long bookId;
-    private final long customerId;
+    private final BookId bookId;
+    private final CustomerId customerId;
     private Rating rating;
     private String comment;
     private final Instant createdAt;
     private Instant updatedAt;
 
-    private Review(long bookId, long customerId, Rating rating, String comment, Instant createdAt,
+    private Review(BookId bookId, CustomerId customerId, Rating rating, String comment, Instant createdAt,
                    Instant updatedAt) {
-        Guard.require(bookId > 0, "bookId", "must be a stored book");
-        Guard.require(customerId > 0, "customerId", "must be a stored customer");
+        Guard.requireNonNull(bookId, "bookId");
+        Guard.requireNonNull(customerId, "customerId");
         this.bookId = bookId;
         this.customerId = customerId;
         this.rating = Guard.requireNonNull(rating, "rating");
@@ -47,7 +49,7 @@ public class Review extends Entity {
      * @param clock      the clock giving the creation time
      * @return the review, not yet stored
      */
-    public static Review write(long bookId, long customerId, Rating rating, String comment, Clock clock) {
+    public static Review write(BookId bookId, CustomerId customerId, Rating rating, String comment, Clock clock) {
         Instant now = Instant.now(clock);
         return new Review(bookId, customerId, rating, comment, now, now);
     }
@@ -65,7 +67,7 @@ public class Review extends Entity {
      * @param updatedAt  when it was last edited
      * @return the review
      */
-    public static Review reconstitute(long id, int version, long bookId, long customerId, Rating rating, String comment,
+    public static Review reconstitute(ReviewId id, int version, BookId bookId, CustomerId customerId, Rating rating, String comment,
                                  Instant createdAt, Instant updatedAt) {
         Review review = new Review(bookId, customerId, rating, comment, createdAt, updatedAt);
         review.markPersisted(id, version);
@@ -73,12 +75,12 @@ public class Review extends Entity {
     }
 
     /** @return the reviewed book's id */
-    public long bookId() {
+    public BookId bookId() {
         return bookId;
     }
 
     /** @return the author's customer id */
-    public long customerId() {
+    public CustomerId customerId() {
         return customerId;
     }
 
@@ -108,8 +110,8 @@ public class Review extends Entity {
      * @param someCustomerId the customer's id
      * @return {@code true} for the author
      */
-    public boolean isWrittenBy(long someCustomerId) {
-        return customerId == someCustomerId;
+    public boolean isWrittenBy(CustomerId someCustomerId) {
+        return customerId.equals(someCustomerId);
     }
 
     /**

@@ -1,5 +1,7 @@
 package com.bookstore.review.domain;
 
+import com.bookstore.shared.kernel.identity.CustomerId;
+import com.bookstore.shared.kernel.identity.BookId;
 import static com.bookstore.shared.kernel.testing.TestClock.CLOCK;
 import static com.bookstore.shared.kernel.testing.TestClock.NOW;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -16,21 +18,21 @@ import org.junit.jupiter.api.Test;
 
 class ReviewTest {
 
-    private static final long CUSTOMER_ID = 7;
+    private static final CustomerId CUSTOMER_ID = CustomerId.of(7);
 
     @Test
     void writesAReviewWithAnOptionalComment() {
-        Review review = Review.write(1, CUSTOMER_ID, Rating.of(4), null, CLOCK);
+        Review review = Review.write(BookId.of(1), CUSTOMER_ID, Rating.of(4), null, CLOCK);
 
         assertThat(review.comment()).isEmpty();
         assertThat(review.createdAt()).isEqualTo(NOW);
         assertThat(review.isWrittenBy(CUSTOMER_ID)).isTrue();
-        assertThat(review.isWrittenBy(99)).isFalse();
+        assertThat(review.isWrittenBy(CustomerId.of(99))).isFalse();
     }
 
     @Test
     void editingUpdatesRatingCommentAndTime() {
-        Review review = Review.write(1, CUSTOMER_ID, Rating.of(4), "İyi", CLOCK);
+        Review review = Review.write(BookId.of(1), CUSTOMER_ID, Rating.of(4), "İyi", CLOCK);
         Clock later = Clock.offset(CLOCK, Duration.ofDays(2));
 
         review.edit(Rating.of(5), "  Çok iyi  ", later);
@@ -45,7 +47,7 @@ class ReviewTest {
     void commentLengthIsLimited() {
         String tooLong = "x".repeat(Review.MAX_COMMENT_LENGTH + 1);
 
-        assertThatThrownBy(() -> Review.write(1, CUSTOMER_ID, Rating.of(3), tooLong, CLOCK))
+        assertThatThrownBy(() -> Review.write(BookId.of(1), CUSTOMER_ID, Rating.of(3), tooLong, CLOCK))
                 .isInstanceOf(ValidationException.class);
     }
 

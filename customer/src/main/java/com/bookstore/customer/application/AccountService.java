@@ -1,5 +1,7 @@
 package com.bookstore.customer.application;
 
+import com.bookstore.customer.domain.AddressId;
+import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.customer.domain.PasswordHasher;
 import com.bookstore.shared.kernel.transaction.TransactionRunner;
 import com.bookstore.shared.kernel.error.ConflictException;
@@ -88,7 +90,7 @@ public class AccountService {
      * @param customerId the customer's id
      * @return the profile
      */
-    public CustomerView profile(long customerId) {
+    public CustomerView profile(CustomerId customerId) {
         return CustomerView.of(requireCustomer(customerId));
     }
 
@@ -102,7 +104,7 @@ public class AccountService {
      * @return the updated profile
      * @throws ConflictException if another customer already uses the e-mail address
      */
-    public CustomerView updateProfile(long customerId, String firstName, String lastName, String email) {
+    public CustomerView updateProfile(CustomerId customerId, String firstName, String lastName, String email) {
         PersonName name = new PersonName(firstName, lastName);
         Email newEmail = Email.of(email);
         return change(customerId, customer -> {
@@ -122,7 +124,7 @@ public class AccountService {
      * @param newPassword     the new password, as typed
      * @throws ValidationException if the current password is wrong or the new one breaks a rule
      */
-    public void changePassword(long customerId, String currentPassword, String newPassword) {
+    public void changePassword(CustomerId customerId, String currentPassword, String newPassword) {
         PasswordPolicy.check(newPassword);
         change(customerId, customer -> {
             if (!passwordHasher.matches(currentPassword, customer.passwordHash())) {
@@ -141,7 +143,7 @@ public class AccountService {
      * @param makeDefault whether to make it the default
      * @return the updated profile, including the new address with its id
      */
-    public CustomerView addAddress(long customerId, String label, Address address, boolean makeDefault) {
+    public CustomerView addAddress(CustomerId customerId, String label, Address address, boolean makeDefault) {
         return change(customerId, customer -> customer.addAddress(label, address, makeDefault));
     }
 
@@ -154,7 +156,7 @@ public class AccountService {
      * @param address    the new address
      * @return the updated profile
      */
-    public CustomerView changeAddress(long customerId, long addressId, String label, Address address) {
+    public CustomerView changeAddress(CustomerId customerId, AddressId addressId, String label, Address address) {
         return change(customerId, customer -> customer.changeAddress(addressId, label, address));
     }
 
@@ -165,7 +167,7 @@ public class AccountService {
      * @param addressId  the address id
      * @return the updated profile
      */
-    public CustomerView makeDefaultAddress(long customerId, long addressId) {
+    public CustomerView makeDefaultAddress(CustomerId customerId, AddressId addressId) {
         return change(customerId, customer -> customer.makeDefault(addressId));
     }
 
@@ -176,7 +178,7 @@ public class AccountService {
      * @param addressId  the address id
      * @return the updated profile
      */
-    public CustomerView removeAddress(long customerId, long addressId) {
+    public CustomerView removeAddress(CustomerId customerId, AddressId addressId) {
         return change(customerId, customer -> customer.removeAddress(addressId));
     }
 
@@ -187,13 +189,13 @@ public class AccountService {
      * @param addressId  the address id
      * @return the address
      */
-    public CustomerView.AddressView address(long customerId, long addressId) {
+    public CustomerView.AddressView address(CustomerId customerId, AddressId addressId) {
         Customer customer = requireCustomer(customerId);
         SavedAddress address = customer.address(addressId);
         return CustomerView.AddressView.of(customer, address);
     }
 
-    private CustomerView change(long customerId, Consumer<Customer> operation) {
+    private CustomerView change(CustomerId customerId, Consumer<Customer> operation) {
         return transactions.inTransaction(() -> {
             Customer customer = requireCustomer(customerId);
             operation.accept(customer);
@@ -207,7 +209,7 @@ public class AccountService {
         }
     }
 
-    private Customer requireCustomer(long customerId) {
+    private Customer requireCustomer(CustomerId customerId) {
         return customers.findById(customerId).orElseThrow(() -> new NotFoundException("Customer", customerId));
     }
 }

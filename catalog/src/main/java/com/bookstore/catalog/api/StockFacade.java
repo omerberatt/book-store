@@ -1,5 +1,6 @@
 package com.bookstore.catalog.api;
 
+import com.bookstore.shared.kernel.identity.BookId;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -20,7 +21,7 @@ public interface StockFacade {
      * @param bookIds the book ids
      * @return the offers, in no particular order
      */
-    List<BookOffer> offers(Collection<Long> bookIds);
+    List<BookOffer> offers(Collection<BookId> bookIds);
 
     /**
      * Takes copies out of stock, all or nothing: if any book is missing, no longer sold or short of
@@ -31,7 +32,7 @@ public interface StockFacade {
      * @throws com.bookstore.shared.kernel.error.ConflictException if a book is no longer sold or
      *                                                             has too few copies
      */
-    void reserve(Map<Long, Integer> quantities);
+    void reserve(Map<BookId, Integer> quantities);
 
     /**
      * Puts copies back into stock, for example when an order is cancelled.
@@ -39,5 +40,5 @@ public interface StockFacade {
      * @param quantities copies to return, keyed by book id
      * @throws com.bookstore.shared.kernel.error.NotFoundException if a book does not exist
      */
-    void release(Map<Long, Integer> quantities);
+    void release(Map<BookId, Integer> quantities);
 }

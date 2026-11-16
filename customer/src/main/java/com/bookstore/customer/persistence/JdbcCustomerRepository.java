@@ -1,5 +1,7 @@
 package com.bookstore.customer.persistence;
 
+import com.bookstore.customer.domain.AddressId;
+import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.kernel.error.ConflictException;
 import com.bookstore.shared.kernel.paging.Page;
 import com.bookstore.shared.kernel.paging.PageRequest;
@@ -50,7 +52,7 @@ public class JdbcCustomerRepository implements CustomerRepository {
     // ---------------------------------------------------------------- queries
 
     @Override
-    public Optional<Customer> findById(long id) {
+    public Optional<Customer> findById(CustomerId id) {
         return load("SELECT " + USER_COLUMNS + " FROM users WHERE id = ?", id).stream().findFirst();
     }
 
@@ -60,7 +62,7 @@ public class JdbcCustomerRepository implements CustomerRepository {
     }
 
     @Override
-    public List<Customer> findAllById(Collection<Long> ids) {
+    public List<Customer> findAllById(Collection<CustomerId> ids) {
         if (ids.isEmpty()) {
             return List.of();
         }
@@ -91,7 +93,7 @@ public class JdbcCustomerRepository implements CustomerRepository {
                                 + "registered_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
                         customer.email().value(), customer.name().firstName(), customer.name().lastName(),
                         customer.passwordHash(), customer.role(), customer.isActive(), customer.registeredAt());
-                customer.markPersisted(id, 0);
+                customer.markPersisted(CustomerId.of(id), 0);
             } else {
                 jdbc.updateVersioned("Customer " + customer.id(),
                         "UPDATE users SET email = ?, first_name = ?, last_name = ?, password_hash = ?, active = ?, "
@@ -114,7 +116,7 @@ public class JdbcCustomerRepository implements CustomerRepository {
     /** Brings the stored addresses in line with the customer's: deletes removed ones, updates and inserts. */
     private void saveAddresses(Customer customer) {
         Set<Long> kept = new HashSet<>();
-        customer.addresses().stream().filter(a -> !a.isNew()).forEach(a -> kept.add(a.id()));
+        customer.addresses().stream().filter(a -> !a.isNew()).forEach(a -> kept.add(a.id().value()));
         List<Long> stored = jdbc.query("SELECT id FROM addresses WHERE user_id = ?", row -> row.getLong(1),
                 customer.id());
         for (long id : stored) {
@@ -132,7 +134,7 @@ public class JdbcCustomerRepository implements CustomerRepository {
                                 + "address_line, district, city, postal_code) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                         customer.id(), order, isDefault, saved.label(), a.recipient(), a.phone(), a.line(),
                         a.district(), a.city(), a.postalCode());
-                saved.markPersisted(id, 0);
+                saved.markPersisted(AddressId.of(id), 0);
             } else {
                 jdbc.update("UPDATE addresses SET sort_order = ?, is_default = ?, label = ?, recipient = ?, phone = ?, "
                                 + "address_line = ?, district = ?, city = ?, postal_code = ?, version = version + 1 "
@@ -167,9 +169,9 @@ public class JdbcCustomerRepository implements CustomerRepository {
 
         Customer toCustomer(List<AddressRow> addressRows) {
             List<SavedAddress> addresses = addressRows.stream().map(AddressRow::toSavedAddress).toList();
-            Long defaultId = addressRows.stream().filter(AddressRow::isDefault).map(AddressRow::id)
+            AddressId defaultId = addressRows.stream().filter(AddressRow::isDefault).map(row -> AddressId.of(row.id()))
                     .findFirst().orElse(null);
-            return Customer.reconstitute(id, version, Email.of(email), new PersonName(firstName, lastName), passwordHash,
+            return Customer.reconstitute(CustomerId.of(id), version, Email.of(email), new PersonName(firstName, lastName), passwordHash,
                     role, active, registeredAt, addresses, defaultId);
         }
     }
@@ -179,7 +181,7 @@ public class JdbcCustomerRepository implements CustomerRepository {
                               String phone, String addressLine, String district, String city, String postalCode) {
 
         SavedAddress toSavedAddress() {
-            return SavedAddress.reconstitute(id, version, label,
+            return SavedAddress.reconstitute(AddressId.of(id), version, label,
                     new Address(recipient, phone, addressLine, district, city, postalCode));
         }
     }

@@ -1,5 +1,6 @@
 package com.bookstore.sales.application;
 
+import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.catalog.api.BookOffer;
 import com.bookstore.catalog.api.StockFacade;
 import com.bookstore.sales.domain.ProductSnapshot;
@@ -26,7 +27,7 @@ final class Products {
      * @param bookIds the books
      * @return snapshots keyed by book id; books that do not exist are missing
      */
-    static Map<Long, ProductSnapshot> load(StockFacade stock, Collection<Long> bookIds) {
+    static Map<BookId, ProductSnapshot> load(StockFacade stock, Collection<BookId> bookIds) {
         if (bookIds.isEmpty()) {
             return Map.of();
         }
@@ -43,7 +44,7 @@ final class Products {
      * @return the snapshot
      * @throws NotFoundException if the book does not exist or is no longer sold
      */
-    static ProductSnapshot loadActive(StockFacade stock, long bookId) {
+    static ProductSnapshot loadActive(StockFacade stock, BookId bookId) {
         ProductSnapshot product = load(stock, java.util.List.of(bookId)).get(bookId);
         if (product == null || !product.active()) {
             throw new NotFoundException("Book", bookId);

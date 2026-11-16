@@ -1,5 +1,6 @@
 package com.bookstore.sales.domain;
 
+import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.money.Money;
 import com.bookstore.shared.kernel.validation.Guard;
 
@@ -16,7 +17,7 @@ import com.bookstore.shared.kernel.validation.Guard;
  * @param availableStock copies that can be ordered now
  * @param active         whether the book is still sold
  */
-public record ProductSnapshot(long bookId, String title, String authorNames, Money unitPrice, int availableStock,
+public record ProductSnapshot(BookId bookId, String title, String authorNames, Money unitPrice, int availableStock,
                               boolean active) {
 
     /** Longest title the catalog allows; order lines copy titles up to this length. */
@@ -24,7 +25,7 @@ public record ProductSnapshot(long bookId, String title, String authorNames, Mon
 
     /** Validates the parts. */
     public ProductSnapshot {
-        Guard.require(bookId > 0, "bookId", "must be a stored book");
+        Guard.requireNonNull(bookId, "bookId");
         title = Guard.requireText(title, "title", MAX_TITLE_LENGTH);
         authorNames = Guard.optionalText(authorNames, "authorNames", 1000);
         Guard.requireNonNull(unitPrice, "unitPrice");

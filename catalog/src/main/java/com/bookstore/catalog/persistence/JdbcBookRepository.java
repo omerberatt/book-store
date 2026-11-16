@@ -1,5 +1,8 @@
 package com.bookstore.catalog.persistence;
 
+import com.bookstore.catalog.domain.CategoryId;
+import com.bookstore.catalog.domain.AuthorId;
+import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.error.ConflictException;
 import com.bookstore.shared.kernel.money.Money;
 import com.bookstore.shared.kernel.paging.Page;
@@ -61,7 +64,7 @@ public class JdbcBookRepository implements BookRepository {
     // ---------------------------------------------------------------- queries
 
     @Override
-    public Optional<Book> findById(long id) {
+    public Optional<Book> findById(BookId id) {
         return load("SELECT " + COLUMNS + " FROM books b WHERE b.id = ?", id).stream().findFirst();
     }
 
@@ -71,7 +74,7 @@ public class JdbcBookRepository implements BookRepository {
     }
 
     @Override
-    public List<Book> findAllById(Collection<Long> ids) {
+    public List<Book> findAllById(Collection<BookId> ids) {
         if (ids.isEmpty()) {
             return List.of();
         }
@@ -95,12 +98,12 @@ public class JdbcBookRepository implements BookRepository {
     }
 
     @Override
-    public boolean existsByAuthorId(long authorId) {
+    public boolean existsByAuthorId(AuthorId authorId) {
         return jdbc.exists("SELECT 1 FROM book_authors WHERE author_id = ? LIMIT 1", authorId);
     }
 
     @Override
-    public boolean existsByCategoryId(long categoryId) {
+    public boolean existsByCategoryId(CategoryId categoryId) {
         return jdbc.exists("SELECT 1 FROM books WHERE category_id = ? LIMIT 1", categoryId);
     }
 
@@ -131,7 +134,7 @@ public class JdbcBookRepository implements BookRepository {
                 book.publisher(), book.publicationYear(), book.language().code(), book.pageCount(),
                 book.description(), book.price(), book.stock().quantity(), book.coverImage(), book.isActive(),
                 book.ratings().count(), book.ratings().sum());
-        book.markPersisted(id, 0);
+        book.markPersisted(new BookId(id), 0);
         insertAuthors(book);
     }
 
@@ -170,7 +173,7 @@ public class JdbcBookRepository implements BookRepository {
             return List.of();
         }
         Map<Long, List<Author>> authors = authorsOf(rows.stream().map(BookRow::id).toList());
-        Map<Long, Category> tree = categories.loadTree();
+        Map<CategoryId, Category> tree = categories.loadTree();
         return rows.stream().map(row -> row.toBook(authors.getOrDefault(row.id(), List.of()), tree)).toList();
     }
 
@@ -203,13 +206,13 @@ public class JdbcBookRepository implements BookRepository {
                     row.getInt("rating_sum"));
         }
 
-        Book toBook(List<Author> authors, Map<Long, Category> tree) {
-            Category category = tree.get(categoryId);
+        Book toBook(List<Author> authors, Map<CategoryId, Category> tree) {
+            Category category = tree.get(new CategoryId(categoryId));
             if (category == null) {
                 throw new IllegalStateException("Book " + id + " points to missing category " + categoryId);
             }
             return Book.builder()
-                    .persisted(id, version)
+                    .persisted(new BookId(id), version)
                     .isbn(new Isbn(isbn))
                     .title(title)
                     .authors(authors)

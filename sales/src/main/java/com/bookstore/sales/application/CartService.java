@@ -1,5 +1,7 @@
 package com.bookstore.sales.application;
 
+import com.bookstore.shared.kernel.identity.BookId;
+import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.catalog.api.StockFacade;
 import com.bookstore.sales.domain.Cart;
 import com.bookstore.sales.domain.CartAdjustment;
@@ -62,7 +64,7 @@ public class CartService {
      * @return the updated cart
      * @throws NotFoundException if the book does not exist or is deactivated
      */
-    public CartView add(CartRef ref, long bookId, int quantity) {
+    public CartView add(CartRef ref, BookId bookId, int quantity) {
         return change(ref, cart -> cart.add(requireActiveBook(bookId), quantity));
     }
 
@@ -74,7 +76,7 @@ public class CartService {
      * @param quantity the new quantity
      * @return the updated cart
      */
-    public CartView changeQuantity(CartRef ref, long bookId, int quantity) {
+    public CartView changeQuantity(CartRef ref, BookId bookId, int quantity) {
         return change(ref, cart -> {
             if (quantity == 0) {
                 cart.remove(bookId);
@@ -91,7 +93,7 @@ public class CartService {
      * @param bookId the book's id
      * @return the updated cart
      */
-    public CartView remove(CartRef ref, long bookId) {
+    public CartView remove(CartRef ref, BookId bookId) {
         return change(ref, cart -> cart.remove(bookId));
     }
 
@@ -113,7 +115,7 @@ public class CartService {
      * @param guestCart  the session cart; it is not changed
      * @return the merged cart
      */
-    public CartView mergeGuestCart(long customerId, Cart guestCart) {
+    public CartView mergeGuestCart(CustomerId customerId, Cart guestCart) {
         return change(CartRef.customer(customerId), cart -> cart.mergeFrom(guestCart));
     }
 
@@ -132,7 +134,7 @@ public class CartService {
         return transactions.inTransaction(() -> {
             Cart cart = load(ref);
             operation.accept(cart);
-            Map<Long, ProductSnapshot> current = Products.load(stock, cart.bookIds());
+            Map<BookId, ProductSnapshot> current = Products.load(stock, cart.bookIds());
             List<CartAdjustment> adjustments = cart.reconcile(current);
             store(ref, cart);
             return toView(cart, current, adjustments);
@@ -156,11 +158,11 @@ public class CartService {
         }
     }
 
-    private ProductSnapshot requireActiveBook(long bookId) {
+    private ProductSnapshot requireActiveBook(BookId bookId) {
         return Products.loadActive(stock, bookId);
     }
 
-    private CartView toView(Cart cart, Map<Long, ProductSnapshot> current, List<CartAdjustment> adjustments) {
+    private CartView toView(Cart cart, Map<BookId, ProductSnapshot> current, List<CartAdjustment> adjustments) {
         List<CartView.Line> lines = cart.items().stream()
                 .map(item -> {
                     ProductSnapshot book = current.get(item.bookId());
