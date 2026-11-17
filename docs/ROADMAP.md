@@ -48,7 +48,7 @@ Ders Bölüm 13'ü izler: JAX-RS'e geçmeden önce bir runtime'ın yaptığı i�
 | --- | --- |
 | 5.1 ✅ | `shared-web` modülü *(ADR-0019)*: `HttpApi`, `Routes`, JSON, Bean Validation, `ProblemMapper`, HTTP Basic; ArchUnit kuralları |
 | 5.2 ✅ | Katalog ve hesap uçları; `AccountFacade.authenticate` |
-| 5.3 | Sepet, sipariş ve sipariş yönetimi uçları |
+| 5.3 ✅ | Sepet, sipariş ve sipariş yönetimi uçları; `cart.changed` problemi düzeltmeleri `adjustments` uzantısıyla taşır |
 | 5.4 | Yorum uçları; çalıştırılabilir sunucu ve demo verisi; uçtan uca HTTP testleri |
 
 Misafir sepeti Faz 5'te HTTP üzerinden sunulmaz; sepet uçları giriş yapmış müşteri içindir *(ADR-0019)*.

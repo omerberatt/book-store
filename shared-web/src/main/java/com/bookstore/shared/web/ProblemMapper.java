@@ -41,7 +41,8 @@ public final class ProblemMapper {
      */
     public Problem toProblem(Throwable failure) {
         return switch (failure) {
-            case WebException web -> Problem.of(web.status(), web.code(), web.getMessage(), web.errors());
+            case WebException web -> Problem.of(web.status(), web.code(), web.getMessage(), web.errors())
+                    .with(web.extensions());
             case ValidationException invalid -> Problem.of(statusOf(invalid.kind()), invalid.code(),
                     invalid.getMessage(), invalid.violations().stream()
                             .map(v -> new Problem.FieldError(v.field(), v.message())).toList());

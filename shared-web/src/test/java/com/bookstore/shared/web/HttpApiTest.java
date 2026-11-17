@@ -8,6 +8,8 @@ import com.bookstore.shared.kernel.identity.CustomerId;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import jakarta.validation.constraints.Max;
@@ -37,6 +39,9 @@ class HttpApiTest {
                 })
                 .get("/api/v1/me", request -> WebResponse.ok(request.customer()))
                 .get("/api/v1/admin/things", request -> WebResponse.ok(request.administrator().email()))
+                .get("/api/v1/conflict", request -> {
+                    throw WebException.conflict("cart.changed", "The cart changed", Map.of("adjustments", List.of("x")));
+                })
                 .get("/api/v1/boom", request -> {
                     throw new IllegalStateException("database password is hunter2");
                 });
@@ -113,6 +118,16 @@ class HttpApiTest {
                 .isEqualTo(1);
         assertThat(anonymous.as("ayse@example.com", "secret").get("/api/v1/admin/things").status()).isEqualTo(403);
         assertThat(anonymous.as("admin@example.com", "secret").get("/api/v1/admin/things").status()).isEqualTo(200);
+    }
+
+    @Test
+    void problemsCarryExtensionMembers() {
+        HttpTestClient.Reply reply = anonymous.get("/api/v1/conflict");
+
+        assertThat(reply.status()).isEqualTo(409);
+        assertThat(reply.code()).isEqualTo("cart.changed");
+        assertThat(reply.json().get("adjustments").get(0).asText()).isEqualTo("x");
+        assertThat(reply.json().has("extensions")).isFalse();
     }
 
     @Test

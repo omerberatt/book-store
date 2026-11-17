@@ -1,6 +1,7 @@
 package com.bookstore.shared.web;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * An error of the HTTP layer itself, not of the business: a malformed request, a missing
@@ -12,12 +13,32 @@ public final class WebException extends RuntimeException {
     private final int status;
     private final String code;
     private final List<Problem.FieldError> errors;
+    private final Map<String, Object> extensions;
 
     private WebException(int status, String code, String message, List<Problem.FieldError> errors) {
+        this(status, code, message, errors, Map.of());
+    }
+
+    private WebException(int status, String code, String message, List<Problem.FieldError> errors,
+                         Map<String, Object> extensions) {
         super(message);
         this.status = status;
         this.code = code;
         this.errors = List.copyOf(errors);
+        this.extensions = Map.copyOf(extensions);
+    }
+
+    /**
+     * A business conflict that the client needs more than a code to resolve, for example the list of
+     * corrections a cart went through. The members are added to the problem (RFC 9457 extensions).
+     *
+     * @param code       the stable code
+     * @param message    what happened
+     * @param extensions the extra members
+     * @return the exception
+     */
+    public static WebException conflict(String code, String message, Map<String, Object> extensions) {
+        return new WebException(HttpStatus.CONFLICT, code, message, List.of(), extensions);
     }
 
     /**
@@ -94,5 +115,10 @@ public final class WebException extends RuntimeException {
     /** @return the invalid fields, if any */
     public List<Problem.FieldError> errors() {
         return errors;
+    }
+
+    /** @return the extension members of the problem, if any */
+    public Map<String, Object> extensions() {
+        return extensions;
     }
 }
