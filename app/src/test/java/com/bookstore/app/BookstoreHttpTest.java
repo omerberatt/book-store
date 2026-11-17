@@ -2,14 +2,23 @@ package com.bookstore.app;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.bookstore.catalog.rest.CatalogResource;
+import com.bookstore.catalog.rest.CategoryResource;
+import com.bookstore.customer.rest.AccountAuthenticator;
+import com.bookstore.customer.rest.AccountResource;
+import com.bookstore.customer.rest.RegistrationResource;
+import com.bookstore.review.rest.RatingResource;
+import com.bookstore.review.rest.ReviewResource;
+import com.bookstore.sales.rest.CartResource;
+import com.bookstore.sales.rest.OrderAdminResource;
+import com.bookstore.sales.rest.OrderResource;
 import com.bookstore.shared.jdbc.ModuleMigrations;
 import com.bookstore.shared.jdbc.TestDatabase;
 import com.bookstore.shared.kernel.event.DomainEvent;
 import com.bookstore.shared.kernel.testing.TestClock;
-import com.bookstore.shared.web.HttpApi;
 import com.bookstore.shared.web.HttpTestClient;
+import com.bookstore.shared.web.RestTestServer;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -19,31 +28,36 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 /**
- * The whole application over HTTP, wired the way {@link BookstoreServer} wires it, on H2 with the
- * demo data: a new customer finds a book, orders it, the administrator delivers it, and the
+ * The whole application over HTTP, with every module's JAX-RS resources on Jersey and the use cases
+ * wired by {@link BookstoreModule} on H2 with the demo data: a new customer finds a book, orders it, the administrator delivers it, and the
  * customer reviews it. Only HTTP calls are used.
  */
 class BookstoreHttpTest {
 
     private final TestDatabase database = TestDatabase.withModules(ModuleMigrations.ALL.toArray(String[]::new));
     private final List<DomainEvent> notified = Collections.synchronizedList(new ArrayList<>());
-    private final HttpApi api;
+    private final RestTestServer server;
     private final HttpTestClient visitor;
     private final HttpTestClient admin;
 
-    BookstoreHttpTest() throws IOException {
+    BookstoreHttpTest() {
         Pbkdf2PasswordHasher hasher = new Pbkdf2PasswordHasher(1_000);
         BookstoreModule bookstore = new BookstoreModule(database.dataSource(), new BookstoreModule.Adapters(
                 TestClock.CLOCK, DemoAdapters.approvingPayments(), hasher, notified::add));
         DemoData.load(database.dataSource(), bookstore.accounts(), hasher, TestClock.CLOCK);
-        api = BookstoreApi.of(bookstore).start(0);
-        visitor = new HttpTestClient(api);
+        server = RestTestServer.start(new AccountAuthenticator(bookstore.accounts()),
+                new CatalogResource(bookstore.catalog()), new CategoryResource(bookstore.catalog()),
+                new RegistrationResource(bookstore.accounts()), new AccountResource(bookstore.accounts()),
+                new CartResource(bookstore.cart()), new OrderResource(bookstore.checkout(), bookstore.orders()),
+                new OrderAdminResource(bookstore.orderAdmin()), new ReviewResource(bookstore.reviews()),
+                new RatingResource(bookstore.reviews()));
+        visitor = server.client();
         admin = visitor.as(DemoData.ADMIN_EMAIL, DemoData.PASSWORD);
     }
 
     @AfterEach
     void stop() {
-        api.close();
+        server.close();
     }
 
     @Test

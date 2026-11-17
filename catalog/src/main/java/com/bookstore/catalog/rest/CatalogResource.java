@@ -1,22 +1,30 @@
 package com.bookstore.catalog.rest;
 
+import com.bookstore.catalog.api.BookDetails;
 import com.bookstore.catalog.api.BookSearchQuery;
+import com.bookstore.catalog.api.BookSummary;
 import com.bookstore.catalog.api.CatalogFacade;
 import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.money.Money;
 import com.bookstore.shared.kernel.paging.SortOrder;
 import com.bookstore.shared.web.PageResponse;
-import com.bookstore.shared.web.Routes;
+import com.bookstore.shared.web.Params;
 import com.bookstore.shared.web.WebException;
-import com.bookstore.shared.web.WebRequest;
-import com.bookstore.shared.web.WebResponse;
 
 import java.math.BigDecimal;
 import java.util.Locale;
-import java.util.Objects;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
 
 /**
- * The catalog's HTTP endpoints (ADR-0009). Everyone may use them; no sign-in is needed.
+ * The catalog's books over HTTP (ADR-0009, ADR-0010). Everyone may use them; no sign-in is needed.
  *
  * <table>
  *   <caption>Endpoints</caption>
@@ -25,10 +33,12 @@ import java.util.Objects;
  *       {@code sort} ({@code title}, {@code price}, {@code publication_year}, {@code rating}),
  *       {@code order} ({@code asc}, {@code desc}), {@code page}, {@code size}</td></tr>
  *   <tr><td>{@code GET /api/v1/books/{id}}</td><td>a book's details</td></tr>
- *   <tr><td>{@code GET /api/v1/categories}</td><td>the category tree</td></tr>
  * </table>
  */
-public final class CatalogResource implements Routes.Resource {
+@Path("books")
+@Produces(MediaType.APPLICATION_JSON)
+@ApplicationScoped
+public class CatalogResource {
 
     private final CatalogFacade catalog;
 
@@ -37,44 +47,74 @@ public final class CatalogResource implements Routes.Resource {
      *
      * @param catalog the catalog's use cases
      */
+    @Inject
     public CatalogResource(CatalogFacade catalog) {
-        this.catalog = Objects.requireNonNull(catalog, "catalog");
+        this.catalog = catalog;
     }
 
-    @Override
-    public void register(Routes routes) {
-        routes.get("/api/v1/books", this::search)
-                .get("/api/v1/books/{id}", this::book)
-                .get("/api/v1/categories", request -> WebResponse.ok(catalog.categoryTree()));
+    /** For the CDI container's client proxy only; never called by the application. */
+    protected CatalogResource() {
+        this(null);
     }
 
-    private WebResponse search(WebRequest request) {
+    /**
+     * Searches the active books.
+     *
+     * @param text     words to look for
+     * @param category a category, with its subcategories
+     * @param author   an author
+     * @param minPrice the lowest price
+     * @param maxPrice the highest price
+     * @param language an ISO 639-1 code
+     * @param inStock  {@code true} to leave out books with no stock
+     * @param sort     what to sort by
+     * @param order    {@code asc} or {@code desc}
+     * @param page     the page number, from zero
+     * @param size     the page size
+     * @return one page of books
+     */
+    @GET
+    public PageResponse<BookSummary> search(@QueryParam("q") String text, @QueryParam("category") String category,
+                                            @QueryParam("author") String author,
+                                            @QueryParam("minPrice") String minPrice,
+                                            @QueryParam("maxPrice") String maxPrice,
+                                            @QueryParam("language") String language,
+                                            @QueryParam("inStock") String inStock, @QueryParam("sort") String sort,
+                                            @QueryParam("order") String order, @QueryParam("page") String page,
+                                            @QueryParam("size") String size) {
         BookSearchQuery query = BookSearchQuery.everything()
-                .withText(request.query("q"))
-                .priced(money(request, "minPrice"), money(request, "maxPrice"))
-                .inLanguage(request.query("language"))
-                .sortedBy(sortField(request), sortOrder(request));
-        Long category = request.queryId("category");
-        if (category != null) {
-            query = query.inCategory(category);
+                .withText(Params.optional(text))
+                .priced(money("minPrice", minPrice), money("maxPrice", maxPrice))
+                .inLanguage(Params.optional(language))
+                .sortedBy(sort == null ? BookSearchQuery.DEFAULT_SORT : sort.toUpperCase(Locale.ROOT), sortOrder(order));
+        Long categoryId = Params.optionalId("category", category);
+        if (categoryId != null) {
+            query = query.inCategory(categoryId);
         }
-        Long author = request.queryId("author");
-        if (author != null) {
-            query = query.byAuthor(author);
+        Long authorId = Params.optionalId("author", author);
+        if (authorId != null) {
+            query = query.byAuthor(authorId);
         }
-        if (request.queryFlag("inStock")) {
+        if (Params.flag("inStock", inStock)) {
             query = query.onlyInStock();
         }
-        return WebResponse.ok(PageResponse.of(catalog.search(query, PageResponse.pageOf(request))));
+        return PageResponse.of(catalog.search(query, PageResponse.pageOf(page, size)));
     }
 
-    private WebResponse book(WebRequest request) {
-        return WebResponse.ok(catalog.book(BookId.of(request.pathId("id"))));
+    /**
+     * Returns a book's details.
+     *
+     * @param id the book's id
+     * @return the details
+     */
+    @GET
+    @Path("{id}")
+    public BookDetails book(@PathParam("id") String id) {
+        return catalog.book(BookId.of(Params.id("id", id)));
     }
 
-    private static Money money(WebRequest request, String name) {
-        String value = request.query(name);
-        if (value == null) {
+    private static Money money(String name, String value) {
+        if (Params.optional(value) == null) {
             return null;
         }
         try {
@@ -84,14 +124,8 @@ public final class CatalogResource implements Routes.Resource {
         }
     }
 
-    private static String sortField(WebRequest request) {
-        String sort = request.query("sort");
-        return sort == null ? BookSearchQuery.DEFAULT_SORT : sort.toUpperCase(Locale.ROOT);
-    }
-
-    private static SortOrder sortOrder(WebRequest request) {
-        String order = request.query("order");
-        if (order == null) {
+    private static SortOrder sortOrder(String order) {
+        if (Params.optional(order) == null) {
             return SortOrder.ASC;
         }
         return switch (order.toLowerCase(Locale.ROOT)) {

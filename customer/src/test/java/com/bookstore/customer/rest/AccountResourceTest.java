@@ -3,11 +3,8 @@ package com.bookstore.customer.rest;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.bookstore.customer.application.CustomerShop;
-import com.bookstore.shared.web.HttpApi;
 import com.bookstore.shared.web.HttpTestClient;
-import com.bookstore.shared.web.Routes;
-
-import java.io.IOException;
+import com.bookstore.shared.web.RestTestServer;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.AfterEach;
@@ -25,20 +22,14 @@ class AccountResourceTest {
             """;
 
     private final CustomerShop shop = new CustomerShop();
-    private final HttpApi api;
-    private final HttpTestClient anonymous;
-    private final HttpTestClient ayse;
-
-    AccountResourceTest() throws IOException {
-        api = new HttpApi(new Routes().add(new AccountResource(shop.accounts)),
-                new AccountAuthenticator(shop.accounts)).start(0);
-        anonymous = new HttpTestClient(api);
-        ayse = anonymous.as("ayse@example.com", CustomerShop.PASSWORD);
-    }
+    private final RestTestServer server = RestTestServer.start(new AccountAuthenticator(shop.accounts),
+            new AccountResource(shop.accounts), new RegistrationResource(shop.accounts));
+    private final HttpTestClient anonymous = server.client();
+    private final HttpTestClient ayse = anonymous.as("ayse@example.com", CustomerShop.PASSWORD);
 
     @AfterEach
     void stop() {
-        api.close();
+        server.close();
     }
 
     @Test
@@ -46,7 +37,7 @@ class AccountResourceTest {
         HttpTestClient.Reply created = anonymous.post("/api/v1/customers", REGISTRATION.formatted(CustomerShop.PASSWORD));
 
         assertThat(created.status()).isEqualTo(201);
-        assertThat(created.location()).isEqualTo("/api/v1/me");
+        assertThat(created.location()).endsWith("/api/v1/me");
         assertThat(created.json().get("role").asText()).isEqualTo("CUSTOMER");
         assertThat(created.body()).doesNotContain(CustomerShop.PASSWORD);
         assertThat(ayse.get("/api/v1/me").json().get("email").asText()).isEqualTo("ayse@example.com");

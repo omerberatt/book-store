@@ -4,17 +4,32 @@ import com.bookstore.sales.api.CartChangedException;
 import com.bookstore.sales.api.CheckoutFacade;
 import com.bookstore.sales.api.OrderDetails;
 import com.bookstore.sales.api.OrderFacade;
+import com.bookstore.sales.api.OrderSummary;
 import com.bookstore.sales.api.PlaceOrderCommand;
 import com.bookstore.sales.rest.SalesRequests.PlaceOrderRequest;
 import com.bookstore.shared.kernel.identity.CustomerId;
+import com.bookstore.shared.web.Callers;
 import com.bookstore.shared.web.PageResponse;
-import com.bookstore.shared.web.Routes;
 import com.bookstore.shared.web.WebException;
-import com.bookstore.shared.web.WebRequest;
-import com.bookstore.shared.web.WebResponse;
 
+import java.net.URI;
 import java.util.Map;
-import java.util.Objects;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.SecurityContext;
 
 /**
  * Placing orders and the customer's order history (ORD-1 – ORD-5, ORD-8, ORD-9). The customer
@@ -30,7 +45,11 @@ import java.util.Objects;
  * <p>If the cart had to be corrected at checkout, the answer is a 409 problem with the code
  * {@code cart.changed} and the corrections as its {@code adjustments} member; nothing was ordered.
  */
-public final class OrderResource implements Routes.Resource {
+@Path("orders")
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
+@ApplicationScoped
+public class OrderResource {
 
     private final CheckoutFacade checkout;
     private final OrderFacade orders;
@@ -41,33 +60,45 @@ public final class OrderResource implements Routes.Resource {
      * @param checkout placing orders
      * @param orders   the customer's orders
      */
+    @Inject
     public OrderResource(CheckoutFacade checkout, OrderFacade orders) {
-        this.checkout = Objects.requireNonNull(checkout, "checkout");
-        this.orders = Objects.requireNonNull(orders, "orders");
+        this.checkout = checkout;
+        this.orders = orders;
     }
 
-    @Override
-    public void register(Routes routes) {
-        routes.post("/api/v1/orders", this::place)
-                .get("/api/v1/orders", request -> WebResponse.ok(
-                        PageResponse.of(orders.myOrders(me(request), PageResponse.pageOf(request)))))
-                .get("/api/v1/orders/{number}", request -> WebResponse.ok(
-                        orders.myOrder(me(request), request.pathParameter("number"))));
+    /** For the CDI container's client proxy only; never called by the application. */
+    protected OrderResource() {
+        this(null, null);
     }
 
-    private WebResponse place(WebRequest request) {
-        PlaceOrderRequest form = request.body(PlaceOrderRequest.class);
+    /** @param security the request's security @param form the address and payment method @return 201 with the order */
+    @POST
+    public Response place(@Context SecurityContext security, @Valid @NotNull PlaceOrderRequest form) {
         try {
             OrderDetails order = checkout.placeOrder(
-                    new PlaceOrderCommand(me(request), form.addressId(), form.paymentMethod()));
-            return WebResponse.created("/api/v1/orders/" + order.orderNumber(), order);
+                    new PlaceOrderCommand(me(security), form.addressId(), form.paymentMethod()));
+            return Response.created(URI.create("orders/" + order.orderNumber())).entity(order).build();
         } catch (CartChangedException changed) {
             throw WebException.conflict(changed.code(), changed.getMessage(),
                     Map.of("adjustments", CartResponse.notices(changed.adjustments())));
         }
     }
 
-    private static CustomerId me(WebRequest request) {
-        return request.customer().customerId();
+    /** @param security the request's security @param page the page @param size the size @return the orders */
+    @GET
+    public PageResponse<OrderSummary> mine(@Context SecurityContext security, @QueryParam("page") String page,
+                                           @QueryParam("size") String size) {
+        return PageResponse.of(orders.myOrders(me(security), PageResponse.pageOf(page, size)));
+    }
+
+    /** @param security the request's security @param number the order number @return the order */
+    @GET
+    @Path("{number}")
+    public OrderDetails one(@Context SecurityContext security, @PathParam("number") String number) {
+        return orders.myOrder(me(security), number);
+    }
+
+    private static CustomerId me(SecurityContext security) {
+        return Callers.customer(security).customerId();
     }
 }

@@ -10,11 +10,9 @@ import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.kernel.testing.DirectTransactions;
 import com.bookstore.shared.kernel.testing.TestClock;
 import com.bookstore.shared.web.Caller;
-import com.bookstore.shared.web.HttpApi;
 import com.bookstore.shared.web.HttpTestClient;
-import com.bookstore.shared.web.Routes;
+import com.bookstore.shared.web.RestTestServer;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 
@@ -32,21 +30,16 @@ class ReviewResourceTest {
     private final ReviewService service = new ReviewService(new InMemoryReviewRepository(),
             new ReviewFakes.FakeRatings(DUNE), purchases, new ReviewFakes.FakeNames(Map.of(AYSE, "Ayşe Y.")),
             new DirectTransactions(), TestClock.CLOCK);
-    private final HttpApi api;
-    private final HttpTestClient anonymous;
-    private final HttpTestClient ayse;
-
-    ReviewResourceTest() throws IOException {
-        api = new HttpApi(new Routes().add(new ReviewResource(service)), (user, password) -> "ayse".equals(user)
+    private final RestTestServer server = RestTestServer.start((user, password) -> "ayse".equals(user)
                 ? Optional.of(new Caller(AYSE, "ayse@example.com", "CUSTOMER"))
-                : Optional.empty()).start(0);
-        anonymous = new HttpTestClient(api);
-        ayse = anonymous.as("ayse", "pw");
-    }
+                : Optional.empty(),
+            new ReviewResource(service), new RatingResource(service));
+    private final HttpTestClient anonymous = server.client();
+    private final HttpTestClient ayse = anonymous.as("ayse", "pw");
 
     @AfterEach
     void stop() {
-        api.close();
+        server.close();
     }
 
     @Test
@@ -64,7 +57,7 @@ class ReviewResourceTest {
 
         HttpTestClient.Reply written = ayse.post(REVIEWS, "{\"stars\": 4, \"comment\": \"Güzel\"}");
         assertThat(written.status()).isEqualTo(201);
-        assertThat(written.location()).isEqualTo(REVIEWS + "/mine");
+        assertThat(written.location()).endsWith(REVIEWS + "/mine");
         assertThat(anonymous.get(REVIEWS).json().get("content").get(0).get("authorName").asText())
                 .isEqualTo("Ayşe Y.");
         assertThat(anonymous.get("/api/v1/books/1/ratings").json().get("counts").get(3).asInt()).isEqualTo(1);

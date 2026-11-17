@@ -70,7 +70,7 @@ Ders Bölüm 14'ü izler *(ADR-0010)*.
 | --- | --- |
 | 6.1 ✅ | CDI ile bağlama: modüllerde `beans.xml`, `@ApplicationScoped` servis ve repository'ler; `BookstoreWiring`, `BookstoreDataSource`, `JtaTransactionRunner`, `CdiDomainEventPublisher`, `BookstoreStartup`; `ConnectionProvider`; Weld SE ile `CdiWiringTest`; platform ArchUnit kuralları |
 | 6.2 ✅ | `app` WAR olur; Payara Micro 7.2026.10 üzerinde açılış, MicroProfile Config ile veri kaynağı, migration ve demo verisi |
-| 6.3 | HTTP katmanı JAX-RS, JSON-B ve `ExceptionMapper`'a taşınır; HTTP testleri JerseyTest ile |
+| 6.3 ✅ | HTTP katmanı JAX-RS, JSON-B ve `ExceptionMapper`'a taşındı; Faz 5'in JDK sunucusu kalktı; HTTP testleri Jersey'nin JDK container'ında; Payara'da uçtan uca `curl` denemesi; `-Ppayara` profili |
 | 6.4 | MicroProfile OpenAPI, sunucuda uçtan uca deneme, dokümanlar |
 
 `JdbcTransactionRunner` kalkmadı: testler ve elle yazılmış `BookstoreModule` onu kullanmaya devam ediyor; sunucuda aynı portun yerini `JtaTransactionRunner` alıyor *(ADR-0010 notu)*.

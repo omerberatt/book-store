@@ -102,6 +102,32 @@
             <artifactId>testcontainers-postgresql</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- The JAX-RS stack the rest tests run on, without an application server (ADR-0010). -->
+        <dependency>
+            <groupId>org.glassfish.jersey.containers</groupId>
+            <artifactId>jersey-container-jdk-http</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.inject</groupId>
+            <artifactId>jersey-hk2</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.media</groupId>
+            <artifactId>jersey-media-json-binding</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.ext</groupId>
+            <artifactId>jersey-bean-validation</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -118,15 +144,65 @@
                     <packagingExcludes>WEB-INF/lib/hibernate-validator-*.jar,WEB-INF/lib/jakarta.validation-api-*.jar,WEB-INF/lib/classmate-*.jar,WEB-INF/lib/jboss-logging-*.jar</packagingExcludes>
                 </configuration>
             </plugin>
-            <!-- ./mvnw -pl app exec:java starts the API (see the README). -->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>${exec-plugin.version}</version>
-                <configuration>
-                    <mainClass>com.bookstore.app.BookstoreServer</mainClass>
-                </configuration>
-            </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!--
+          ./mvnw -pl app -Ppayara package exec:exec   (after ./mvnw install -DskipTests)
+          copies Payara Micro next to the WAR and starts it on http://localhost:8080 with the WAR at /.
+          Maven passes the arguments straight to Java, so no shell rewrites "/" into a path.
+        -->
+        <profile>
+            <id>payara</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <version>${dependency-plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>copy-payara-micro</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>copy</goal>
+                                </goals>
+                                <configuration>
+                                    <artifactItems>
+                                        <artifactItem>
+                                            <groupId>fish.payara.extras</groupId>
+                                            <artifactId>payara-micro</artifactId>
+                                            <version>${payara-micro.version}</version>
+                                            <destFileName>payara-micro.jar</destFileName>
+                                        </artifactItem>
+                                    </artifactItems>
+                                    <outputDirectory>${project.build.directory}</outputDirectory>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>${exec-plugin.version}</version>
+                        <configuration>
+                            <executable>${java.home}/bin/java</executable>
+                            <arguments>
+                                <argument>-jar</argument>
+                                <argument>${project.build.directory}/payara-micro.jar</argument>
+                                <argument>--deploy</argument>
+                                <argument>${project.build.directory}/bookstore.war</argument>
+                                <argument>--contextRoot</argument>
+                                <argument>/</argument>
+                                <argument>--port</argument>
+                                <argument>8080</argument>
+                                <argument>--nocluster</argument>
+                            </arguments>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

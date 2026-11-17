@@ -10,10 +10,11 @@ import java.util.Base64;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * Talks to a running {@link HttpApi} with the JDK's {@link HttpClient}, the way a browser or
- * {@code curl} would. Shared with the modules' {@code rest} tests through the test-jar.
+ * Talks to a running API with the JDK's {@link HttpClient}, the way a browser or {@code curl}
+ * would. Shared with the modules' {@code rest} tests through the test-jar.
  */
 public final class HttpTestClient {
 
@@ -24,10 +25,10 @@ public final class HttpTestClient {
     /**
      * Creates an anonymous client.
      *
-     * @param api the running API
+     * @param root the server's root, for example {@code http://127.0.0.1:8080/}
      */
-    public HttpTestClient(HttpApi api) {
-        this(api.baseUri(), null);
+    public HttpTestClient(URI root) {
+        this(root, null);
     }
 
     private HttpTestClient(URI baseUri, String authorization) {
@@ -109,10 +110,12 @@ public final class HttpTestClient {
      */
     public record Reply(int status, String body, String contentType, String location) {
 
+        private static final ObjectMapper JSON = new ObjectMapper();
+
         /** @return the body as a JSON tree */
         public JsonNode json() {
             try {
-                return Json.mapper().readTree(body);
+                return JSON.readTree(body);
             } catch (JsonProcessingException e) {
                 throw new IllegalStateException("Not JSON: " + body, e);
             }

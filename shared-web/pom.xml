@@ -13,28 +13,45 @@
 
     <artifactId>shared-web</artifactId>
     <name>Book Store :: Shared Web</name>
-    <description>The hand-written HTTP boundary shared by the rest packages of every business module: JDK HTTP server, routing, JSON, Bean Validation and RFC 9457 problems (ADR-0019).</description>
+    <description>The hand-written HTTP boundary shared by the rest packages of every business module: RFC 9457 problems, HTTP Basic sign-in, JSON-B settings and request parameters on JAX-RS (ADR-0010, ADR-0019).</description>
 
     <dependencies>
         <dependency>
             <groupId>com.bookstore</groupId>
             <artifactId>shared-kernel</artifactId>
         </dependency>
+        <!-- JAX-RS, JSON-B, Bean Validation and CDI; Payara provides them (ADR-0010). -->
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-web-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- The JAX-RS stack the HTTP tests run on, without an application server. -->
+        <dependency>
+            <groupId>org.glassfish.jersey.containers</groupId>
+            <artifactId>jersey-container-jdk-http</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.inject</groupId>
+            <artifactId>jersey-hk2</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.media</groupId>
+            <artifactId>jersey-media-json-binding</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.ext</groupId>
+            <artifactId>jersey-bean-validation</artifactId>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jsr310</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>jakarta.validation</groupId>
-            <artifactId>jakarta.validation-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.hibernate.validator</groupId>
-            <artifactId>hibernate-validator</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

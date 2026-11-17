@@ -170,8 +170,8 @@ Faz numaraları [ROADMAP.md](ROADMAP.md) içindeki aşamalardır; ADR'ler [docs/
 | Doğrulamanın yeri: sınır mı domain mi? | Biçim sınırda *(400)*, kural domain'de *(422)*; örneğin zayıf parola 422, boş ad 400 *(`AccountResourceTest`)* | ✅ | 5 |
 | `DomainException.Kind` → durum kodu | `ProblemMapper.statusOf`: 404 / 409 / 422 / 403; biçim hatası 400 | ✅ | 4.3, 5 |
 | RFC 9457 Problem Details | `Problem`, `ProblemMapper`, `application/problem+json`; uzantı alanları *(`cart.changed` için `adjustments`)*; opak 500 | ✅ | 5 |
-| JSON dönüşümleri | Faz 5'te Jackson *(`Json`: tipli kimlikler sayı, zamanlar ISO-8601, bilinmeyen alan hata)*; Faz 6'da JSON-B | 🔁 | 5, 6 |
-| JDK HTTP sunucusu *(`com.sun.net.httpserver`)* | `HttpApi`: istek başına sanal thread, `Routes` ile yol şablonları *(404 / 405)*, HTTP Basic | ✅ | 5 |
+| JSON dönüşümleri | Faz 5'te Jackson; Faz 6'da JSON-B *(Yasson; `JsonbConfiguration`: kimlikler sayı, `Money` tutar ve para birimi, bilinmeyen alan hata)* | ✅ | 5, 6.3 |
+| JDK HTTP sunucusu *(`com.sun.net.httpserver`)* | `HttpApi`: istek başına sanal thread, `Routes` ile yol şablonları *(404 / 405)*, HTTP Basic; Faz 6.3'te JAX-RS'e devredildi | ✅ | 5 |
 | HTTP testleri | `HttpTestClient` *(`java.net.http.HttpClient`)*; modül başına `…ResourceTest` ve uçtan uca `BookstoreHttpTest` | ✅ | 5 |
 
 ## Bölüm 14 — Uygulama Sunucusu: CDI, JTA, JAX-RS ve Payara Micro
@@ -183,10 +183,10 @@ Faz numaraları [ROADMAP.md](ROADMAP.md) içindeki aşamalardır; ADR'ler [docs/
 | Producer'lar *(container'ın kuramadığı nesneler)* | `BookstoreWiring`: `Clock`, kargo kuralı, `JdbcExecutor`, parola, ödeme, bildirim; `BookstoreDataSource`: havuz ve `ConnectionProvider`; `@Typed` ile producer tiplerini sınırlamak *(`CdiWiringTest`)* | ✅ | 6.1 |
 | `@DataSourceDefinition` ve MicroProfile Config | `BookstoreDataSource` *(`${MPCONFIG=...}`)*; varsayılanlar `microprofile-config.properties`'te, parola ortamdan; Payara'da doğrulandı | ✅ | 6.1, 6.2 |
 | Açılışta migration ve demo verisi | `BookstoreStartup` *(CDI `Startup` olayı, `bookstore.demo-data`)*; Payara'da 4 migration ve demo verisi | ✅ | 6.1, 6.2 |
-| JTA `@Transactional`, repository'ler commit etmez | `JtaTransactionRunner`: `TransactionRunner` portunun `@Transactional` implementasyonu *(ADR-0010 notu)*; repository'ler havuzdan JTA'ya katılan bağlantı alır | 🔁 | 6.1, 6.4 *(sunucuda doğrulama)* |
+| JTA `@Transactional`, repository'ler commit etmez | `JtaTransactionRunner`: `TransactionRunner` portunun `@Transactional` implementasyonu *(ADR-0010 notu)*; repository'ler havuzdan JTA'ya katılan bağlantı alır; Payara'da sipariş akışıyla denendi *(geri alma yolu yalnızca H2 testlerinde)* | ✅ | 6.1, 6.3 |
 | CDI olayları, `@Observes(during = AFTER_SUCCESS)` | `CdiDomainEventPublisher`, `OrderNotificationObserver.onOrderEvent`; `domain_event_observers_wait_for_commit` | ✅ | 6.1 |
-| JAX-RS kaynakları, JSON-B, `ExceptionMapper` | Faz 5'teki HTTP katmanının taşınması | ⏳ | 6 |
-| JerseyTest | Faz 5'teki HTTP beklentileri aynen geçer | ⏳ | 6 |
+| JAX-RS kaynakları, JSON-B, `ExceptionMapper` | Modül başına `…Resource` *(`@Path`, CDI ile yönetilen)*, `BookstoreApplication` *(`/api/v1`)*, `ProblemExceptionMappers`, `JsonbConfiguration`, `BasicAuthenticationFilter`; Payara'da `curl` ile denendi | ✅ | 6.3 |
+| JerseyTest | Faz 5'in HTTP testleri aynı beklentilerle Jersey'nin JDK HTTP container'ında *(`RestTestServer`, JerseyTest'in kullandığı runtime)* | ✅ | 6.3 |
 | MicroProfile OpenAPI | `/openapi` *(API-4)* | ⏳ | 6 |
 
 ---

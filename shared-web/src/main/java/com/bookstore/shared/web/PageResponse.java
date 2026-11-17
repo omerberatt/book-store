@@ -37,11 +37,12 @@ public record PageResponse<T>(List<T> content, int number, int size, long totalE
     /**
      * Reads the {@code page} and {@code size} query parameters.
      *
-     * @param request the request
+     * @param page the page number as text, may be {@code null}
+     * @param size the page size as text, may be {@code null}
      * @return the page request; the first page of the default size if they are missing
      */
-    public static PageRequest pageOf(WebRequest request) {
+    public static PageRequest pageOf(String page, String size) {
         PageRequest first = PageRequest.first();
-        return new PageRequest(request.queryInt("page", first.number()), request.queryInt("size", first.size()));
+        return new PageRequest(Params.integer("page", page, first.number()), Params.integer("size", size, first.size()));
     }
 }

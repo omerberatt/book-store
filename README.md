@@ -57,33 +57,35 @@ mvnw.cmd verify
 
 ## API'yi çalıştırma
 
-Faz 5'ten itibaren uygulama, JDK HTTP sunucusu üzerinde bir REST API olarak çalışır. Web sayfaları Faz 7'de gelecek.
+Uygulama, Payara Micro 7 üzerinde çalışan bir WAR'dır *([ADR-0010](docs/adr/ADR-0010.md))*. Web sayfaları Faz 7'de gelecek. Önce bütün modülleri derleyin:
 
 ```bash
 ./mvnw install -DskipTests
 ```
 
+Sonra sunucuyu başlatın. Maven, Payara Micro'yu indirip WAR'ı onunla açar:
+
 ```bash
-./mvnw -pl app exec:java
+./mvnw -pl app -Ppayara package exec:exec
 ```
 
-Sunucu `http://127.0.0.1:8080` adresinde açılır. Veritabanı belirtilmezse bellek içi bir H2 veritabanı kullanılır ve demo verisi yüklenir: 8 kitap, bir müşteri (`ayse@bookstore.local`) ve bir yönetici (`admin@bookstore.local`). İkisinin parolası `kitap2026`. Sunucu durunca veriler silinir.
+API `http://localhost:8080/api/v1` adresindedir. Veritabanı belirtilmezse bellek içi bir H2 veritabanı kullanılır ve demo verisi yüklenir: 8 kitap, bir müşteri (`ayse@bookstore.local`) ve bir yönetici (`admin@bookstore.local`). İkisinin parolası `kitap2026`. Sunucu durunca veriler silinir.
 
 Örnek istekler:
 
 ```bash
-curl "http://127.0.0.1:8080/api/v1/books?q=madonna"
+curl "http://localhost:8080/api/v1/books?q=madonna"
 ```
 
 ```bash
-curl -u ayse@bookstore.local:kitap2026 http://127.0.0.1:8080/api/v1/me
+curl -u ayse@bookstore.local:kitap2026 http://localhost:8080/api/v1/me
 ```
 
 ```bash
-curl -u ayse@bookstore.local:kitap2026 -H "Content-Type: application/json" -d '{"bookId": 1, "quantity": 2}' http://127.0.0.1:8080/api/v1/cart/items
+curl -u ayse@bookstore.local:kitap2026 -H "Content-Type: application/json" -d '{"bookId": 1, "quantity": 2}' http://localhost:8080/api/v1/cart/items
 ```
 
-Kalıcı bir PostgreSQL için önce `docker compose up -d`, sonra şu ortam değişkenleri: `BOOKSTORE_DB_URL=jdbc:postgresql://localhost:5432/bookstore`, `BOOKSTORE_DB_USER=bookstore`, `BOOKSTORE_DB_PASSWORD=bookstore` ve demo verisi isteniyorsa `BOOKSTORE_DEMO_DATA=true`. Port `BOOKSTORE_PORT` ile değişir.
+Kalıcı bir PostgreSQL için önce `docker compose up -d`, sonra sunucuyu başlatmadan önce şu ortam değişkenleri *(MicroProfile Config)*: `BOOKSTORE_DB_CLASS_NAME=org.postgresql.ds.PGSimpleDataSource`, `BOOKSTORE_DB_URL=jdbc:postgresql://localhost:5432/bookstore`, `BOOKSTORE_DB_USER=bookstore`, `BOOKSTORE_DB_PASSWORD=bookstore`; demo verisi istenmiyorsa `BOOKSTORE_DEMO_DATA=false`.
 
 Uçların listesi her modülün `rest` paketindeki `…Resource` sınıflarının açıklamasındadır; hatalar RFC 9457 biçiminde döner *([ADR-0009](docs/adr/ADR-0009.md))*.
 

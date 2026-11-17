@@ -1,14 +1,28 @@
 package com.bookstore.sales.rest;
 
 import com.bookstore.sales.api.OrderAdminFacade;
+import com.bookstore.sales.api.OrderDetails;
+import com.bookstore.sales.api.OrderSummary;
 import com.bookstore.sales.rest.SalesRequests.StatusChangeRequest;
 import com.bookstore.shared.kernel.paging.PageRequest;
+import com.bookstore.shared.web.Callers;
 import com.bookstore.shared.web.PageResponse;
-import com.bookstore.shared.web.Routes;
-import com.bookstore.shared.web.WebRequest;
-import com.bookstore.shared.web.WebResponse;
+import com.bookstore.shared.web.Params;
 
-import java.util.Objects;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.SecurityContext;
 
 /**
  * Order management for administrators (ORD-6, ORD-7, ADM-5). Every endpoint needs a signed-in
@@ -21,7 +35,11 @@ import java.util.Objects;
  *   <tr><td>{@code PUT /api/v1/admin/orders/{number}/status}</td><td>move it to another status</td></tr>
  * </table>
  */
-public final class OrderAdminResource implements Routes.Resource {
+@Path("admin/orders")
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
+@ApplicationScoped
+public class OrderAdminResource {
 
     private final OrderAdminFacade orders;
 
@@ -30,28 +48,48 @@ public final class OrderAdminResource implements Routes.Resource {
      *
      * @param orders the order management use cases
      */
+    @Inject
     public OrderAdminResource(OrderAdminFacade orders) {
-        this.orders = Objects.requireNonNull(orders, "orders");
+        this.orders = orders;
     }
 
-    @Override
-    public void register(Routes routes) {
-        routes.get("/api/v1/admin/orders", this::list)
-                .get("/api/v1/admin/orders/{number}", request -> {
-                    request.administrator();
-                    return WebResponse.ok(orders.order(request.pathParameter("number")));
-                })
-                .put("/api/v1/admin/orders/{number}/status", request -> {
-                    request.administrator();
-                    StatusChangeRequest change = request.body(StatusChangeRequest.class);
-                    return WebResponse.ok(orders.changeStatus(request.pathParameter("number"), change.status()));
-                });
+    /** For the CDI container's client proxy only; never called by the application. */
+    protected OrderAdminResource() {
+        this(null);
     }
 
-    private WebResponse list(WebRequest request) {
-        request.administrator();
-        PageRequest page = PageResponse.pageOf(request);
-        String status = request.query("status");
-        return WebResponse.ok(PageResponse.of(status == null ? orders.orders(page) : orders.ordersIn(status, page)));
+    /**
+     * Lists orders.
+     *
+     * @param security the request's security
+     * @param status   only orders in this status, for example {@code SHIPPED}
+     * @param page     the page
+     * @param size     the size
+     * @return the orders, newest first
+     */
+    @GET
+    public PageResponse<OrderSummary> list(@Context SecurityContext security, @QueryParam("status") String status,
+                                           @QueryParam("page") String page, @QueryParam("size") String size) {
+        Callers.administrator(security);
+        PageRequest request = PageResponse.pageOf(page, size);
+        String wanted = Params.optional(status);
+        return PageResponse.of(wanted == null ? orders.orders(request) : orders.ordersIn(wanted, request));
+    }
+
+    /** @param security the request's security @param number the order number @return the order */
+    @GET
+    @Path("{number}")
+    public OrderDetails one(@Context SecurityContext security, @PathParam("number") String number) {
+        Callers.administrator(security);
+        return orders.order(number);
+    }
+
+    /** @param security the request's security @param number the order @param change the status @return the order */
+    @PUT
+    @Path("{number}/status")
+    public OrderDetails changeStatus(@Context SecurityContext security, @PathParam("number") String number,
+                                     @Valid @NotNull StatusChangeRequest change) {
+        Callers.administrator(security);
+        return orders.changeStatus(number, change.status());
     }
 }

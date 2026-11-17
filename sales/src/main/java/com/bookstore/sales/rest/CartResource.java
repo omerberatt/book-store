@@ -2,19 +2,31 @@ package com.bookstore.sales.rest;
 
 import com.bookstore.sales.api.CartFacade;
 import com.bookstore.sales.api.CartRef;
-import com.bookstore.sales.api.CartView;
 import com.bookstore.sales.rest.SalesRequests.AddToCartRequest;
 import com.bookstore.sales.rest.SalesRequests.QuantityRequest;
 import com.bookstore.shared.kernel.identity.BookId;
-import com.bookstore.shared.web.Routes;
-import com.bookstore.shared.web.WebRequest;
-import com.bookstore.shared.web.WebResponse;
+import com.bookstore.shared.web.Callers;
+import com.bookstore.shared.web.Params;
 
-import java.util.Objects;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.SecurityContext;
 
 /**
  * The signed-in customer's cart (CRT-1, CRT-3 – CRT-5). Every answer is the whole cart, checked
- * against the catalog. A visitor's cart is not served over HTTP in Phase 5 (ADR-0019).
+ * against the catalog. A visitor's cart is not served over HTTP yet (ADR-0019).
  *
  * <table>
  *   <caption>Endpoints</caption>
@@ -25,7 +37,11 @@ import java.util.Objects;
  *   <tr><td>{@code DELETE /api/v1/cart/items/{bookId}}</td><td>remove a book</td></tr>
  * </table>
  */
-public final class CartResource implements Routes.Resource {
+@Path("cart")
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
+@ApplicationScoped
+public class CartResource {
 
     private final CartFacade cart;
 
@@ -34,35 +50,55 @@ public final class CartResource implements Routes.Resource {
      *
      * @param cart the cart use cases
      */
+    @Inject
     public CartResource(CartFacade cart) {
-        this.cart = Objects.requireNonNull(cart, "cart");
+        this.cart = cart;
     }
 
-    @Override
-    public void register(Routes routes) {
-        routes.get("/api/v1/cart", request -> answer(cart.view(mine(request))))
-                .delete("/api/v1/cart", request -> answer(cart.clear(mine(request))))
-                .post("/api/v1/cart/items", this::add)
-                .put("/api/v1/cart/items/{bookId}", this::changeQuantity)
-                .delete("/api/v1/cart/items/{bookId}",
-                        request -> answer(cart.remove(mine(request), BookId.of(request.pathId("bookId")))));
+    /** For the CDI container's client proxy only; never called by the application. */
+    protected CartResource() {
+        this(null);
     }
 
-    private WebResponse add(WebRequest request) {
-        AddToCartRequest add = request.body(AddToCartRequest.class);
-        return answer(cart.add(mine(request), BookId.of(add.bookId()), add.quantity()));
+    /** @param security the request's security @return the cart */
+    @GET
+    public CartResponse view(@Context SecurityContext security) {
+        return CartResponse.of(cart.view(mine(security)));
     }
 
-    private WebResponse changeQuantity(WebRequest request) {
-        QuantityRequest change = request.body(QuantityRequest.class);
-        return answer(cart.changeQuantity(mine(request), BookId.of(request.pathId("bookId")), change.quantity()));
+    /** @param security the request's security @return the empty cart */
+    @DELETE
+    public CartResponse clear(@Context SecurityContext security) {
+        return CartResponse.of(cart.clear(mine(security)));
     }
 
-    private static CartRef mine(WebRequest request) {
-        return CartRef.customer(request.customer().customerId());
+    /** @param security the request's security @param add the book and quantity @return the cart */
+    @POST
+    @Path("items")
+    public CartResponse add(@Context SecurityContext security, @Valid @NotNull AddToCartRequest add) {
+        return CartResponse.of(cart.add(mine(security), BookId.of(add.bookId()), add.quantity()));
     }
 
-    private static WebResponse answer(CartView view) {
-        return WebResponse.ok(CartResponse.of(view));
+    /** @param security the request's security @param bookId the book @param change the quantity @return the cart */
+    @PUT
+    @Path("items/{bookId}")
+    public CartResponse changeQuantity(@Context SecurityContext security, @PathParam("bookId") String bookId,
+                                       @Valid @NotNull QuantityRequest change) {
+        return CartResponse.of(cart.changeQuantity(mine(security), book(bookId), change.quantity()));
+    }
+
+    /** @param security the request's security @param bookId the book @return the cart */
+    @DELETE
+    @Path("items/{bookId}")
+    public CartResponse remove(@Context SecurityContext security, @PathParam("bookId") String bookId) {
+        return CartResponse.of(cart.remove(mine(security), book(bookId)));
+    }
+
+    private static CartRef mine(SecurityContext security) {
+        return CartRef.customer(Callers.customer(security).customerId());
+    }
+
+    private static BookId book(String bookId) {
+        return BookId.of(Params.id("bookId", bookId));
     }
 }

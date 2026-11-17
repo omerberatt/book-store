@@ -5,11 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.bookstore.catalog.application.CatalogShop;
 import com.bookstore.catalog.domain.Book;
 import com.bookstore.shared.web.Authenticator;
-import com.bookstore.shared.web.HttpApi;
 import com.bookstore.shared.web.HttpTestClient;
-import com.bookstore.shared.web.Routes;
-
-import java.io.IOException;
+import com.bookstore.shared.web.RestTestServer;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.AfterEach;
@@ -21,17 +18,13 @@ class CatalogResourceTest {
     private final CatalogShop shop = new CatalogShop();
     private final Book dune = shop.book("Dune", "350.00", 4);
     private final Book madonna = shop.book("Kürk Mantolu Madonna", "120.00", 0);
-    private final HttpApi api;
-    private final HttpTestClient client;
-
-    CatalogResourceTest() throws IOException {
-        api = new HttpApi(new Routes().add(new CatalogResource(shop.catalog)), Authenticator.NOBODY).start(0);
-        client = new HttpTestClient(api);
-    }
+    private final RestTestServer server = RestTestServer.start(Authenticator.NOBODY,
+            new CatalogResource(shop.catalog), new CategoryResource(shop.catalog));
+    private final HttpTestClient client = server.client();
 
     @AfterEach
     void stop() {
-        api.close();
+        server.close();
     }
 
     @Test

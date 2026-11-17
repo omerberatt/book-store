@@ -7,11 +7,9 @@ import com.bookstore.sales.application.SalesShop;
 import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.kernel.money.Money;
 import com.bookstore.shared.web.Caller;
-import com.bookstore.shared.web.HttpApi;
 import com.bookstore.shared.web.HttpTestClient;
-import com.bookstore.shared.web.Routes;
+import com.bookstore.shared.web.RestTestServer;
 
-import java.io.IOException;
 import java.util.Optional;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -25,24 +23,21 @@ class SalesResourcesTest {
     private final FakeCatalog.Item dune = shop.book("Dune", "100.00", 5);
     private final CustomerId ayseId = shop.customer("ayse@example.com");
     private final CustomerId mehmetId = shop.customer("mehmet@example.com");
-    private final HttpApi api;
+    private final RestTestServer server;
     private final HttpTestClient anonymous;
     private final HttpTestClient ayse;
     private final HttpTestClient mehmet;
     private final HttpTestClient admin;
 
-    SalesResourcesTest() throws IOException {
-        Routes routes = new Routes()
-                .add(new CartResource(shop.cart))
-                .add(new OrderResource(shop.checkout, shop.myOrders))
-                .add(new OrderAdminResource(shop.orderAdmin));
-        api = new HttpApi(routes, (user, password) -> switch (user) {
+    SalesResourcesTest() {
+        server = RestTestServer.start((user, password) -> switch (user) {
             case "ayse" -> Optional.of(new Caller(ayseId, "ayse@example.com", "CUSTOMER"));
             case "mehmet" -> Optional.of(new Caller(mehmetId, "mehmet@example.com", "CUSTOMER"));
             case "admin" -> Optional.of(new Caller(CustomerId.of(999), "admin@example.com", Caller.ADMIN));
             default -> Optional.empty();
-        }).start(0);
-        anonymous = new HttpTestClient(api);
+        }, new CartResource(shop.cart), new OrderResource(shop.checkout, shop.myOrders),
+                new OrderAdminResource(shop.orderAdmin));
+        anonymous = server.client();
         ayse = anonymous.as("ayse", "pw");
         mehmet = anonymous.as("mehmet", "pw");
         admin = anonymous.as("admin", "pw");
@@ -50,7 +45,7 @@ class SalesResourcesTest {
 
     @AfterEach
     void stop() {
-        api.close();
+        server.close();
     }
 
     @Test
@@ -84,7 +79,7 @@ class SalesResourcesTest {
 
         assertThat(placed.status()).isEqualTo(201);
         String number = placed.json().get("orderNumber").asText();
-        assertThat(placed.location()).isEqualTo("/api/v1/orders/" + number);
+        assertThat(placed.location()).endsWith("/api/v1/orders/" + number);
         assertThat(placed.json().get("status").asText()).isEqualTo("PAID");
         assertThat(ayse.get("/api/v1/orders").json().get("totalElements").asInt()).isEqualTo(1);
         assertThat(ayse.get(placed.location()).json().get("lines").get(0).get("bookTitle").asText()).isEqualTo("Dune");

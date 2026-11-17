@@ -1,11 +1,9 @@
 package com.bookstore.shared.web;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
-import com.fasterxml.jackson.annotation.JsonAnyGetter;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * An error response in the RFC 9457 "Problem Details" format, sent as
@@ -21,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  *                   changes a cart went through
  */
 public record Problem(String type, String title, int status, String detail, String code, List<FieldError> errors,
-                      @JsonIgnore Map<String, Object> extensions) {
+                      Map<String, Object> extensions) {
 
     /** The media type of a problem response. */
     public static final String MEDIA_TYPE = "application/problem+json";
@@ -57,10 +55,22 @@ public record Problem(String type, String title, int status, String detail, Stri
         return new Problem(type, title, status, detail, code, errors, members);
     }
 
-    /** @return the extension members, written as top-level JSON members */
-    @JsonAnyGetter
-    public Map<String, Object> extensionMembers() {
-        return extensions;
+    /**
+     * Returns the response body: the standard members in RFC 9457 order, then the extensions at the
+     * same level.
+     *
+     * @return the members, by name
+     */
+    public Map<String, Object> body() {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("type", type);
+        body.put("title", title);
+        body.put("status", status);
+        body.put("detail", detail);
+        body.put("code", code);
+        body.put("errors", errors);
+        body.putAll(extensions);
+        return body;
     }
 
     /**

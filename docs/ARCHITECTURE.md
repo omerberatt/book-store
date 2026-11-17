@@ -263,7 +263,7 @@ Ayrıntıları ve ArchUnit karşılıkları ADR-0004 ve ADR-0005'tedir:
 | --- | --- | --- | --- |
 | Modüller | ✅ İş alanına göre modüller, `shared-kernel`, `shared-jdbc`, `app`, mimari testler | — | 4.1 |
 | Migration'lar | ✅ Modül başına dosya ve Flyway geçmişi | — | 4.1 |
-| Web | ✅ Elle yazılmış REST API *(`shared-web`, modül başına `rest` paketi, JDK HTTP sunucusu, HTTP Basic)* | Payara Micro, JAX-RS, Jakarta Security, statik arayüz | 6, 7 |
+| Web | ✅ JAX-RS üzerinde REST API *(Payara Micro 7, JSON-B, HTTP Basic filtresi)* | Jakarta Security, statik arayüz | 7 |
 | Mimari kurallar | ✅ ADR-0003–0008'in ArchUnit kuralları *(`rest` kuralları Faz 5'te dolar)* | — | 4.2 |
 | Kimlikler | ✅ Tipli kimlikler *(`BookId`, `CustomerId` shared-kernel'de)* | — | 4.3 |
 | Hatalar | ✅ `DomainException` + `Kind` + `code` | — | 4.3 |
