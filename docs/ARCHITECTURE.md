@@ -35,6 +35,7 @@ graph TD
     customer["<b>customer</b><br/>hesap, rol, adres"]
     kernel["<b>shared-kernel</b><br/>Money, Address, Entity, hatalar"]
     jdbc["<b>shared-jdbc</b><br/>JDBC araç seti, modül migration'ları"]
+    web["<b>shared-web</b><br/>HTTP sınırı: yönlendirme, JSON, RFC 9457"]
     arch["<b>quality/architecture-tests</b><br/>ArchUnit"]
 
     app --> review
@@ -55,6 +56,11 @@ graph TD
     sales --> jdbc
     review --> jdbc
     jdbc --> kernel
+    catalog --> web
+    customer --> web
+    sales --> web
+    review --> web
+    web --> kernel
     arch -. inceler .-> app
 ```
 
@@ -62,6 +68,7 @@ graph TD
 | --- | --- | --- |
 | `shared-kernel` | Hiçbir iş modülüne ait olmayan genel tipler | `Money`, `Address`, `Entity`, `DomainEvent`, `TransactionRunner`, `Page<T>`, `TextNormalizer`, `Guard`, `DomainException`, `Identifier`, `BookId`, `CustomerId`, `Specification<T>` |
 | `shared-jdbc` | İş modüllerinin `persistence` paketlerinin kullandığı teknik JDBC araç seti *(ADR-0018)* | `JdbcExecutor`, `JdbcTransactionRunner`, `RecordRowMapper`, `ModuleMigrations` |
+| `shared-web` | İş modüllerinin `rest` paketlerinin kullandığı, elle yazılmış HTTP sınırı *(ADR-0019)*; Faz 6'da JAX-RS'e devredilir | `HttpApi`, `Routes`, `WebRequest`, `Json`, `RequestValidator`, `ProblemMapper`, `Caller` |
 | `catalog` | Satılan kitaplar, stokları ve puan özetleri | `Book`, `Author`, `Category`, `Isbn`, `Stock`, `RatingSummary`; api: `StockFacade`, `RatingFacade`, `BookOffer` |
 | `customer` | Kayıtlı kullanıcılar, roller, adres defteri | `Customer`, `Email`, `PersonName`, `SavedAddress`, `PasswordPolicy`; api: `CustomerDirectory` |
 | `sales` | Sepet, sipariş verme, ödeme, sipariş durumları | `Cart`, `Order`, `OrderStatus`, `OrderNumber`, `ProductSnapshot`, `ShippingPolicy`; api: `PurchaseHistory` |

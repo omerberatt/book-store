@@ -31,6 +31,13 @@ class ModuleBoundaryTest {
             .should().dependOnClassesThat().resideInAnyPackage(businessModulePackages())
             .because("ADR-0018: shared-jdbc is a technical module below the business modules");
 
+    /** ADR-0019: the shared web toolkit is technical and sees no business module either. */
+    @ArchTest
+    static final ArchRule shared_web_depends_on_no_business_module = noClasses()
+            .that().resideInAPackage("com.bookstore.shared.web..")
+            .should().dependOnClassesThat().resideInAnyPackage(businessModulePackages())
+            .because("ADR-0019: shared-web is a technical module below the business modules' rest packages");
+
     /** ADR-0002: the business modules depend on each other without cycles. */
     @ArchTest
     static final ArchRule business_modules_are_free_of_cycles = slices()

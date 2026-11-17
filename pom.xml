@@ -19,6 +19,7 @@
     <modules>
         <module>shared-kernel</module>
         <module>shared-jdbc</module>
+        <module>shared-web</module>
         <module>catalog</module>
         <module>customer</module>
         <module>sales</module>
@@ -39,6 +40,10 @@
         <h2.version>2.4.240</h2.version>
         <postgresql.version>42.7.14</postgresql.version>
         <testcontainers.version>2.0.5</testcontainers.version>
+        <jackson.version>2.22.4</jackson.version>
+        <validation-api.version>3.1.1</validation-api.version>
+        <hibernate-validator.version>9.1.6.Final</hibernate-validator.version>
+        <exec-plugin.version>3.6.4</exec-plugin.version>
 
         <compiler-plugin.version>3.15.0</compiler-plugin.version>
         <surefire-plugin.version>3.5.6</surefire-plugin.version>
@@ -82,6 +87,23 @@
                 <version>${h2.version}</version>
             </dependency>
             <dependency>
+                <groupId>com.fasterxml.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>${jackson.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>jakarta.validation</groupId>
+                <artifactId>jakarta.validation-api</artifactId>
+                <version>${validation-api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.hibernate.validator</groupId>
+                <artifactId>hibernate-validator</artifactId>
+                <version>${hibernate-validator.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.postgresql</groupId>
                 <artifactId>postgresql</artifactId>
                 <version>${postgresql.version}</version>
@@ -111,6 +133,17 @@
             <dependency>
                 <groupId>com.bookstore</groupId>
                 <artifactId>shared-jdbc</artifactId>
+                <version>${project.version}</version>
+                <type>test-jar</type>
+            </dependency>
+            <dependency>
+                <groupId>com.bookstore</groupId>
+                <artifactId>shared-web</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.bookstore</groupId>
+                <artifactId>shared-web</artifactId>
                 <version>${project.version}</version>
                 <type>test-jar</type>
             </dependency>

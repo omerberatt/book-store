@@ -18,6 +18,10 @@
     <dependencies>
         <dependency>
             <groupId>com.bookstore</groupId>
+            <artifactId>shared-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.bookstore</groupId>
             <artifactId>catalog</artifactId>
         </dependency>
         <dependency>

@@ -21,6 +21,7 @@ Projenin amacı: çalışan bir e-ticaret uygulaması ortaya koymak.
 ```
 shared-kernel                 Money, Address, Entity, hatalar
 shared-jdbc                   JDBC araç seti, modül başına migration'lar
+shared-web                    HTTP sınırı: yönlendirme, JSON, doğrulama, RFC 9457
 catalog | customer | sales | review     iş modülleri; her birinde api, application, domain, persistence, rest
 app                           WAR: Payara Micro 7, CDI bağlama, açılış, HTML/JS arayüz
 quality/architecture-tests    ArchUnit kuralları

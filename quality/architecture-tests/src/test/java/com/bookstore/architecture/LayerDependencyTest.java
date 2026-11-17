@@ -69,7 +69,15 @@ class LayerDependencyTest {
             .that().resideInAPackage(REST)
             .should().dependOnClassesThat().resideInAnyPackage(DOMAIN, APPLICATION, PERSISTENCE, SHARED_JDBC)
             .allowEmptyShould(true)
-            .because("ADR-0003: rest uses only api, so the web layer cannot reach around the use cases");
+            .because("ADR-0003, ADR-0019: rest uses only api and shared-web, so the web layer cannot reach around the use cases");
+
+    /** ADR-0009, ADR-0019: HTTP, JSON and Bean Validation libraries stay at the HTTP boundary. */
+    @ArchTest
+    static final ArchRule web_libraries_stay_in_rest = noClasses()
+            .that().resideOutsideOfPackages(REST, "com.bookstore.shared.web..")
+            .should().dependOnClassesThat().resideInAnyPackage("com.sun.net.httpserver..", "com.fasterxml.jackson..",
+                    "jakarta.validation..", "org.hibernate.validator..")
+            .because("ADR-0009: only the rest packages and shared-web know they speak HTTP and JSON");
 
     /** ADR-0003: no business package depends on rest; only the composition root may wire it. */
     @ArchTest
