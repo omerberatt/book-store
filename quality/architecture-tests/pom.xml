@@ -19,6 +19,7 @@
         <dependency>
             <groupId>com.bookstore</groupId>
             <artifactId>app</artifactId>
+            <classifier>classes</classifier>
         </dependency>
         <dependency>
             <groupId>com.tngtech.archunit</groupId>

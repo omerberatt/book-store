@@ -44,6 +44,7 @@
         <validation-api.version>3.1.1</validation-api.version>
         <hibernate-validator.version>9.1.6.Final</hibernate-validator.version>
         <exec-plugin.version>3.6.4</exec-plugin.version>
+        <war-plugin.version>3.5.1</war-plugin.version>
         <jakartaee.version>11.0.0</jakartaee.version>
         <mp-config.version>3.1.2</mp-config.version>
         <mp-openapi.version>4.1.1</mp-openapi.version>
@@ -204,6 +205,7 @@
                 <groupId>com.bookstore</groupId>
                 <artifactId>app</artifactId>
                 <version>${project.version}</version>
+                <classifier>classes</classifier>
             </dependency>
             <dependency>
                 <groupId>com.bookstore</groupId>

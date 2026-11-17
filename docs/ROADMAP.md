@@ -69,7 +69,7 @@ Ders Bölüm 14'ü izler *(ADR-0010)*.
 | Adım | İş |
 | --- | --- |
 | 6.1 ✅ | CDI ile bağlama: modüllerde `beans.xml`, `@ApplicationScoped` servis ve repository'ler; `BookstoreWiring`, `BookstoreDataSource`, `JtaTransactionRunner`, `CdiDomainEventPublisher`, `BookstoreStartup`; `ConnectionProvider`; Weld SE ile `CdiWiringTest`; platform ArchUnit kuralları |
-| 6.2 | `app` WAR olur; Payara Micro 7.2026.10 üzerinde açılış, migration ve demo verisi |
+| 6.2 ✅ | `app` WAR olur; Payara Micro 7.2026.10 üzerinde açılış, MicroProfile Config ile veri kaynağı, migration ve demo verisi |
 | 6.3 | HTTP katmanı JAX-RS, JSON-B ve `ExceptionMapper`'a taşınır; HTTP testleri JerseyTest ile |
 | 6.4 | MicroProfile OpenAPI, sunucuda uçtan uca deneme, dokümanlar |
 

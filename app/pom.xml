@@ -12,6 +12,7 @@
     </parent>
 
     <artifactId>app</artifactId>
+    <packaging>war</packaging>
     <name>Book Store :: App</name>
     <description>Entry point that puts the business modules together. Becomes a WAR on Payara Micro in phase 6 (ADR-0010).</description>
 
@@ -105,6 +106,18 @@
 
     <build>
         <plugins>
+            <!-- bookstore.war for Payara Micro (ADR-0010); the classes also go into a jar for the architecture tests. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>${war-plugin.version}</version>
+                <configuration>
+                    <warName>bookstore</warName>
+                    <attachClasses>true</attachClasses>
+                    <!-- Payara provides Bean Validation; a second copy in the WAR would clash with it. -->
+                    <packagingExcludes>WEB-INF/lib/hibernate-validator-*.jar,WEB-INF/lib/jakarta.validation-api-*.jar,WEB-INF/lib/classmate-*.jar,WEB-INF/lib/jboss-logging-*.jar</packagingExcludes>
+                </configuration>
+            </plugin>
             <!-- ./mvnw -pl app exec:java starts the API (see the README). -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
