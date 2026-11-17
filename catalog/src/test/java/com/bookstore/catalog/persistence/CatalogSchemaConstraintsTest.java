@@ -4,7 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.bookstore.catalog.domain.Book;
+import com.bookstore.catalog.domain.Language;
 import com.bookstore.shared.jdbc.DataAccessException;
+
+import java.util.Arrays;
 
 import org.junit.jupiter.api.Test;
 
@@ -35,6 +38,17 @@ class CatalogSchemaConstraintsTest {
     @Test
     void foreignKeysPreventOrphans() {
         assertViolation("INSERT INTO book_authors (book_id, author_id, sort_order) VALUES (?, 999, 0)", book.id());
+    }
+
+    @Test
+    void languageMustBeOneOfTheReferenceTable() {
+        assertViolation("UPDATE books SET language = 'zz' WHERE id = ?", book.id());
+    }
+
+    @Test
+    void theLanguagesTableListsEveryLanguageOfTheDomain() {
+        assertThat(db.jdbc.query("SELECT code FROM languages", row -> row.getString("code")))
+                .containsExactlyInAnyOrderElementsOf(Arrays.stream(Language.values()).map(Language::code).toList());
     }
 
     private void assertViolation(String sql, Object... params) {

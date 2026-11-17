@@ -263,7 +263,7 @@ Ayrıntıları ve ArchUnit karşılıkları ADR-0004 ve ADR-0005'tedir:
 | Arama ölçütü | ✅ `Specification<Book>`, SQL'e `BookSearchSql` çevirir | — | 4.3 |
 | Servis sonuçları | ✅ `api` paketinde komutlar, DTO'lar, façade'lar; `application` paketinde mapper'lar | — | 4.4 |
 | Bildirim | ✅ `DomainEventPublisher` + `InProcessEventPublisher` + `OrderNotificationObserver` | CDI olayları *(`AFTER_SUCCESS`)* | 6 |
-| Veritabanı | H2 MySQL modu, `CHECK` içinde `CASE` | PostgreSQL 17, referans tablolar | 4.6 |
+| Veritabanı | ✅ PostgreSQL 17 lehçesi, referans tablolar, H2 PostgreSQL modu *(Testcontainers henüz yok)* | Testcontainers ile sözleşme testleri | 4.6 |
 | Composition root | ✅ `BookstoreModule` *(elle)* | CDI | 6 |
 | Repository testleri | Implementasyon başına ayrı testler | Ortak sözleşme testleri | 4.6 |
 | Transaction | `TransactionRunner` portu, `JdbcTransactionRunner` | JTA `@Transactional` | 6 |

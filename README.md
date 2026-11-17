@@ -32,7 +32,7 @@ quality/architecture-tests    ArchUnit kuralları
 
 Java 21 · Maven · Jakarta EE 11 · MicroProfile 6.1 · Payara Micro 7 · PostgreSQL 17 · Flyway · JDBC · JUnit · AssertJ · ArchUnit · Testcontainers
 
-*(Testler bugün H2 üzerinde çalışıyor; Jakarta EE ve PostgreSQL geçişi Faz 4.6–6'da.)*
+*(Testler H2'nin PostgreSQL modunda çalışıyor; yerel PostgreSQL için `docker compose up -d`. Jakarta EE geçişi Faz 6'da.)*
 
 ## Gereksinimler
 

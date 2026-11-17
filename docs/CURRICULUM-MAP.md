@@ -151,13 +151,13 @@ Faz numaraları [ROADMAP.md](ROADMAP.md) içindeki aşamalardır; ADR'ler [docs/
 | N+1 sorgu problemi | Bir sayfa kitap üç sorguyla yüklenir | ✅ | 3 |
 | Specification sorgularının bedeli | `BookSearchSql` tüm filtreyi SQL'de yapar | ✅ | 3 |
 | `BigDecimal` ölçek problemi | `Money` her zaman 2 basamağa yuvarlar | ✅ | 1 |
-| `CHECK (... IN ...)` ve H2 2.4.240 hatası | Faz 3'te bulundu, `CASE` ile aşıldı; referans tablolarla değiştirilecek *(ADR-0008)* | 🔁 | 4 |
+| `CHECK (... IN ...)` ve H2 2.4.240 hatası | Faz 3'te bulundu, `CASE` ile aşıldı; Faz 4.6'da `languages`, `roles`, `order_statuses`, `payment_methods` referans tablolarıyla değiştirildi *(ADR-0008)* | ✅ | 4.6 |
 | `SQLException`'ı sarmalamak | `DataAccessException`; kısıt ihlalleri `ConflictException`'a çevrilir | ✅ | 3 |
 | Sipariş numarası veritabanından | `order_number_sequences` + `JdbcOrderNumberSequence` | ✅ | 3 |
 | Transaction sınırı kullanım senaryosunda | `TransactionRunner` portu + `JdbcTransactionRunner` *(`ThreadLocal` ile bağlantı)* | ✅ | 2, 3 |
 | Sözleşme testleri *(contract tests)* | Her repository için tek sözleşme; bellek içi, H2 ve PostgreSQL implementasyonlarının hepsi geçecek | ⏳ | 4 |
 | Bellek içi repository'nin kopya saklaması | Bugün referans saklıyor *(ders Bölüm 12'deki açığın aynısı)* | 🔁 | 4 |
-| PostgreSQL ve Testcontainers | Bugün H2 MySQL modu; PostgreSQL 17, H2 PostgreSQL modu ve Testcontainers olacak *(ADR-0008)* | 🔁 | 4 |
+| PostgreSQL ve Testcontainers | Migration'lar PostgreSQL 17 lehçesinde; testler H2 PostgreSQL modunda; yerel veritabanı `docker-compose.yml`. Testcontainers sözleşme testleriyle gelecek *(ADR-0008)* | 🔁 | 4.6 |
 | Atomik kayıt, geri alma | `app` modülünde `CheckoutWithDatabaseTest.declinedPaymentRollsBack…`: başka bir modüldeki stok da geri alınıyor | ✅ | 3, 4.1 |
 | JPA'nın neleri ortadan kaldırdığı | Ayrı persistence modeliyle ikinci uygulama | ⏳ | 9 |
 

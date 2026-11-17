@@ -17,6 +17,7 @@ import com.bookstore.shared.kernel.paging.PageRequest;
 import com.bookstore.shared.kernel.testing.TestAddresses;
 import com.bookstore.shared.kernel.testing.TestClock;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -97,6 +98,12 @@ class JdbcCustomerRepositoryTest {
 
         assertThat(page.content()).extracting(c -> c.email().value()).containsExactly("b@example.com", "a@example.com");
         assertThat(db.customers.findAllById(List.of(a.id(), b.id(), CustomerId.of(999)))).hasSize(2);
+    }
+
+    @Test
+    void theRolesTableListsEveryRoleOfTheDomain() {
+        assertThat(db.jdbc.query("SELECT code FROM roles", row -> row.getString("code")))
+                .containsExactlyInAnyOrderElementsOf(Arrays.stream(Role.values()).map(Role::name).toList());
     }
 
     @Test

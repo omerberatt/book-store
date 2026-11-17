@@ -42,7 +42,7 @@ public class DataAccessException extends RuntimeException {
     }
 
     /**
-     * Tells whether a constraint violation concerns a constraint with the given name. Both MySQL and
+     * Tells whether a constraint violation concerns a constraint with the given name. Both PostgreSQL and
      * H2 name the violated constraint or index in their error message.
      *
      * @param constraintName for example {@code "uq_users_email"}

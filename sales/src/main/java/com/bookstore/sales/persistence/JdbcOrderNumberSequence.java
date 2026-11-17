@@ -1,8 +1,7 @@
 package com.bookstore.sales.persistence;
 
-import com.bookstore.sales.domain.OrderNumberSequence;
 import com.bookstore.sales.domain.OrderNumber;
-import com.bookstore.shared.jdbc.DataAccessException;
+import com.bookstore.sales.domain.OrderNumberSequence;
 import com.bookstore.shared.jdbc.JdbcExecutor;
 import com.bookstore.shared.jdbc.JdbcTransactionRunner;
 
@@ -34,24 +33,14 @@ public class JdbcOrderNumberSequence implements OrderNumberSequence {
     @Override
     public OrderNumber next(Year year) {
         return transactions.inTransaction(() -> {
-            if (!increment(year)) {
-                try {
-                    jdbc.update("INSERT INTO order_number_sequences (order_year, last_number) VALUES (?, 1)", year);
-                } catch (DataAccessException e) {
-                    // Another transaction created the row first; use it.
-                    if (!e.isConstraintViolation() || !increment(year)) {
-                        throw e;
-                    }
-                }
-            }
+            // PostgreSQL aborts a transaction after any failed statement, so a duplicate row must not
+            // raise an error: the first order of a year creates the counter, every order then bumps it.
+            jdbc.update("INSERT INTO order_number_sequences (order_year, last_number) VALUES (?, 0)"
+                    + " ON CONFLICT DO NOTHING", year);
+            jdbc.update("UPDATE order_number_sequences SET last_number = last_number + 1 WHERE order_year = ?", year);
             long number = jdbc.queryForLong("SELECT last_number FROM order_number_sequences WHERE order_year = ?",
                     year);
             return OrderNumber.of(year, number);
         });
-    }
-
-    private boolean increment(Year year) {
-        return jdbc.update("UPDATE order_number_sequences SET last_number = last_number + 1 WHERE order_year = ?",
-                year) == 1;
     }
 }

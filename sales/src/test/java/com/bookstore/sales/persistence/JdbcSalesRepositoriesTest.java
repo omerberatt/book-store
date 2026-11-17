@@ -27,6 +27,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Year;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +43,14 @@ import org.junit.jupiter.api.Test;
 class JdbcSalesRepositoriesTest {
 
     private final SalesDb db = new SalesDb();
+
+    @Test
+    void referenceTablesListEveryStatusAndPaymentMethodOfTheDomain() {
+        assertThat(db.jdbc.query("SELECT code FROM order_statuses", row -> row.getString("code")))
+                .containsExactlyInAnyOrderElementsOf(Arrays.stream(OrderStatus.values()).map(Enum::name).toList());
+        assertThat(db.jdbc.query("SELECT code FROM payment_methods", row -> row.getString("code")))
+                .containsExactlyInAnyOrderElementsOf(Arrays.stream(PaymentMethod.values()).map(Enum::name).toList());
+    }
 
     @Nested
     class Carts {

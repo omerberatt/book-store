@@ -98,7 +98,7 @@ class BookstoreModuleTest {
     private static JdbcDataSource emptyDatabase() {
         JdbcDataSource h2 = new JdbcDataSource();
         h2.setURL("jdbc:h2:mem:" + UUID.randomUUID()
-                + ";MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;LOCK_TIMEOUT=10000");
+                + ";MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1;LOCK_TIMEOUT=10000");
         h2.setUser("sa");
         return h2;
     }

@@ -8,7 +8,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.Year;
@@ -30,10 +29,13 @@ import java.util.StringJoiner;
  *
  * <p>Parameters are always bound, never concatenated into the SQL, so user input cannot change
  * the meaning of a query (SQL injection). Values are converted on the way in: {@link Instant} to a
- * UTC {@code DATETIME}, a typed {@link Identifier} to its value, {@link Money} to its amount, enums to their name, {@link Year} to an
- * integer.
+ * UTC {@code TIMESTAMP}, a typed {@link Identifier} to its value, {@link Money} to its amount,
+ * enums to their name, {@link Year} to an integer.
  */
 public class JdbcExecutor {
+
+    /** Every table with a generated key calls it {@code id}; naming it works on H2 and PostgreSQL alike. */
+    private static final String[] GENERATED_ID = {"id"};
 
     /** Error code for an update that lost the race against a concurrent update. */
     public static final String CONCURRENT_MODIFICATION = "concurrent-modification";
@@ -139,7 +141,7 @@ public class JdbcExecutor {
     }
 
     /**
-     * Runs an {@code INSERT} into a table with an auto-increment key and returns the new key.
+     * Runs an {@code INSERT} into a table whose {@code id} column is generated and returns the new id.
      *
      * @param sql    the SQL
      * @param params values for the placeholders
@@ -147,7 +149,7 @@ public class JdbcExecutor {
      */
     public long insert(String sql, Object... params) {
         return transactions.withConnection(connection -> {
-            try (PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            try (PreparedStatement statement = connection.prepareStatement(sql, GENERATED_ID)) {
                 bind(statement, params);
                 statement.executeUpdate();
                 try (ResultSet keys = statement.getGeneratedKeys()) {

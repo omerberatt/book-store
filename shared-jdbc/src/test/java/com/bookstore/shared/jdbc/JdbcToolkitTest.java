@@ -97,7 +97,7 @@ class JdbcToolkitTest {
         db.jdbc().update("INSERT INTO counters (counter_year, last_number) VALUES (?, ?)", 2026, 42);
 
         SequenceRow row = db.jdbc().queryOne("SELECT counter_year, last_number, CAST(? AS DECIMAL(12, 2)) AS some_amount, "
-                        + "CAST(? AS DATETIME(6)) AS seen_at FROM counters",
+                        + "CAST(? AS TIMESTAMP(6)) AS seen_at FROM counters",
                 RecordRowMapper.of(SequenceRow.class), new BigDecimal("1.50"), Instant.parse("2026-01-02T03:04:05Z"))
                 .orElseThrow();
 

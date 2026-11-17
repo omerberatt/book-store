@@ -8,7 +8,7 @@ import javax.sql.DataSource;
 import org.h2.jdbcx.JdbcDataSource;
 
 /**
- * A fresh in-memory H2 database in MySQL mode, migrated with the given modules' migrations, plus
+ * A fresh in-memory H2 database in PostgreSQL mode, migrated with the given modules' migrations, plus
  * the JDBC toolkit wired to it. Each test creates its own, so tests never see each other's data.
  *
  * @param dataSource   the database
@@ -26,7 +26,7 @@ public record TestDatabase(DataSource dataSource, JdbcTransactionRunner transact
     public static TestDatabase withModules(String... modules) {
         JdbcDataSource h2 = new JdbcDataSource();
         h2.setURL("jdbc:h2:mem:" + UUID.randomUUID()
-                + ";MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;LOCK_TIMEOUT=10000");
+                + ";MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1;LOCK_TIMEOUT=10000");
         h2.setUser("sa");
         ModuleMigrations.migrate(h2, List.of(modules));
         JdbcTransactionRunner transactions = new JdbcTransactionRunner(h2);

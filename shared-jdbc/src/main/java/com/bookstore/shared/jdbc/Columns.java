@@ -21,7 +21,7 @@ public final class Columns {
     }
 
     /**
-     * Reads a UTC {@code DATETIME} column.
+     * Reads a UTC {@code TIMESTAMP} column.
      *
      * @param row    the result set
      * @param column the column name
