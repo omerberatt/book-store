@@ -4,7 +4,7 @@ Java ile yazılmış, modüler bir çevrimiçi kitap mağazası.
 
 Projenin amacı: çalışan bir e-ticaret uygulaması ortaya koymak.
 
-> **Durum:** Faz 0–5 tamamlandı. Kod iş alanına göre modüllerde *(katalog, müşteri, satış, yorum)*; modüller birbirini yalnızca `api` paketleriyle kullanıyor. Bu kural ve mimari kararların diğer kuralları ArchUnit testleriyle korunuyor. Veritabanı PostgreSQL 17; elle yazılmış bir REST API var *(aşağıda nasıl çalıştırılacağı)*. Jakarta EE ve web sayfaları henüz yok. Ayrıntılar [yol haritasında](docs/ROADMAP.md).
+> **Durum:** Faz 0–6 tamamlandı. Kod iş alanına göre modüllerde *(katalog, müşteri, satış, yorum)*; modüller birbirini yalnızca `api` paketleriyle kullanıyor. Bu kural ve mimari kararların diğer kuralları ArchUnit testleriyle korunuyor. Veritabanı PostgreSQL 17; Payara Micro 7 üzerinde JAX-RS ile bir REST API var *(aşağıda nasıl çalıştırılacağı; tarif `/openapi` adresinde)*. Web sayfaları henüz yok. Ayrıntılar [yol haritasında](docs/ROADMAP.md).
 
 ## Dokümanlar
 

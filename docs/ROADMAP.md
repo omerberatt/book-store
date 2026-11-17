@@ -12,7 +12,7 @@ Hangi konunun hangi fazda işlendiği [CURRICULUM-MAP.md](CURRICULUM-MAP.md) iç
 | **3** | ✅ | Kalıcılık | 12 | Flyway şeması, JDBC araç seti, yedi repository, sipariş numarası sayacı, işlem yönetimi; H2 üzerinde 59 test |
 | **4** | ✅ | Dersle hizalama | 4–12 | İş alanına göre modüller, ArchUnit, tipli kimlikler, `api` sözleşmesi, olay yayıncısı, PostgreSQL ve sözleşme testleri |
 | **5** | ✅ | HTTP sınırı *(elle)* | 13 | JDK HTTP sunucusu, DTO'lar, Bean Validation, RFC 9457 |
-| **6** | | Uygulama sunucusu | 14 | Payara Micro 7 üzerinde WAR: CDI, JTA, CDI olayları, JAX-RS, JSON-B, MicroProfile Config ve OpenAPI |
+| **6** | ✅ | Uygulama sunucusu | 14 | Payara Micro 7 üzerinde WAR: CDI, JTA, CDI olayları, JAX-RS, JSON-B, MicroProfile Config ve OpenAPI |
 | **7** | | Güvenlik ve arayüz | — | Jakarta Security, BCrypt, HTML ve JavaScript sayfaları, iki dilli arayüz |
 | **8** | | Yönetim paneli | — | Kitap/yazar/kategori, kapak görseli, sipariş, kullanıcı ve yorum yönetimi |
 | **9** | | Lab ilerisi ve sağlamlaştırma | 11–14 soruları | CI, Transactional Outbox, ETag, Idempotency-Key, sağlık kontrolü, performans hedefi, JPA |
@@ -71,7 +71,7 @@ Ders Bölüm 14'ü izler *(ADR-0010)*.
 | 6.1 ✅ | CDI ile bağlama: modüllerde `beans.xml`, `@ApplicationScoped` servis ve repository'ler; `BookstoreWiring`, `BookstoreDataSource`, `JtaTransactionRunner`, `CdiDomainEventPublisher`, `BookstoreStartup`; `ConnectionProvider`; Weld SE ile `CdiWiringTest`; platform ArchUnit kuralları |
 | 6.2 ✅ | `app` WAR olur; Payara Micro 7.2026.10 üzerinde açılış, MicroProfile Config ile veri kaynağı, migration ve demo verisi |
 | 6.3 ✅ | HTTP katmanı JAX-RS, JSON-B ve `ExceptionMapper`'a taşındı; Faz 5'in JDK sunucusu kalktı; HTTP testleri Jersey'nin JDK container'ında; Payara'da uçtan uca `curl` denemesi; `-Ppayara` profili |
-| 6.4 | MicroProfile OpenAPI, sunucuda uçtan uca deneme, dokümanlar |
+| 6.4 ✅ | MicroProfile OpenAPI `/openapi` adresinde; Payara'da doğrulandı |
 
 `JdbcTransactionRunner` kalkmadı: testler ve elle yazılmış `BookstoreModule` onu kullanmaya devam ediyor; sunucuda aynı portun yerini `JtaTransactionRunner` alıyor *(ADR-0010 notu)*.
 

@@ -187,7 +187,7 @@ Faz numaraları [ROADMAP.md](ROADMAP.md) içindeki aşamalardır; ADR'ler [docs/
 | CDI olayları, `@Observes(during = AFTER_SUCCESS)` | `CdiDomainEventPublisher`, `OrderNotificationObserver.onOrderEvent`; `domain_event_observers_wait_for_commit` | ✅ | 6.1 |
 | JAX-RS kaynakları, JSON-B, `ExceptionMapper` | Modül başına `…Resource` *(`@Path`, CDI ile yönetilen)*, `BookstoreApplication` *(`/api/v1`)*, `ProblemExceptionMappers`, `JsonbConfiguration`, `BasicAuthenticationFilter`; Payara'da `curl` ile denendi | ✅ | 6.3 |
 | JerseyTest | Faz 5'in HTTP testleri aynı beklentilerle Jersey'nin JDK HTTP container'ında *(`RestTestServer`, JerseyTest'in kullandığı runtime)* | ✅ | 6.3 |
-| MicroProfile OpenAPI | `/openapi` *(API-4)* | ⏳ | 6 |
+| MicroProfile OpenAPI | `/openapi` *(API-4)*: `BookstoreApplication` üzerinde `@OpenAPIDefinition` ve HTTP Basic şeması; modül jar'ları `mp.openapi.extensions.scan.lib=true` ile taranır; Payara'da 21 uç listelendi | ✅ | 6.4 |
 
 ---
 
