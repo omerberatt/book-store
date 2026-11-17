@@ -4,6 +4,8 @@ import com.bookstore.shared.kernel.identity.Identifier;
 
 import java.io.IOException;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -20,6 +22,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
  * <ul>
  *   <li>records are read and written by their components;</li>
  *   <li>typed ids ({@link Identifier}) are written as plain numbers, so {@code BookId} is {@code 42};</li>
+ *   <li>{@code is…} methods such as {@code Money.isZero()} are not written as properties;</li>
  *   <li>{@code Instant} is written as ISO-8601 text and {@code Year} as a number;</li>
  *   <li>unknown fields in a request are an error, so a typo is not silently ignored.</li>
  * </ul>
@@ -29,6 +32,8 @@ public final class Json {
     private static final ObjectMapper MAPPER = new ObjectMapper()
             .registerModule(new JavaTimeModule())
             .registerModule(new SimpleModule("bookstore-ids").addSerializer(Identifier.class, new IdSerializer()))
+            // Only record components and real getters are written; isZero() and friends are behaviour, not data.
+            .setVisibility(PropertyAccessor.IS_GETTER, JsonAutoDetect.Visibility.NONE)
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
             .enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
             .enable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES);

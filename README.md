@@ -4,7 +4,7 @@ Java ile yazılmış, modüler bir çevrimiçi kitap mağazası.
 
 Projenin amacı: çalışan bir e-ticaret uygulaması ortaya koymak.
 
-> **Durum:** Faz 0–4 tamamlandı. Kod iş alanına göre modüllerde *(katalog, müşteri, satış, yorum)*; modüller birbirini yalnızca `api` paketleriyle kullanıyor. Bu kural ve mimari kararların diğer kuralları ArchUnit testleriyle korunuyor. Veritabanı PostgreSQL 17; HTTP katmanı, Jakarta EE ve web sayfaları henüz yok. Ayrıntılar [yol haritasında](docs/ROADMAP.md).
+> **Durum:** Faz 0–5 tamamlandı. Kod iş alanına göre modüllerde *(katalog, müşteri, satış, yorum)*; modüller birbirini yalnızca `api` paketleriyle kullanıyor. Bu kural ve mimari kararların diğer kuralları ArchUnit testleriyle korunuyor. Veritabanı PostgreSQL 17; elle yazılmış bir REST API var *(aşağıda nasıl çalıştırılacağı)*. Jakarta EE ve web sayfaları henüz yok. Ayrıntılar [yol haritasında](docs/ROADMAP.md).
 
 ## Dokümanlar
 
@@ -54,6 +54,38 @@ Windows komut satırı (`cmd`):
 ```cmd
 mvnw.cmd verify
 ```
+
+## API'yi çalıştırma
+
+Faz 5'ten itibaren uygulama, JDK HTTP sunucusu üzerinde bir REST API olarak çalışır. Web sayfaları Faz 7'de gelecek.
+
+```bash
+./mvnw install -DskipTests
+```
+
+```bash
+./mvnw -pl app exec:java
+```
+
+Sunucu `http://127.0.0.1:8080` adresinde açılır. Veritabanı belirtilmezse bellek içi bir H2 veritabanı kullanılır ve demo verisi yüklenir: 8 kitap, bir müşteri (`ayse@bookstore.local`) ve bir yönetici (`admin@bookstore.local`). İkisinin parolası `kitap2026`. Sunucu durunca veriler silinir.
+
+Örnek istekler:
+
+```bash
+curl "http://127.0.0.1:8080/api/v1/books?q=madonna"
+```
+
+```bash
+curl -u ayse@bookstore.local:kitap2026 http://127.0.0.1:8080/api/v1/me
+```
+
+```bash
+curl -u ayse@bookstore.local:kitap2026 -H "Content-Type: application/json" -d '{"bookId": 1, "quantity": 2}' http://127.0.0.1:8080/api/v1/cart/items
+```
+
+Kalıcı bir PostgreSQL için önce `docker compose up -d`, sonra şu ortam değişkenleri: `BOOKSTORE_DB_URL=jdbc:postgresql://localhost:5432/bookstore`, `BOOKSTORE_DB_USER=bookstore`, `BOOKSTORE_DB_PASSWORD=bookstore` ve demo verisi isteniyorsa `BOOKSTORE_DEMO_DATA=true`. Port `BOOKSTORE_PORT` ile değişir.
+
+Uçların listesi her modülün `rest` paketindeki `…Resource` sınıflarının açıklamasındadır; hatalar RFC 9457 biçiminde döner *([ADR-0009](docs/adr/ADR-0009.md))*.
 
 ## Geliştirme akışı
 

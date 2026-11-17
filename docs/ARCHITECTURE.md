@@ -2,7 +2,7 @@
 
 Bu doküman sistemin **nasıl** kurulduğunu anlatır. **Ne** yaptığı [SPEC.md](SPEC.md), kararların gerekçeleri [docs/adr](adr/README.md), müfredatla ilişkisi [CURRICULUM-MAP.md](CURRICULUM-MAP.md) içindedir.
 
-> **Mevcut durum ve hedef.** Bu doküman **hedef mimariyi** anlatır. Faz 4.1 ile modül yapısı hedefe ulaştı: kod iş alanına göre modüllerde duruyor ve modüller birbirini yalnızca `api` paketleriyle kullanıyor. Faz 4.2 ile ADR-0003–0008'in kuralları ArchUnit testi oldu; Faz 4.3 ile domain modeli tipli kimlikler, `DomainException` ve `Specification` ile dersle hizalandı. Faz 4 tamamlandı; henüz yapılmayanlar *(web katmanı, uygulama sunucusu, güvenlik ve arayüz)* Faz 5–7'de; bölüm 9 kalan farkları listeler.
+> **Mevcut durum ve hedef.** Bu doküman **hedef mimariyi** anlatır. Faz 4.1 ile modül yapısı hedefe ulaştı: kod iş alanına göre modüllerde duruyor ve modüller birbirini yalnızca `api` paketleriyle kullanıyor. Faz 4.2 ile ADR-0003–0008'in kuralları ArchUnit testi oldu; Faz 4.3 ile domain modeli tipli kimlikler, `DomainException` ve `Specification` ile dersle hizalandı. Faz 4 ve 5 tamamlandı; elle yazılmış bir REST API var. Henüz yapılmayanlar *(uygulama sunucusu, güvenlik ve arayüz)* Faz 6–7'de; bölüm 9 kalan farkları listeler.
 
 ## 1. Genel bakış
 
@@ -259,11 +259,11 @@ Ayrıntıları ve ArchUnit karşılıkları ADR-0004 ve ADR-0005'tedir:
 
 ## 9. Bugünkü kodla hedef arasındaki farklar
 
-| Konu | Bugün *(Faz 4 sonu)* | Hedef | Adım |
+| Konu | Bugün *(Faz 5 sonu)* | Hedef | Adım |
 | --- | --- | --- | --- |
 | Modüller | ✅ İş alanına göre modüller, `shared-kernel`, `shared-jdbc`, `app`, mimari testler | — | 4.1 |
 | Migration'lar | ✅ Modül başına dosya ve Flyway geçmişi | — | 4.1 |
-| Web | Web katmanı yok *(Spring Boot iskeleti kaldırıldı)* | JDK HTTP sunucusu, sonra Payara Micro, JAX-RS, statik arayüz | 5, 6, 7 |
+| Web | ✅ Elle yazılmış REST API *(`shared-web`, modül başına `rest` paketi, JDK HTTP sunucusu, HTTP Basic)* | Payara Micro, JAX-RS, Jakarta Security, statik arayüz | 6, 7 |
 | Mimari kurallar | ✅ ADR-0003–0008'in ArchUnit kuralları *(`rest` kuralları Faz 5'te dolar)* | — | 4.2 |
 | Kimlikler | ✅ Tipli kimlikler *(`BookId`, `CustomerId` shared-kernel'de)* | — | 4.3 |
 | Hatalar | ✅ `DomainException` + `Kind` + `code` | — | 4.3 |

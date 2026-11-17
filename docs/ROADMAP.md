@@ -11,7 +11,7 @@ Hangi konunun hangi fazda işlendiği [CURRICULUM-MAP.md](CURRICULUM-MAP.md) iç
 | **2** | ✅ | Kullanım senaryoları | 10, 11 | Katalog, sepet, hesap, sipariş verme, sipariş geçmişi, sipariş durum yönetimi ve yorum servisleri; beş port; bellek içi repository'lerle 54 test |
 | **3** | ✅ | Kalıcılık | 12 | Flyway şeması, JDBC araç seti, yedi repository, sipariş numarası sayacı, işlem yönetimi; H2 üzerinde 59 test |
 | **4** | ✅ | Dersle hizalama | 4–12 | İş alanına göre modüller, ArchUnit, tipli kimlikler, `api` sözleşmesi, olay yayıncısı, PostgreSQL ve sözleşme testleri |
-| **5** | | HTTP sınırı *(elle)* | 13 | JDK HTTP sunucusu, DTO'lar, Bean Validation, RFC 9457 |
+| **5** | ✅ | HTTP sınırı *(elle)* | 13 | JDK HTTP sunucusu, DTO'lar, Bean Validation, RFC 9457 |
 | **6** | | Uygulama sunucusu | 14 | Payara Micro 7 üzerinde WAR: CDI, JTA, CDI olayları, JAX-RS, JSON-B, MicroProfile Config ve OpenAPI |
 | **7** | | Güvenlik ve arayüz | — | Jakarta Security, BCrypt, HTML ve JavaScript sayfaları, iki dilli arayüz |
 | **8** | | Yönetim paneli | — | Kitap/yazar/kategori, kapak görseli, sipariş, kullanıcı ve yorum yönetimi |
@@ -49,7 +49,7 @@ Ders Bölüm 13'ü izler: JAX-RS'e geçmeden önce bir runtime'ın yaptığı i�
 | 5.1 ✅ | `shared-web` modülü *(ADR-0019)*: `HttpApi`, `Routes`, JSON, Bean Validation, `ProblemMapper`, HTTP Basic; ArchUnit kuralları |
 | 5.2 ✅ | Katalog ve hesap uçları; `AccountFacade.authenticate` |
 | 5.3 ✅ | Sepet, sipariş ve sipariş yönetimi uçları; `cart.changed` problemi düzeltmeleri `adjustments` uzantısıyla taşır |
-| 5.4 | Yorum uçları; çalıştırılabilir sunucu ve demo verisi; uçtan uca HTTP testleri |
+| 5.4 ✅ | Yorum uçları; çalıştırılabilir sunucu *(`./mvnw -pl app exec:java`)* ve demo verisi; PBKDF2 parola özeti; uçtan uca HTTP testi |
 
 Misafir sepeti Faz 5'te HTTP üzerinden sunulmaz; sepet uçları giriş yapmış müşteri içindir *(ADR-0019)*.
 
@@ -98,6 +98,13 @@ Ders notlarının soru bölümlerinde Lab projesine bırakılan konular ve son k
 ---
 
 ## Tamamlanan fazların notları
+
+### Faz 5
+
+- Dört commit: `shared-web` *(ADR-0019)*; katalog ve hesap uçları; sepet ve sipariş uçları; yorum uçları ve çalıştırılabilir sunucu.
+- Kimlik Faz 5'te elle yazılmış HTTP Basic ile belirleniyor *(`AccountFacade.authenticate`)*; Faz 7'de Jakarta Security'ye geçecek. Misafir sepeti HTTP üzerinden sunulmuyor.
+- Sunucu `curl` ile elle de denendi: katalog araması, HTTP Basic ile profil ve kimliksiz sepet isteğine RFC 9457 401 yanıtı. Bu deneme `Money`'nin `isZero()` gibi metotlarının JSON'a sızdığını gösterdi; düzeltildi ve `JsonTest` ile sabitlendi.
+- Test sayısı: 412 koşan, 38 Docker'a bağlı.
 
 ### Faz 1–2
 

@@ -22,6 +22,12 @@
         </dependency>
         <dependency>
             <groupId>com.bookstore</groupId>
+            <artifactId>shared-web</artifactId>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.bookstore</groupId>
             <artifactId>catalog</artifactId>
         </dependency>
         <dependency>
@@ -45,7 +51,6 @@
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.bookstore</groupId>
@@ -74,7 +79,6 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
@@ -82,4 +86,18 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <!-- ./mvnw -pl app exec:java starts the API (see the README). -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>${exec-plugin.version}</version>
+                <configuration>
+                    <mainClass>com.bookstore.app.BookstoreServer</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>

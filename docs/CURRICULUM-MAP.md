@@ -165,14 +165,14 @@ Faz numaraları [ROADMAP.md](ROADMAP.md) içindeki aşamalardır; ADR'ler [docs/
 
 | Konu | Kitap mağazasında | Durum | Faz |
 | --- | --- | --- | --- |
-| `rest` paketi, façade üzerinden erişim | Her iş modülünde *(ADR-0009)* | ⏳ | 5 |
-| Request DTO ve Bean Validation *(biçimsel doğrulama)* | `AddToCartRequest`, `PlaceOrderRequest`, `RegistrationRequest` … | ⏳ | 5 |
-| Doğrulamanın yeri: sınır mı domain mi? | Biçim sınırda, kural domain'de *(ADR-0009)* | ⏳ | 5 |
-| `DomainException.Kind` → durum kodu | `Kind` 4.3'te geldi; eşleme *(404 / 409 / 422 / 403, biçim hatası 400)* Faz 5'te | ⏳ | 4.3, 5 |
-| RFC 9457 Problem Details | `ProblemMapper`, `application/problem+json` | ⏳ | 5 |
-| JSON dönüşümleri | Faz 5'te Jackson, Faz 6'da JSON-B | ⏳ | 5, 6 |
-| JDK HTTP sunucusu *(`com.sun.net.httpserver`)* | Elle yönlendirme ve hata eşleme | ⏳ | 5 |
-| HTTP testleri | `java.net.http.HttpClient` ile uçtan uca | ⏳ | 5 |
+| `rest` paketi, façade üzerinden erişim | `CatalogResource`, `AccountResource`, `CartResource`, `OrderResource`, `OrderAdminResource`, `ReviewResource`; ortak işler `shared-web`'de *(ADR-0009, ADR-0019)* | ✅ | 5 |
+| Request DTO ve Bean Validation *(biçimsel doğrulama)* | `AccountRequests`, `SalesRequests`, `ReviewResource.ReviewRequest`; `RequestValidator` bütün alan hatalarını tek 400 yanıtında döner | ✅ | 5 |
+| Doğrulamanın yeri: sınır mı domain mi? | Biçim sınırda *(400)*, kural domain'de *(422)*; örneğin zayıf parola 422, boş ad 400 *(`AccountResourceTest`)* | ✅ | 5 |
+| `DomainException.Kind` → durum kodu | `ProblemMapper.statusOf`: 404 / 409 / 422 / 403; biçim hatası 400 | ✅ | 4.3, 5 |
+| RFC 9457 Problem Details | `Problem`, `ProblemMapper`, `application/problem+json`; uzantı alanları *(`cart.changed` için `adjustments`)*; opak 500 | ✅ | 5 |
+| JSON dönüşümleri | Faz 5'te Jackson *(`Json`: tipli kimlikler sayı, zamanlar ISO-8601, bilinmeyen alan hata)*; Faz 6'da JSON-B | 🔁 | 5, 6 |
+| JDK HTTP sunucusu *(`com.sun.net.httpserver`)* | `HttpApi`: istek başına sanal thread, `Routes` ile yol şablonları *(404 / 405)*, HTTP Basic | ✅ | 5 |
+| HTTP testleri | `HttpTestClient` *(`java.net.http.HttpClient`)*; modül başına `…ResourceTest` ve uçtan uca `BookstoreHttpTest` | ✅ | 5 |
 
 ## Bölüm 14 — Uygulama Sunucusu: CDI, JTA, JAX-RS ve Payara Micro
 
