@@ -156,7 +156,7 @@ Faz numaraları [ROADMAP.md](ROADMAP.md) içindeki aşamalardır; ADR'ler [docs/
 | Sipariş numarası veritabanından | `order_number_sequences` + `JdbcOrderNumberSequence` | ✅ | 3 |
 | Transaction sınırı kullanım senaryosunda | `TransactionRunner` portu + `JdbcTransactionRunner` *(`ThreadLocal` ile bağlantı)* | ✅ | 2, 3 |
 | Sözleşme testleri *(contract tests)* | Her repository için tek sözleşme; bellek içi, H2 ve PostgreSQL implementasyonlarının hepsi geçecek | ⏳ | 4 |
-| Bellek içi repository'nin kopya saklaması | Bugün referans saklıyor *(ders Bölüm 12'deki açığın aynısı)* | 🔁 | 4 |
+| Bellek içi repository'nin kopya saklaması | `InMemoryStore` kopya saklar, her okumada yeni kopya verir ve eski sürümle kaydı `concurrent-modification` ile reddeder; kategori ağacı satır olarak tutulup her okumada yeniden kurulur. Paylaşılan referansa güvenen üç test ve bir kimlik karşılaştırması hatası düzeltildi | ✅ | 4.6 |
 | PostgreSQL ve Testcontainers | Migration'lar PostgreSQL 17 lehçesinde; testler H2 PostgreSQL modunda; yerel veritabanı `docker-compose.yml`. Testcontainers sözleşme testleriyle gelecek *(ADR-0008)* | 🔁 | 4.6 |
 | Atomik kayıt, geri alma | `app` modülünde `CheckoutWithDatabaseTest.declinedPaymentRollsBack…`: başka bir modüldeki stok da geri alınıyor | ✅ | 3, 4.1 |
 | JPA'nın neleri ortadan kaldırdığı | Ayrı persistence modeliyle ikinci uygulama | ⏳ | 9 |

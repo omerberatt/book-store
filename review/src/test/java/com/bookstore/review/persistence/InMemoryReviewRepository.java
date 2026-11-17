@@ -23,6 +23,12 @@ public class InMemoryReviewRepository extends InMemoryStore<ReviewId, Review> im
         super(ReviewId::new);
     }
 
+    @Override
+    protected Review copyOf(Review review) {
+        return Review.reconstitute(review.id(), review.version(), review.bookId(), review.customerId(),
+                review.rating(), review.comment(), review.createdAt(), review.updatedAt());
+    }
+
     private static final Comparator<Review> NEWEST_FIRST =
             Comparator.comparing(Review::createdAt).thenComparing(review -> review.id().value()).reversed();
 
@@ -51,7 +57,7 @@ public class InMemoryReviewRepository extends InMemoryStore<ReviewId, Review> im
     @Override
     protected void beforeSave(Review review) {
         Optional<Review> existing = findByBookIdAndCustomerId(review.bookId(), review.customerId());
-        if (existing.isPresent() && existing.get() != review) {
+        if (existing.isPresent() && (review.isNew() || !existing.get().id().equals(review.id()))) {
             throw new ConflictException("review.duplicate", "duplicate review");
         }
     }

@@ -28,6 +28,7 @@ class StockAndRatingServiceTest {
     @Test
     void offersCopyTheCurrentPriceStockAndStatus() {
         madonna.deactivate();
+        shop.books.save(madonna);
 
         List<BookOffer> offers = shop.stock.offers(List.of(dune.id(), madonna.id(), BookId.of(999)));
 
@@ -58,6 +59,7 @@ class StockAndRatingServiceTest {
     @Test
     void reserveRefusesInactiveAndMissingBooks() {
         madonna.deactivate();
+        shop.books.save(madonna);
 
         assertThatThrownBy(() -> shop.stock.reserve(Map.of(madonna.id(), 1)))
                 .isInstanceOfSatisfying(ConflictException.class, e -> assertThat(e.code()).isEqualTo("book.inactive"));

@@ -99,6 +99,7 @@ class CatalogServiceTest {
     void summaryShowsStockAndRating() {
         madonna.addRating(5);
         madonna.addRating(4);
+        shop.books.save(madonna);
 
         List<BookSummary> found = shop.catalog.search(BookSearchQuery.everything().byAuthor(ali.id().value()),
                 PageRequest.first()).content();

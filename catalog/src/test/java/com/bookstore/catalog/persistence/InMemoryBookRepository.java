@@ -29,6 +29,27 @@ public class InMemoryBookRepository extends InMemoryStore<BookId, Book> implemen
     }
 
     @Override
+    protected Book copyOf(Book book) {
+        return Book.builder()
+                .persisted(book.id(), book.version())
+                .isbn(book.isbn())
+                .title(book.title())
+                .authors(book.authors())
+                .category(book.category())
+                .publisher(book.publisher())
+                .publicationYear(book.publicationYear().orElse(null))
+                .language(book.language())
+                .pageCount(book.pageCount())
+                .description(book.description())
+                .price(book.price())
+                .stock(book.stock())
+                .coverImage(book.coverImage().orElse(null))
+                .active(book.isActive())
+                .ratings(book.ratings())
+                .build();
+    }
+
+    @Override
     public Optional<Book> findByIsbn(Isbn isbn) {
         return Optional.ofNullable(idByIsbn.get(isbn)).flatMap(this::findById);
     }

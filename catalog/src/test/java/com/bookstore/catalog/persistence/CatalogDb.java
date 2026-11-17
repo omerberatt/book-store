@@ -11,7 +11,6 @@ import com.bookstore.shared.jdbc.TestDatabase;
 import com.bookstore.shared.kernel.money.Money;
 
 import java.util.concurrent.atomic.AtomicInteger;
-
 import javax.sql.DataSource;
 
 /**

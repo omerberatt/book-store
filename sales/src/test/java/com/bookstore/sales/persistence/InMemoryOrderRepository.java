@@ -24,6 +24,13 @@ public class InMemoryOrderRepository extends InMemoryStore<OrderId, Order> imple
         super(OrderId::new);
     }
 
+    @Override
+    protected Order copyOf(Order order) {
+        return Order.reconstitute(order.id(), order.version(), order.number(), order.customerId(), order.lines(),
+                order.shippingAddress(), order.paymentMethod(), order.shippingCost(), order.status(), order.placedAt(),
+                order.statusChangedAt());
+    }
+
     private static final Comparator<Order> NEWEST_FIRST =
             Comparator.comparing(Order::placedAt).thenComparing(order -> order.id().value()).reversed();
 

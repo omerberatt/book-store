@@ -13,6 +13,7 @@ import com.bookstore.shared.kernel.testing.InMemoryStore;
 
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
@@ -26,6 +27,16 @@ public class InMemoryCustomerRepository extends InMemoryStore<CustomerId, Custom
     /** Creates an empty repository. */
     public InMemoryCustomerRepository() {
         super(CustomerId::new);
+    }
+
+    @Override
+    protected Customer copyOf(Customer customer) {
+        List<SavedAddress> addresses = customer.addresses().stream()
+                .map(a -> SavedAddress.reconstitute(a.id(), a.version(), a.label(), a.address()))
+                .toList();
+        return Customer.reconstitute(customer.id(), customer.version(), customer.email(), customer.name(),
+                customer.passwordHash(), customer.role(), customer.isActive(), customer.registeredAt(), addresses,
+                customer.defaultAddress().map(SavedAddress::id).orElse(null));
     }
 
     @Override
