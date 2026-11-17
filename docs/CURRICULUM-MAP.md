@@ -135,8 +135,8 @@ Faz numaraları [ROADMAP.md](ROADMAP.md) içindeki aşamalardır; ADR'ler [docs/
 | Olaylar `sealed` arayüz + `record` | `shared-kernel` `DomainEvent`; `sales` modülünün `sealed` `OrderEvent` arayüzü: `OrderPlaced`, `OrderStatusChanged` | ✅ | 4.1 |
 | Aggregate olayı biriktirir, servis toplar *(`pullEvents`)* | `Entity.raise` / `pullEvents` | ✅ | 1 |
 | Önce kayıt, sonra yayın | `CheckoutService`, `OrderAdminService` | ✅ | 2 |
-| Yayıncı portu ve gözlemciler | Bugün tek bir `Notifier` portu; `DomainEventPublisher` + `InProcessEventPublisher` + gözlemciler olacak *(ADR-0007)* | 🔁 | 4 |
-| Dual-write problemi | Bilinçli olarak belgeleyen bir test | ⏳ | 4 |
+| Yayıncı portu ve gözlemciler | `shared-kernel`: `DomainEventPublisher` portu ve `InProcessEventPublisher` *(aynı thread, abonelik sırası, alt türler dahil)*; `sales.application.OrderNotificationObserver` sipariş olaylarını `Notifier` adaptörüne verir; `BookstoreModule` aboneliği kurar *(ADR-0007)* | ✅ | 4.5 |
+| Dual-write problemi | `CheckoutWithDatabaseTest.aFailingNotificationLeavesTheStoredOrderInPlaceAndIsLost`: bildirim hata verince sipariş kayıtlı kalır, bildirim kaybolur *(çözümü Faz 9'daki Transactional Outbox)* | ✅ | 4.5 |
 | `switch` ile tür eşleme *(exhaustiveness)* | `OrderTest.target`, `CartService.load`, `CheckoutService` ödeme sonucu | ✅ | 1, 2 |
 
 ## Bölüm 12 — Persistence Boundary, JDBC ve Flyway

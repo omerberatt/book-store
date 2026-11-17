@@ -10,7 +10,7 @@ Hangi konunun hangi fazda işlendiği [CURRICULUM-MAP.md](CURRICULUM-MAP.md) iç
 | **1** | ✅ | Domain modeli | 1–5, 7, 8 | Değer nesneleri, varlıklar, sipariş durum makinesi, kargo kuralı, arama ölçütü, repository arayüzleri; 144 birim testi |
 | **2** | ✅ | Kullanım senaryoları | 10, 11 | Katalog, sepet, hesap, sipariş verme, sipariş geçmişi, sipariş durum yönetimi ve yorum servisleri; beş port; bellek içi repository'lerle 54 test |
 | **3** | ✅ | Kalıcılık | 12 | Flyway şeması, JDBC araç seti, yedi repository, sipariş numarası sayacı, işlem yönetimi; H2 üzerinde 59 test |
-| **4** | 4.1–4.4 ✅ | Dersle hizalama | 4–12 | İş alanına göre modüller, ArchUnit, tipli kimlikler, `api` sözleşmesi, olay yayıncısı, PostgreSQL ve sözleşme testleri |
+| **4** | 4.1–4.5 ✅ | Dersle hizalama | 4–12 | İş alanına göre modüller, ArchUnit, tipli kimlikler, `api` sözleşmesi, olay yayıncısı, PostgreSQL ve sözleşme testleri |
 | **5** | | HTTP sınırı *(elle)* | 13 | JDK HTTP sunucusu, DTO'lar, Bean Validation, RFC 9457 |
 | **6** | | Uygulama sunucusu | 14 | Payara Micro 7 üzerinde WAR: CDI, JTA, CDI olayları, JAX-RS, JSON-B, MicroProfile Config ve OpenAPI |
 | **7** | | Güvenlik ve arayüz | — | Jakarta Security, BCrypt, HTML ve JavaScript sayfaları, iki dilli arayüz |
@@ -29,7 +29,7 @@ Faz 0–3, ders notları görülmeden önce genel bir Java müfredatı varsayıl
 | 4.2 ✅ | Mimari kurallar | ADR-0003–0008'deki kuralların ArchUnit testleri. Kuralların yakaladığı ihlaller düzeltildi: `Optional` alanlı ve parametreli tipler. | 0003–0008 |
 | 4.3 ✅ | Domain modeli | Tipli kimlikler; `DomainException` + `Kind` + `code`; `restore` → `reconstitute`; `shared-kernel`'de `Specification<T>`, `catalog`'da `BookSpecifications`. | 0004 |
 | 4.4 ✅ | `api` sözleşmesi | Her modülde `api` paketi: komutlar, DTO'lar, façade arayüzleri; `application` paketinde mapper'lar. `app` modülünde elle yazılmış composition root *(`BookstoreModule`)* ve smoke test. | 0003, 0006 |
-| 4.5 | Domain olayları | `DomainEventPublisher` portu, `InProcessEventPublisher`, bildirim gözlemcisi; dual-write problemini belgeleyen test. | 0007 |
+| 4.5 ✅ | Domain olayları | `DomainEventPublisher` portu, `InProcessEventPublisher`, bildirim gözlemcisi; dual-write problemini belgeleyen test. | 0007 |
 | 4.6 | PostgreSQL | Referans tablolar, PostgreSQL 17 lehçesi; `docker-compose.yml`; H2 PostgreSQL modu; repository sözleşme testleri *(bellek içi, H2, Testcontainers)*; bellek içi repository'ler kopya saklar. | 0008 |
 
 **Faz 4 sonunda:** Faz 1–3'ün bütün davranışı ve testleri yeni yapıda çalışır; ArchUnit kuralları geçer; Spring bağımlılığı kalmaz.
@@ -94,6 +94,13 @@ Ders notlarının soru bölümlerinde Lab projesine bırakılan konular ve son k
 
 - Domain kuralları ve kullanım senaryoları yazıldı. Faz 1'den Faz 2'ye devredilen dört madde *(CRT-5, REV-2/REV-3, ACC-1, ORD-10)* Faz 2'de tamamlandı.
 - Bellek içi test çiftleri işlemi geri alamıyordu; bu sınır Faz 3'te kapandı.
+
+### Faz 4.5
+
+- `shared-kernel`'de `DomainEventPublisher` portu ve `InProcessEventPublisher`. `CheckoutService` ve `OrderAdminService` siparişi kaydettikten sonra olayları porta veriyor.
+- `Notifier` artık dış dünyaya giden adaptör; `sales.application.OrderNotificationObserver` sipariş olaylarını ona iletiyor. Aboneliği `BookstoreModule` kuruyor.
+- Dual-write problemi bir testle belgelendi: bildirim hata verince sipariş kayıtlı kalıyor, bildirim kayboluyor.
+- `only_application_publishes_events` ArchUnit kuralı eklendi. Test sayısı 316 → 321.
 
 ### Faz 4.4
 

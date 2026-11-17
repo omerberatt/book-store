@@ -35,7 +35,13 @@ final class JdbcBookstore {
 
     final List<DomainEvent> notified = Collections.synchronizedList(new ArrayList<>());
     final AtomicBoolean declineCards = new AtomicBoolean();
-    private final Notifier notifier = notified::add;
+    final AtomicBoolean notificationsFail = new AtomicBoolean();
+    private final Notifier notifier = event -> {
+        if (notificationsFail.get()) {
+            throw new IllegalStateException("Mail server unreachable");
+        }
+        notified.add(event);
+    };
     private final PaymentGateway payments = (number, amount) -> declineCards.get()
             ? new PaymentGateway.PaymentResult.Declined("Card declined")
             : new PaymentGateway.PaymentResult.Approved("TX-" + number.value());

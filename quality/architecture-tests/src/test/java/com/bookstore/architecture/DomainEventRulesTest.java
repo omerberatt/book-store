@@ -3,6 +3,7 @@ package com.bookstore.architecture;
 import static com.bookstore.architecture.Layers.APPLICATION;
 import static com.bookstore.architecture.Layers.DOMAIN;
 import static com.bookstore.architecture.Layers.SHARED_KERNEL_DOMAIN;
+import static com.bookstore.architecture.Layers.publishingEvents;
 import static com.bookstore.architecture.Layers.pullingEvents;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
@@ -39,4 +40,11 @@ class DomainEventRulesTest {
             .that().resideOutsideOfPackages(APPLICATION, SHARED_KERNEL_DOMAIN)
             .should().callMethodWhere(pullingEvents())
             .because("ADR-0007: events are published only after the aggregate is stored");
+
+    /** ADR-0007: only use cases publish events; aggregates and repositories never do. */
+    @ArchTest
+    static final ArchRule only_application_publishes_events = noClasses()
+            .that().resideOutsideOfPackages(APPLICATION, "com.bookstore.shared.kernel.event..")
+            .should().callMethodWhere(publishingEvents())
+            .because("ADR-0007: the use case saves the aggregate first, then hands its events to the publisher");
 }

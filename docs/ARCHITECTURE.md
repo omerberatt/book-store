@@ -2,7 +2,7 @@
 
 Bu doküman sistemin **nasıl** kurulduğunu anlatır. **Ne** yaptığı [SPEC.md](SPEC.md), kararların gerekçeleri [docs/adr](adr/README.md), müfredatla ilişkisi [CURRICULUM-MAP.md](CURRICULUM-MAP.md) içindedir.
 
-> **Mevcut durum ve hedef.** Bu doküman **hedef mimariyi** anlatır. Faz 4.1 ile modül yapısı hedefe ulaştı: kod iş alanına göre modüllerde duruyor ve modüller birbirini yalnızca `api` paketleriyle kullanıyor. Faz 4.2 ile ADR-0003–0008'in kuralları ArchUnit testi oldu; Faz 4.3 ile domain modeli tipli kimlikler, `DomainException` ve `Specification` ile dersle hizalandı. Henüz yapılmayanlar *(web katmanı, PostgreSQL, uygulama sunucusu)* Faz 4.5–7'de; bölüm 9 kalan farkları listeler.
+> **Mevcut durum ve hedef.** Bu doküman **hedef mimariyi** anlatır. Faz 4.1 ile modül yapısı hedefe ulaştı: kod iş alanına göre modüllerde duruyor ve modüller birbirini yalnızca `api` paketleriyle kullanıyor. Faz 4.2 ile ADR-0003–0008'in kuralları ArchUnit testi oldu; Faz 4.3 ile domain modeli tipli kimlikler, `DomainException` ve `Specification` ile dersle hizalandı. Henüz yapılmayanlar *(web katmanı, PostgreSQL, uygulama sunucusu)* Faz 4.6–7'de; bölüm 9 kalan farkları listeler.
 
 ## 1. Genel bakış
 
@@ -252,7 +252,7 @@ Ayrıntıları ve ArchUnit karşılıkları ADR-0004 ve ADR-0005'tedir:
 
 ## 9. Bugünkü kodla hedef arasındaki farklar
 
-| Konu | Bugün *(Faz 4.4 sonu)* | Hedef | Adım |
+| Konu | Bugün *(Faz 4.5 sonu)* | Hedef | Adım |
 | --- | --- | --- | --- |
 | Modüller | ✅ İş alanına göre modüller, `shared-kernel`, `shared-jdbc`, `app`, mimari testler | — | 4.1 |
 | Migration'lar | ✅ Modül başına dosya ve Flyway geçmişi | — | 4.1 |
@@ -262,7 +262,7 @@ Ayrıntıları ve ArchUnit karşılıkları ADR-0004 ve ADR-0005'tedir:
 | Hatalar | ✅ `DomainException` + `Kind` + `code` | — | 4.3 |
 | Arama ölçütü | ✅ `Specification<Book>`, SQL'e `BookSearchSql` çevirir | — | 4.3 |
 | Servis sonuçları | ✅ `api` paketinde komutlar, DTO'lar, façade'lar; `application` paketinde mapper'lar | — | 4.4 |
-| Bildirim | `Notifier` portu | `DomainEventPublisher` + gözlemciler | 4.5 |
+| Bildirim | ✅ `DomainEventPublisher` + `InProcessEventPublisher` + `OrderNotificationObserver` | CDI olayları *(`AFTER_SUCCESS`)* | 6 |
 | Veritabanı | H2 MySQL modu, `CHECK` içinde `CASE` | PostgreSQL 17, referans tablolar | 4.6 |
 | Composition root | ✅ `BookstoreModule` *(elle)* | CDI | 6 |
 | Repository testleri | Implementasyon başına ayrı testler | Ortak sözleşme testleri | 4.6 |

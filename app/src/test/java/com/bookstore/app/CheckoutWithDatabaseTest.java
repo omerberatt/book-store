@@ -48,6 +48,24 @@ class CheckoutWithDatabaseTest {
         assertThat(store.notified).hasSize(2);
     }
 
+    /**
+     * The dual-write problem (ADR-0007): the order is committed before its events are published, so
+     * a failing notification cannot undo it. The customer sees an error for an order that exists, and
+     * the notification is lost. The Transactional Outbox of Phase 9 closes this gap.
+     */
+    @Test
+    void aFailingNotificationLeavesTheStoredOrderInPlaceAndIsLost() {
+        store.cart.add(CartRef.customer(ayse.id()), dune.id(), 2);
+        store.notificationsFail.set(true);
+
+        assertThatThrownBy(() -> place(ayse)).hasMessage("Mail server unreachable");
+
+        assertThat(store.database.jdbc().queryForLong("SELECT COUNT(*) FROM orders")).isEqualTo(1);
+        assertThat(stockOf(dune)).isEqualTo(3);
+        assertThat(store.carts.findByCustomerId(ayse.id()).orElseThrow().isEmpty()).isTrue();
+        assertThat(store.notified).isEmpty();
+    }
+
     @Test
     void declinedPaymentRollsBackTheStockTheOrderAndTheOrderNumber() {
         store.cart.add(CartRef.customer(ayse.id()), dune.id(), 2);

@@ -10,7 +10,7 @@ import com.bookstore.sales.domain.OrderRepository;
 import com.bookstore.sales.domain.OrderStatus;
 import com.bookstore.shared.kernel.error.ConflictException;
 import com.bookstore.shared.kernel.error.NotFoundException;
-import com.bookstore.shared.kernel.event.Notifier;
+import com.bookstore.shared.kernel.event.DomainEventPublisher;
 import com.bookstore.shared.kernel.paging.Page;
 import com.bookstore.shared.kernel.paging.PageRequest;
 import com.bookstore.shared.kernel.transaction.TransactionRunner;
@@ -26,7 +26,7 @@ public class OrderAdminService implements OrderAdminFacade {
     private final OrderRepository orders;
     private final StockFacade stock;
     private final TransactionRunner transactions;
-    private final Notifier notifier;
+    private final DomainEventPublisher events;
     private final Clock clock;
 
     /**
@@ -35,15 +35,15 @@ public class OrderAdminService implements OrderAdminFacade {
      * @param orders       where orders are stored
      * @param stock        the catalog's stock, for returning copies on cancellation
      * @param transactions runs work in a transaction
-     * @param notifier     tells customers about their orders
+     * @param events       receives the events of stored orders
      * @param clock        the clock giving status change times
      */
     public OrderAdminService(OrderRepository orders, StockFacade stock, TransactionRunner transactions,
-                             Notifier notifier, Clock clock) {
+                             DomainEventPublisher events, Clock clock) {
         this.orders = orders;
         this.stock = stock;
         this.transactions = transactions;
-        this.notifier = notifier;
+        this.events = events;
         this.clock = clock;
     }
 
@@ -104,7 +104,7 @@ public class OrderAdminService implements OrderAdminFacade {
             }
             return orders.save(found);
         });
-        order.pullEvents().forEach(notifier::publish);
+        events.publishAll(order.pullEvents());
         return SalesMapper.detailsOf(order);
     }
 

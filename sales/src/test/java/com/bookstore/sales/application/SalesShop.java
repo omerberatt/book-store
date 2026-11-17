@@ -3,6 +3,7 @@ package com.bookstore.sales.application;
 import com.bookstore.sales.api.CartRef;
 import com.bookstore.sales.api.OrderDetails;
 import com.bookstore.sales.api.PlaceOrderCommand;
+import com.bookstore.sales.domain.OrderEvent;
 import com.bookstore.sales.domain.OrderNumber;
 import com.bookstore.sales.domain.OrderNumberSequence;
 import com.bookstore.sales.domain.PaymentGateway;
@@ -10,6 +11,7 @@ import com.bookstore.sales.domain.ShippingPolicy;
 import com.bookstore.sales.persistence.InMemoryCartRepository;
 import com.bookstore.sales.persistence.InMemoryOrderRepository;
 import com.bookstore.shared.kernel.address.Address;
+import com.bookstore.shared.kernel.event.InProcessEventPublisher;
 import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.kernel.money.Money;
 import com.bookstore.shared.kernel.testing.DirectTransactions;
@@ -40,15 +42,21 @@ public final class SalesShop {
     public final InMemoryOrderRepository orders = new InMemoryOrderRepository();
     public final DirectTransactions transactions = new DirectTransactions();
     public final RecordingNotifier notifier = new RecordingNotifier();
+    public final InProcessEventPublisher events = new InProcessEventPublisher();
+
+    {
+        events.subscribe(OrderEvent.class, new OrderNotificationObserver(notifier));
+    }
+
     public final ScriptedPaymentGateway payments = new ScriptedPaymentGateway();
     public final CountingOrderNumbers orderNumbers = new CountingOrderNumbers();
     public final ShippingPolicy shipping = ShippingPolicy.standard();
 
     public final CartService cart = new CartService(catalog, carts, shipping, transactions);
     public final CheckoutService checkout = new CheckoutService(customers, carts, catalog, orders, orderNumbers,
-            payments, shipping, transactions, notifier, CLOCK);
+            payments, shipping, transactions, events, CLOCK);
     public final OrderService myOrders = new OrderService(orders);
-    public final OrderAdminService orderAdmin = new OrderAdminService(orders, catalog, transactions, notifier, CLOCK);
+    public final OrderAdminService orderAdmin = new OrderAdminService(orders, catalog, transactions, events, CLOCK);
     public final PurchaseHistoryService purchases = new PurchaseHistoryService(orders);
 
     /** Adds an active book to the fake catalog. */

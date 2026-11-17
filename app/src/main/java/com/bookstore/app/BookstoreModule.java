@@ -21,8 +21,10 @@ import com.bookstore.sales.api.OrderFacade;
 import com.bookstore.sales.application.CartService;
 import com.bookstore.sales.application.CheckoutService;
 import com.bookstore.sales.application.OrderAdminService;
+import com.bookstore.sales.application.OrderNotificationObserver;
 import com.bookstore.sales.application.OrderService;
 import com.bookstore.sales.application.PurchaseHistoryService;
+import com.bookstore.sales.domain.OrderEvent;
 import com.bookstore.sales.domain.PaymentGateway;
 import com.bookstore.sales.domain.ShippingPolicy;
 import com.bookstore.sales.persistence.JdbcCartRepository;
@@ -31,6 +33,7 @@ import com.bookstore.sales.persistence.JdbcOrderRepository;
 import com.bookstore.shared.jdbc.JdbcExecutor;
 import com.bookstore.shared.jdbc.JdbcTransactionRunner;
 import com.bookstore.shared.jdbc.ModuleMigrations;
+import com.bookstore.shared.kernel.event.InProcessEventPublisher;
 import com.bookstore.shared.kernel.event.Notifier;
 
 import java.time.Clock;
@@ -77,6 +80,8 @@ public final class BookstoreModule {
         JdbcTransactionRunner transactions = new JdbcTransactionRunner(dataSource);
         JdbcExecutor jdbc = new JdbcExecutor(transactions);
         ShippingPolicy shipping = ShippingPolicy.standard();
+        InProcessEventPublisher events = new InProcessEventPublisher();
+        events.subscribe(OrderEvent.class, new OrderNotificationObserver(adapters.notifier()));
 
         // catalog
         JdbcCategoryRepository categoryRepository = new JdbcCategoryRepository(jdbc);
@@ -97,10 +102,9 @@ public final class BookstoreModule {
         this.cart = new CartService(stock, cartRepository, shipping, transactions);
         this.checkout = new CheckoutService(directory, cartRepository, stock, orderRepository,
                 new JdbcOrderNumberSequence(jdbc, transactions), adapters.paymentGateway(), shipping, transactions,
-                adapters.notifier(), adapters.clock());
+                events, adapters.clock());
         this.orders = new OrderService(orderRepository);
-        this.orderAdmin = new OrderAdminService(orderRepository, stock, transactions, adapters.notifier(),
-                adapters.clock());
+        this.orderAdmin = new OrderAdminService(orderRepository, stock, transactions, events, adapters.clock());
         PurchaseHistoryService purchases = new PurchaseHistoryService(orderRepository);
 
         // review
@@ -158,7 +162,7 @@ public final class BookstoreModule {
      * @param clock          the source of the current time
      * @param paymentGateway charges cards
      * @param passwordHasher hashes and checks passwords
-     * @param notifier       tells customers about their orders
+     * @param notifier       tells customers about their orders; {@link OrderNotificationObserver} feeds it
      */
     public record Adapters(Clock clock, PaymentGateway paymentGateway, PasswordHasher passwordHasher,
                            Notifier notifier) {

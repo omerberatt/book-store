@@ -22,7 +22,7 @@ import com.bookstore.shared.kernel.address.Address;
 import com.bookstore.shared.kernel.error.NotFoundException;
 import com.bookstore.shared.kernel.error.RuleViolationException;
 import com.bookstore.shared.kernel.error.ValidationException;
-import com.bookstore.shared.kernel.event.Notifier;
+import com.bookstore.shared.kernel.event.DomainEventPublisher;
 import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.kernel.transaction.TransactionRunner;
@@ -59,7 +59,7 @@ public class CheckoutService implements CheckoutFacade {
     private final PaymentGateway paymentGateway;
     private final ShippingPolicy shippingPolicy;
     private final TransactionRunner transactions;
-    private final Notifier notifier;
+    private final DomainEventPublisher events;
     private final Clock clock;
 
     /**
@@ -73,13 +73,13 @@ public class CheckoutService implements CheckoutFacade {
      * @param paymentGateway charges cards
      * @param shippingPolicy the rule for the shipping cost
      * @param transactions   runs work in a transaction
-     * @param notifier       tells customers about their orders
+     * @param events         receives the events of stored orders
      * @param clock          the clock giving order times
      */
     public CheckoutService(CustomerDirectory customers, CartRepository carts, StockFacade stock,
                            OrderRepository orders, OrderNumberSequence orderNumbers, PaymentGateway paymentGateway,
-                           ShippingPolicy shippingPolicy, TransactionRunner transactions, Notifier notifier,
-                           Clock clock) {
+                           ShippingPolicy shippingPolicy, TransactionRunner transactions,
+                           DomainEventPublisher events, Clock clock) {
         this.customers = customers;
         this.carts = carts;
         this.stock = stock;
@@ -88,7 +88,7 @@ public class CheckoutService implements CheckoutFacade {
         this.paymentGateway = paymentGateway;
         this.shippingPolicy = shippingPolicy;
         this.transactions = transactions;
-        this.notifier = notifier;
+        this.events = events;
         this.clock = clock;
     }
 
@@ -116,7 +116,7 @@ public class CheckoutService implements CheckoutFacade {
 
         Order order = transactions.inTransaction(() -> place(command, paymentMethod));
 
-        order.pullEvents().forEach(notifier::publish);
+        events.publishAll(order.pullEvents());
         return SalesMapper.detailsOf(order);
     }
 

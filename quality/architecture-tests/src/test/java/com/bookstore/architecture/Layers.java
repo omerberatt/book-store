@@ -1,6 +1,7 @@
 package com.bookstore.architecture;
 
 import com.bookstore.shared.kernel.domain.Entity;
+import com.bookstore.shared.kernel.event.DomainEventPublisher;
 
 import java.sql.Connection;
 import java.util.Set;
@@ -62,6 +63,17 @@ final class Layers {
     static DescribedPredicate<JavaMethodCall> pullingEvents() {
         return DescribedPredicate.describe("Entity.pullEvents()", call -> call.getName().equals("pullEvents")
                 && call.getTargetOwner().isAssignableTo(Entity.class));
+    }
+
+    /**
+     * Calls to {@code publish} or {@code publishAll} on a domain event publisher.
+     *
+     * @return the predicate
+     */
+    static DescribedPredicate<JavaMethodCall> publishingEvents() {
+        return DescribedPredicate.describe("DomainEventPublisher.publish/publishAll", call ->
+                (call.getName().equals("publish") || call.getName().equals("publishAll"))
+                        && call.getTargetOwner().isAssignableTo(DomainEventPublisher.class));
     }
 
     /**
