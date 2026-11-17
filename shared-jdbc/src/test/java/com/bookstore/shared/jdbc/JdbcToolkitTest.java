@@ -13,7 +13,12 @@ import org.junit.jupiter.api.Test;
 /** The transaction runner, the executor and the reflective row mapper against a real database. */
 class JdbcToolkitTest {
 
-    private final TestDatabase db = TestDatabase.withModules("toolkit");
+    private final TestDatabase db = newDatabase();
+
+    /** @return the database the tests run on: H2 here, PostgreSQL in {@link PostgresJdbcToolkitTest} */
+    protected TestDatabase newDatabase() {
+        return TestDatabase.withModules("toolkit");
+    }
 
     @Test
     void migrationsRunOnlyOnce() {

@@ -3,25 +3,70 @@ package com.bookstore.sales.persistence;
 import com.bookstore.catalog.domain.Book;
 import com.bookstore.catalog.persistence.CatalogDb;
 import com.bookstore.customer.persistence.CustomerDb;
+import com.bookstore.sales.domain.CartRepository;
+import com.bookstore.sales.domain.OrderNumberSequence;
+import com.bookstore.sales.domain.OrderRepository;
 import com.bookstore.sales.domain.ProductSnapshot;
 import com.bookstore.shared.jdbc.JdbcExecutor;
 import com.bookstore.shared.jdbc.TestDatabase;
 
 /**
- * A test database with the catalog, customer and sales tables, and the sales repositories on it.
- * Books and users that sales rows refer to are created through the other modules' fixtures.
+ * The sales repositories on a test database (H2 or PostgreSQL) with the catalog, customer and
+ * sales tables, or in memory. Books and users that sales rows refer to are created through the
+ * other modules' fixtures. {@link #jdbc} is {@code null} in memory.
  */
 public final class SalesDb {
 
-    public final TestDatabase database = TestDatabase.withModules("catalog", "customer", "sales");
-    public final JdbcExecutor jdbc = database.jdbc();
-    public final CatalogDb catalog = new CatalogDb(database);
-    public final CustomerDb customers = new CustomerDb(database);
-    public final JdbcCartRepository carts = new JdbcCartRepository(jdbc);
-    public final JdbcOrderRepository orders = new JdbcOrderRepository(jdbc);
-    public final JdbcOrderNumberSequence orderNumbers = new JdbcOrderNumberSequence(jdbc, database.transactions());
+    public final JdbcExecutor jdbc;
+    public final CatalogDb catalog;
+    public final CustomerDb customers;
+    public final CartRepository carts;
+    public final OrderRepository orders;
+    public final OrderNumberSequence orderNumbers;
 
-    /** Returns the sales module's view of a stored book. */
+    /** Creates a fresh H2 database. */
+    public SalesDb() {
+        this(TestDatabase.withModules("catalog", "customer", "sales"));
+    }
+
+    /**
+     * Uses a database that has the catalog, customer and sales tables.
+     *
+     * @param database the database
+     */
+    public SalesDb(TestDatabase database) {
+        this.jdbc = database.jdbc();
+        this.catalog = new CatalogDb(database);
+        this.customers = new CustomerDb(database);
+        this.carts = new JdbcCartRepository(jdbc);
+        this.orders = new JdbcOrderRepository(jdbc);
+        this.orderNumbers = new JdbcOrderNumberSequence(jdbc, database.transactions());
+    }
+
+    private SalesDb(CatalogDb catalog, CustomerDb customers) {
+        this.jdbc = null;
+        this.catalog = catalog;
+        this.customers = customers;
+        this.carts = new InMemoryCartRepository();
+        this.orders = new InMemoryOrderRepository();
+        this.orderNumbers = new InMemoryOrderNumberSequence();
+    }
+
+    /**
+     * Creates the sales module's in-memory repositories, with in-memory catalog and customers.
+     *
+     * @return the fixture
+     */
+    public static SalesDb inMemory() {
+        return new SalesDb(CatalogDb.inMemory(), CustomerDb.inMemory());
+    }
+
+    /**
+     * Returns the sales module's view of a stored book.
+     *
+     * @param book a stored book
+     * @return the snapshot
+     */
     public static ProductSnapshot snapshotOf(Book book) {
         return new ProductSnapshot(book.id(), book.title(), book.authorNames(), book.price(), book.stock().quantity(),
                 book.isActive());

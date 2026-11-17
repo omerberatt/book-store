@@ -4,13 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.bookstore.catalog.domain.Book;
-import com.bookstore.catalog.persistence.CatalogDb;
 import com.bookstore.customer.domain.Customer;
 import com.bookstore.customer.persistence.CustomerDb;
 import com.bookstore.review.domain.Rating;
 import com.bookstore.review.domain.Review;
-import com.bookstore.shared.jdbc.DataAccessException;
-import com.bookstore.shared.jdbc.TestDatabase;
+import com.bookstore.review.domain.ReviewRepository;
 import com.bookstore.shared.kernel.error.ConflictException;
 import com.bookstore.shared.kernel.paging.PageRequest;
 import com.bookstore.shared.kernel.testing.TestClock;
@@ -20,14 +18,22 @@ import java.time.Duration;
 
 import org.junit.jupiter.api.Test;
 
-class JdbcReviewRepositoryTest {
+/**
+ * The contract of the review repository (ADR-0008): the in-memory, H2 and PostgreSQL
+ * implementations must all pass these tests.
+ */
+abstract class ReviewRepositoryContract {
 
-    private final TestDatabase database = TestDatabase.withModules("catalog", "customer", "sales", "review");
-    private final JdbcReviewRepository reviews = new JdbcReviewRepository(database.jdbc());
-    private final CustomerDb customers = new CustomerDb(database);
+    protected final ReviewDb db = newDb();
+
+    /** @return a fresh, empty repository of the implementation under test */
+    protected abstract ReviewDb newDb();
+
+    private final ReviewRepository reviews = db.reviews;
+    private final CustomerDb customers = db.customers;
     private final Customer ayse = customers.customer("ayse@example.com");
     private final Customer mehmet = customers.customer("mehmet@example.com");
-    private final Book dune = new CatalogDb(database).book("Dune", "100", 10);
+    private final Book dune = db.catalog.book("Dune", "100", 10);
 
     @Test
     void reviewSurvivesTheRoundTripAndEdits() {
@@ -69,13 +75,5 @@ class JdbcReviewRepositoryTest {
 
         reviews.delete(first);
         assertThat(reviews.findRatingsByBookId(dune.id())).containsExactly(Rating.of(2));
-    }
-
-    @Test
-    void ratingMustBeOneToFiveInTheDatabaseToo() {
-        assertThatThrownBy(() -> database.jdbc().update("INSERT INTO reviews (book_id, user_id, rating, comment_text, "
-                + "created_at, updated_at) VALUES (?, ?, 6, '', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
-                dune.id(), ayse.id()))
-                .isInstanceOfSatisfying(DataAccessException.class, e -> assertThat(e.isConstraintViolation()).isTrue());
     }
 }

@@ -5,10 +5,10 @@ import com.bookstore.sales.api.OrderDetails;
 import com.bookstore.sales.api.PlaceOrderCommand;
 import com.bookstore.sales.domain.OrderEvent;
 import com.bookstore.sales.domain.OrderNumber;
-import com.bookstore.sales.domain.OrderNumberSequence;
 import com.bookstore.sales.domain.PaymentGateway;
 import com.bookstore.sales.domain.ShippingPolicy;
 import com.bookstore.sales.persistence.InMemoryCartRepository;
+import com.bookstore.sales.persistence.InMemoryOrderNumberSequence;
 import com.bookstore.sales.persistence.InMemoryOrderRepository;
 import com.bookstore.shared.kernel.address.Address;
 import com.bookstore.shared.kernel.event.InProcessEventPublisher;
@@ -20,12 +20,8 @@ import com.bookstore.shared.kernel.testing.TestAddresses;
 import com.bookstore.shared.kernel.testing.TestClock;
 
 import java.time.Clock;
-import java.time.Year;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * The sales module wired with in-memory repositories, fake ports and fakes of the catalog and
@@ -49,7 +45,7 @@ public final class SalesShop {
     }
 
     public final ScriptedPaymentGateway payments = new ScriptedPaymentGateway();
-    public final CountingOrderNumbers orderNumbers = new CountingOrderNumbers();
+    public final InMemoryOrderNumberSequence orderNumbers = new InMemoryOrderNumberSequence();
     public final ShippingPolicy shipping = ShippingPolicy.standard();
 
     public final CartService cart = new CartService(catalog, carts, shipping, transactions);
@@ -118,18 +114,6 @@ public final class SalesShop {
         /** @return the amounts charged successfully, in order */
         public List<Money> charged() {
             return List.copyOf(charged);
-        }
-    }
-
-    /** One counter per year, safe for concurrent use. */
-    public static final class CountingOrderNumbers implements OrderNumberSequence {
-
-        private final Map<Year, AtomicLong> counters = new ConcurrentHashMap<>();
-
-        @Override
-        public OrderNumber next(Year year) {
-            long sequence = counters.computeIfAbsent(year, y -> new AtomicLong()).incrementAndGet();
-            return OrderNumber.of(year, sequence);
         }
     }
 }

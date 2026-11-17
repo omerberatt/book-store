@@ -1,8 +1,11 @@
 package com.bookstore.catalog.persistence;
 
 import com.bookstore.catalog.domain.Author;
+import com.bookstore.catalog.domain.AuthorRepository;
 import com.bookstore.catalog.domain.Book;
+import com.bookstore.catalog.domain.BookRepository;
 import com.bookstore.catalog.domain.Category;
+import com.bookstore.catalog.domain.CategoryRepository;
 import com.bookstore.catalog.domain.Isbn;
 import com.bookstore.catalog.domain.Stock;
 import com.bookstore.shared.jdbc.JdbcExecutor;
@@ -14,18 +17,19 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.sql.DataSource;
 
 /**
- * A fresh H2 database with the catalog module's tables and repositories, plus helpers that store
- * typical catalog objects. Other modules' persistence tests use it to create the books their rows
- * refer to.
+ * The catalog module's repositories on a test database (H2 or PostgreSQL) or in memory, plus helpers
+ * that store typical catalog objects. The repository contract tests run against all three; other
+ * modules' persistence tests use it to create the books their rows refer to. The JDBC fields are
+ * {@code null} for the in-memory variant.
  */
 public final class CatalogDb {
 
     public final DataSource dataSource;
     public final JdbcTransactionRunner transactions;
     public final JdbcExecutor jdbc;
-    public final JdbcCategoryRepository categories;
-    public final JdbcAuthorRepository authors;
-    public final JdbcBookRepository books;
+    public final CategoryRepository categories;
+    public final AuthorRepository authors;
+    public final BookRepository books;
 
     private final AtomicInteger counter = new AtomicInteger();
 
@@ -43,9 +47,29 @@ public final class CatalogDb {
         dataSource = database.dataSource();
         transactions = database.transactions();
         jdbc = database.jdbc();
-        categories = new JdbcCategoryRepository(jdbc);
+        JdbcCategoryRepository jdbcCategories = new JdbcCategoryRepository(jdbc);
+        categories = jdbcCategories;
         authors = new JdbcAuthorRepository(jdbc);
-        books = new JdbcBookRepository(jdbc, categories);
+        books = new JdbcBookRepository(jdbc, jdbcCategories);
+    }
+
+    private CatalogDb(CategoryRepository categories, AuthorRepository authors, BookRepository books) {
+        this.dataSource = null;
+        this.transactions = null;
+        this.jdbc = null;
+        this.categories = categories;
+        this.authors = authors;
+        this.books = books;
+    }
+
+    /**
+     * Creates the catalog's in-memory repositories.
+     *
+     * @return the fixture
+     */
+    public static CatalogDb inMemory() {
+        return new CatalogDb(new InMemoryCategoryRepository(), new InMemoryAuthorRepository(),
+                new InMemoryBookRepository());
     }
 
     /** Stores a root category. */

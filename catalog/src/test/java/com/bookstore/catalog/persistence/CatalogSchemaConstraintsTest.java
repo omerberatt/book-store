@@ -17,7 +17,12 @@ import org.junit.jupiter.api.Test;
  */
 class CatalogSchemaConstraintsTest {
 
-    private final CatalogDb db = new CatalogDb();
+    private final CatalogDb db = newDb();
+
+    /** @return the database the constraints are checked on: H2 here, PostgreSQL in a subclass */
+    protected CatalogDb newDb() {
+        return new CatalogDb();
+    }
     private final Book book = db.book("Dune", "100", 5);
 
     @Test

@@ -35,9 +35,16 @@ import java.util.Set;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-class JdbcCatalogRepositoryTest {
+/**
+ * The contract of the catalog's repositories (ADR-0008): every implementation – in memory, H2 and
+ * PostgreSQL – must pass these tests. Subclasses only say which one they test.
+ */
+abstract class CatalogRepositoryContract {
 
-    private final CatalogDb db = new CatalogDb();
+    protected final CatalogDb db = newDb();
+
+    /** @return fresh, empty repositories of the implementation under test */
+    protected abstract CatalogDb newDb();
 
     @Nested
     class Categories {

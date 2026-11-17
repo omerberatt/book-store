@@ -29,9 +29,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 final class JdbcBookstore {
 
-    final TestDatabase database = TestDatabase.withModules(ModuleMigrations.ALL.toArray(String[]::new));
-    final CatalogDb catalogDb = new CatalogDb(database);
-    final CustomerDb customerDb = new CustomerDb(database);
+    final TestDatabase database;
+    final CatalogDb catalogDb;
+    final CustomerDb customerDb;
 
     final List<DomainEvent> notified = Collections.synchronizedList(new ArrayList<>());
     final AtomicBoolean declineCards = new AtomicBoolean();
@@ -46,15 +46,37 @@ final class JdbcBookstore {
             ? new PaymentGateway.PaymentResult.Declined("Card declined")
             : new PaymentGateway.PaymentResult.Approved("TX-" + number.value());
 
-    final BookstoreModule module = new BookstoreModule(database.dataSource(),
-            new BookstoreModule.Adapters(TestClock.CLOCK, payments, new CustomerShop.PrefixPasswordHasher(), notifier));
+    final BookstoreModule module;
+    final CatalogFacade catalog;
+    final CartFacade cart;
+    final CheckoutFacade checkout;
+    final OrderAdminFacade orderAdmin;
+    final ReviewFacade reviews;
+    final JdbcOrderRepository orders;
+    final JdbcCartRepository carts;
 
-    final CatalogFacade catalog = module.catalog();
-    final CartFacade cart = module.cart();
-    final CheckoutFacade checkout = module.checkout();
-    final OrderAdminFacade orderAdmin = module.orderAdmin();
-    final ReviewFacade reviews = module.reviews();
+    /** Wires the application on a fresh H2 database. */
+    JdbcBookstore() {
+        this(TestDatabase.withModules(ModuleMigrations.ALL.toArray(String[]::new)));
+    }
 
-    final JdbcOrderRepository orders = new JdbcOrderRepository(database.jdbc());
-    final JdbcCartRepository carts = new JdbcCartRepository(database.jdbc());
+    /**
+     * Wires the application on a migrated database.
+     *
+     * @param database H2 or PostgreSQL, with every module's tables
+     */
+    JdbcBookstore(TestDatabase database) {
+        this.database = database;
+        this.catalogDb = new CatalogDb(database);
+        this.customerDb = new CustomerDb(database);
+        this.module = new BookstoreModule(database.dataSource(),
+                new BookstoreModule.Adapters(TestClock.CLOCK, payments, new CustomerShop.PrefixPasswordHasher(), notifier));
+        this.catalog = module.catalog();
+        this.cart = module.cart();
+        this.checkout = module.checkout();
+        this.orderAdmin = module.orderAdmin();
+        this.reviews = module.reviews();
+        this.orders = new JdbcOrderRepository(database.jdbc());
+        this.carts = new JdbcCartRepository(database.jdbc());
+    }
 }

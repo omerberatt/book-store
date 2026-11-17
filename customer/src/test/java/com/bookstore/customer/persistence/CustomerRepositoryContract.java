@@ -9,7 +9,6 @@ import com.bookstore.customer.domain.Email;
 import com.bookstore.customer.domain.PersonName;
 import com.bookstore.customer.domain.Role;
 import com.bookstore.customer.domain.SavedAddress;
-import com.bookstore.shared.jdbc.DataAccessException;
 import com.bookstore.shared.kernel.error.ConflictException;
 import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.kernel.paging.Page;
@@ -17,14 +16,20 @@ import com.bookstore.shared.kernel.paging.PageRequest;
 import com.bookstore.shared.kernel.testing.TestAddresses;
 import com.bookstore.shared.kernel.testing.TestClock;
 
-import java.util.Arrays;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-class JdbcCustomerRepositoryTest {
+/**
+ * The contract of the customer repository (ADR-0008): the in-memory, H2 and PostgreSQL
+ * implementations must all pass these tests.
+ */
+abstract class CustomerRepositoryContract {
 
-    private final CustomerDb db = new CustomerDb();
+    protected final CustomerDb db = newDb();
+
+    /** @return a fresh, empty repository of the implementation under test */
+    protected abstract CustomerDb newDb();
 
     @Test
     void customerAndAddressesSurviveTheRoundTrip() {
@@ -98,22 +103,5 @@ class JdbcCustomerRepositoryTest {
 
         assertThat(page.content()).extracting(c -> c.email().value()).containsExactly("b@example.com", "a@example.com");
         assertThat(db.customers.findAllById(List.of(a.id(), b.id(), CustomerId.of(999)))).hasSize(2);
-    }
-
-    @Test
-    void theRolesTableListsEveryRoleOfTheDomain() {
-        assertThat(db.jdbc.query("SELECT code FROM roles", row -> row.getString("code")))
-                .containsExactlyInAnyOrderElementsOf(Arrays.stream(Role.values()).map(Role::name).toList());
-    }
-
-    @Test
-    void roleMustBeKnownToTheDatabase() {
-        Customer customer = db.customer("ayse@example.com");
-
-        assertThatThrownBy(() -> db.jdbc.update("UPDATE users SET role = 'HACKER' WHERE id = ?", customer.id()))
-                .isInstanceOfSatisfying(DataAccessException.class,
-                        e -> assertThat(e.isConstraintViolation()).isTrue());
-        db.jdbc.update("UPDATE users SET role = 'ADMIN' WHERE id = ?", customer.id());
-        assertThat(db.customers.findById(customer.id()).orElseThrow().isAdmin()).isTrue();
     }
 }

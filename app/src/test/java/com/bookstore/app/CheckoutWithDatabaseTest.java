@@ -29,7 +29,12 @@ import org.junit.jupiter.api.Test;
  */
 class CheckoutWithDatabaseTest {
 
-    private final JdbcBookstore store = new JdbcBookstore();
+    private final JdbcBookstore store = newStore();
+
+    /** @return the application on H2; PostgreSQL in {@link PostgresCheckoutWithDatabaseTest} */
+    protected JdbcBookstore newStore() {
+        return new JdbcBookstore();
+    }
 
     private final Book dune = store.catalogDb.book("Dune", "100.00", 5);
     private final Customer ayse = store.customerDb.customer("ayse@example.com");

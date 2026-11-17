@@ -4,7 +4,7 @@ Java ile yazılmış, modüler bir çevrimiçi kitap mağazası.
 
 Projenin amacı: çalışan bir e-ticaret uygulaması ortaya koymak.
 
-> **Durum:** Faz 0–3 ve Faz 4.1–4.5 tamamlandı. Kod iş alanına göre modüllerde *(katalog, müşteri, satış, yorum)*; modüller birbirini yalnızca `api` paketleriyle kullanıyor. Bu kural ve mimari kararların diğer kuralları ArchUnit testleriyle korunuyor. Jakarta EE, PostgreSQL, HTTP katmanı ve web sayfaları henüz yok. Ayrıntılar [yol haritasında](docs/ROADMAP.md).
+> **Durum:** Faz 0–4 tamamlandı. Kod iş alanına göre modüllerde *(katalog, müşteri, satış, yorum)*; modüller birbirini yalnızca `api` paketleriyle kullanıyor. Bu kural ve mimari kararların diğer kuralları ArchUnit testleriyle korunuyor. Veritabanı PostgreSQL 17; HTTP katmanı, Jakarta EE ve web sayfaları henüz yok. Ayrıntılar [yol haritasında](docs/ROADMAP.md).
 
 ## Dokümanlar
 
@@ -38,7 +38,7 @@ Java 21 · Maven · Jakarta EE 11 · MicroProfile 6.1 · Payara Micro 7 · Postg
 
 - JDK 21
 
-Maven kurmanız gerekmez; depo Maven Wrapper içerir. Docker zorunlu değildir; varsa veritabanı testleri gerçek PostgreSQL üzerinde de çalışır *(Faz 4'ten itibaren)*.
+Maven kurmanız gerekmez; depo Maven Wrapper içerir. Docker zorunlu değildir; varsa repository sözleşme testleri Testcontainers ile gerçek PostgreSQL 17 üzerinde de çalışır, yoksa atlanır.
 
 ## Derleme ve test
 

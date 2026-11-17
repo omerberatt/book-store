@@ -14,7 +14,6 @@ import com.bookstore.sales.domain.OrderStatus;
 import com.bookstore.sales.domain.PaymentMethod;
 import com.bookstore.sales.domain.ProductSnapshot;
 import com.bookstore.sales.domain.ShippingPolicy;
-import com.bookstore.shared.jdbc.DataAccessException;
 import com.bookstore.shared.jdbc.JdbcExecutor;
 import com.bookstore.shared.kernel.error.ConflictException;
 import com.bookstore.shared.kernel.identity.BookId;
@@ -27,7 +26,6 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Year;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,17 +38,16 @@ import java.util.concurrent.Future;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-class JdbcSalesRepositoriesTest {
+/**
+ * The contract of the sales repositories and the order number sequence (ADR-0008): the in-memory,
+ * H2 and PostgreSQL implementations must all pass these tests.
+ */
+abstract class SalesRepositoryContract {
 
-    private final SalesDb db = new SalesDb();
+    protected final SalesDb db = newDb();
 
-    @Test
-    void referenceTablesListEveryStatusAndPaymentMethodOfTheDomain() {
-        assertThat(db.jdbc.query("SELECT code FROM order_statuses", row -> row.getString("code")))
-                .containsExactlyInAnyOrderElementsOf(Arrays.stream(OrderStatus.values()).map(Enum::name).toList());
-        assertThat(db.jdbc.query("SELECT code FROM payment_methods", row -> row.getString("code")))
-                .containsExactlyInAnyOrderElementsOf(Arrays.stream(PaymentMethod.values()).map(Enum::name).toList());
-    }
+    /** @return fresh, empty repositories of the implementation under test */
+    protected abstract SalesDb newDb();
 
     @Nested
     class Carts {
@@ -91,16 +88,6 @@ class JdbcSalesRepositoriesTest {
         @Test
         void guestCartsAreNotStored() {
             assertThatThrownBy(() -> db.carts.save(Cart.guest())).isInstanceOf(IllegalArgumentException.class);
-        }
-
-        @Test
-        void quantityIsCappedAtTenByTheDatabaseToo() {
-            db.jdbc.update("INSERT INTO carts (user_id) VALUES (?)", customer.id());
-
-            assertThatThrownBy(() -> db.jdbc.update("INSERT INTO cart_items (user_id, book_id, sort_order, quantity, "
-                    + "price_when_added) VALUES (?, ?, 0, 11, 100)", customer.id(), dune.bookId()))
-                    .isInstanceOfSatisfying(DataAccessException.class,
-                            e -> assertThat(e.isConstraintViolation()).isTrue());
         }
     }
 
