@@ -33,6 +33,16 @@ public interface AccountFacade {
     Optional<LoginAccount> findLoginAccount(String email);
 
     /**
+     * Checks a customer's e-mail address and password, for signing in (ACC-3). A disabled account
+     * (ACC-7) cannot sign in.
+     *
+     * @param email    the e-mail address as typed
+     * @param password the password as typed
+     * @return the account, if the credentials are right and the account is active
+     */
+    Optional<LoginAccount> authenticate(String email, String password);
+
+    /**
      * Returns a customer's profile.
      *
      * @param customerId the customer

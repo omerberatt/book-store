@@ -90,6 +90,16 @@ public class AccountService implements AccountFacade {
         return customers.findByEmail(parsed).map(CustomerMapper::loginOf);
     }
 
+    @Override
+    public Optional<LoginAccount> authenticate(String email, String password) {
+        if (password == null) {
+            return Optional.empty();
+        }
+        return findLoginAccount(email)
+                .filter(LoginAccount::active)
+                .filter(account -> passwordHasher.matches(password, account.passwordHash()));
+    }
+
     /**
      * Returns a customer's profile.
      *

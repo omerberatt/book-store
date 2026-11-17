@@ -71,6 +71,22 @@ class AccountServiceTest {
     }
 
     @Test
+    void authenticationNeedsTheRightPasswordAndAnActiveAccount() {
+        CustomerId id = shop.customer("ayse@example.com");
+
+        assertThat(shop.accounts.authenticate("AYSE@example.com", CustomerShop.PASSWORD))
+                .hasValueSatisfying(account -> assertThat(account.customerId()).isEqualTo(id));
+        assertThat(shop.accounts.authenticate("ayse@example.com", "wrong-password")).isEmpty();
+        assertThat(shop.accounts.authenticate("ayse@example.com", null)).isEmpty();
+        assertThat(shop.accounts.authenticate("nobody@example.com", CustomerShop.PASSWORD)).isEmpty();
+
+        var customer = shop.customers.findById(id).orElseThrow();
+        customer.deactivate();
+        shop.customers.save(customer);
+        assertThat(shop.accounts.authenticate("ayse@example.com", CustomerShop.PASSWORD)).isEmpty();
+    }
+
+    @Test
     void loginAccountShowsDeactivatedCustomers() {
         CustomerId id = shop.customer("ayse@example.com");
         var customer = shop.customers.findById(id).orElseThrow();
