@@ -23,9 +23,13 @@ import java.time.Clock;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+
 /**
  * Registration, sign-in lookup, profile and address book (ACC-1 to ACC-7).
  */
+@ApplicationScoped
 public class AccountService implements AccountFacade {
 
     /** Error code for an e-mail address that is already registered. */
@@ -44,12 +48,18 @@ public class AccountService implements AccountFacade {
      * @param transactions   runs work in a transaction
      * @param clock          the clock giving registration times
      */
+    @Inject
     public AccountService(CustomerRepository customers, PasswordHasher passwordHasher, TransactionRunner transactions,
                           Clock clock) {
         this.customers = customers;
         this.passwordHasher = passwordHasher;
         this.transactions = transactions;
         this.clock = clock;
+    }
+
+    /** For the CDI container's client proxy only; never called by the application. */
+    protected AccountService() {
+        this(null, null, null, null);
     }
 
     /**

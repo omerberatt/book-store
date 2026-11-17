@@ -16,9 +16,13 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+
 /**
  * Prices and stock for other modules.
  */
+@ApplicationScoped
 public class StockService implements StockFacade {
 
     private final BookRepository books;
@@ -30,9 +34,15 @@ public class StockService implements StockFacade {
      * @param books        where books are stored
      * @param transactions runs work in a transaction; joins the caller's if there is one
      */
+    @Inject
     public StockService(BookRepository books, TransactionRunner transactions) {
         this.books = books;
         this.transactions = transactions;
+    }
+
+    /** For the CDI container's client proxy only; never called by the application. */
+    protected StockService() {
+        this(null, null);
     }
 
     @Override

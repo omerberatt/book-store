@@ -16,6 +16,12 @@
     <description>Carts, checkout, payment and order status changes.</description>
 
     <dependencies>
+        <!-- CDI and JTA annotations for the application and persistence packages (ADR-0010); the server provides them. -->
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-web-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>com.bookstore</groupId>
             <artifactId>shared-web</artifactId>

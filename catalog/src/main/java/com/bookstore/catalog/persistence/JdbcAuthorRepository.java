@@ -11,10 +11,14 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+
 /**
  * Stores authors in the {@code authors} table, together with a normalised copy of the name used
  * by the catalog search.
  */
+@ApplicationScoped
 public class JdbcAuthorRepository implements AuthorRepository {
 
     static final RowMapper<Author> MAPPER =
@@ -27,8 +31,14 @@ public class JdbcAuthorRepository implements AuthorRepository {
      *
      * @param jdbc runs the SQL
      */
+    @Inject
     public JdbcAuthorRepository(JdbcExecutor jdbc) {
         this.jdbc = jdbc;
+    }
+
+    /** For the CDI container's client proxy only; never called by the application. */
+    protected JdbcAuthorRepository() {
+        this(null);
     }
 
     @Override

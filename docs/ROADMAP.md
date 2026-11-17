@@ -61,10 +61,19 @@ Ders Bölüm 14'ü izler *(ADR-0010)*.
 - CDI ile bağlama; `BookstoreWiring` yalnızca `Clock`, `DataSource` ve kargo kuralını üretir.
 - `@DataSourceDefinition` ve MicroProfile Config; parolalar ortamdan.
 - `BookstoreStartup`: açılışta migration ve isteğe bağlı demo verisi.
-- `@Transactional` kullanım senaryoları; `JdbcTransactionRunner` kalkar.
+- `@Transactional` ile JTA transaction'ları; sunucuda `TransactionRunner` portunu `JtaTransactionRunner` uygular.
 - CDI olayları ve `AFTER_SUCCESS` gözlemcileri.
 - HTTP katmanı JAX-RS, JSON-B ve `ExceptionMapper`'a taşınır; Faz 5'in HTTP testleri JerseyTest ile aynen geçer.
 - MicroProfile OpenAPI ile `/openapi`.
+
+| Adım | İş |
+| --- | --- |
+| 6.1 ✅ | CDI ile bağlama: modüllerde `beans.xml`, `@ApplicationScoped` servis ve repository'ler; `BookstoreWiring`, `BookstoreDataSource`, `JtaTransactionRunner`, `CdiDomainEventPublisher`, `BookstoreStartup`; `ConnectionProvider`; Weld SE ile `CdiWiringTest`; platform ArchUnit kuralları |
+| 6.2 | `app` WAR olur; Payara Micro 7.2026.10 üzerinde açılış, migration ve demo verisi |
+| 6.3 | HTTP katmanı JAX-RS, JSON-B ve `ExceptionMapper`'a taşınır; HTTP testleri JerseyTest ile |
+| 6.4 | MicroProfile OpenAPI, sunucuda uçtan uca deneme, dokümanlar |
+
+`JdbcTransactionRunner` kalkmadı: testler ve elle yazılmış `BookstoreModule` onu kullanmaya devam ediyor; sunucuda aynı portun yerini `JtaTransactionRunner` alıyor *(ADR-0010 notu)*.
 
 ## Faz 7 — Güvenlik ve arayüz
 

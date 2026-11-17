@@ -25,9 +25,13 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+
 /**
  * Stores customers in the {@code users} table and their saved addresses in {@code addresses}.
  */
+@ApplicationScoped
 public class JdbcCustomerRepository implements CustomerRepository {
 
     private static final String USER_COLUMNS =
@@ -45,8 +49,14 @@ public class JdbcCustomerRepository implements CustomerRepository {
      *
      * @param jdbc runs the SQL
      */
+    @Inject
     public JdbcCustomerRepository(JdbcExecutor jdbc) {
         this.jdbc = jdbc;
+    }
+
+    /** For the CDI container's client proxy only; never called by the application. */
+    protected JdbcCustomerRepository() {
+        this(null);
     }
 
     // ---------------------------------------------------------------- queries

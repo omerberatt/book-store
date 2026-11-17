@@ -52,7 +52,7 @@ public final class BookstoreServer {
         int migrations = bookstore.migrate();
         LOG.log(Level.INFO, "Applied {0} migrations", migrations);
         if (demoData) {
-            DemoData.load(dataSource, bookstore, hasher, clock);
+            DemoData.load(dataSource, bookstore.accounts(), hasher, clock);
             LOG.log(Level.INFO, "Loaded the demo data; sign in as {0} or {1} with the password {2}",
                     DemoData.CUSTOMER_EMAIL, DemoData.ADMIN_EMAIL, DemoData.PASSWORD);
         }

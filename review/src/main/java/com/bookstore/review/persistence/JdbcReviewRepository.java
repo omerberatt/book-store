@@ -17,10 +17,14 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+
 /**
  * Stores reviews in the {@code reviews} table. A unique key on {@code (user_id, book_id)} keeps
  * customers to one review per book even if two requests arrive at the same time.
  */
+@ApplicationScoped
 public class JdbcReviewRepository implements ReviewRepository {
 
     private static final String COLUMNS = "id, version, book_id, user_id, rating, comment_text, created_at, updated_at";
@@ -34,8 +38,14 @@ public class JdbcReviewRepository implements ReviewRepository {
      *
      * @param jdbc runs the SQL
      */
+    @Inject
     public JdbcReviewRepository(JdbcExecutor jdbc) {
         this.jdbc = jdbc;
+    }
+
+    /** For the CDI container's client proxy only; never called by the application. */
+    protected JdbcReviewRepository() {
+        this(null);
     }
 
     @Override

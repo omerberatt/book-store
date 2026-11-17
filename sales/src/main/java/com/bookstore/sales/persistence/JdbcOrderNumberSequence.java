@@ -3,9 +3,12 @@ package com.bookstore.sales.persistence;
 import com.bookstore.sales.domain.OrderNumber;
 import com.bookstore.sales.domain.OrderNumberSequence;
 import com.bookstore.shared.jdbc.JdbcExecutor;
-import com.bookstore.shared.jdbc.JdbcTransactionRunner;
+import com.bookstore.shared.kernel.transaction.TransactionRunner;
 
 import java.time.Year;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 
 /**
  * Hands out order numbers from a counter row per year in {@code order_number_sequences}.
@@ -14,10 +17,11 @@ import java.time.Year;
  * two checkouts running at the same time cannot get the same number: the second waits for the
  * first. If the transaction rolls back, its number is handed out again.
  */
+@ApplicationScoped
 public class JdbcOrderNumberSequence implements OrderNumberSequence {
 
     private final JdbcExecutor jdbc;
-    private final JdbcTransactionRunner transactions;
+    private final TransactionRunner transactions;
 
     /**
      * Creates the sequence.
@@ -25,9 +29,15 @@ public class JdbcOrderNumberSequence implements OrderNumberSequence {
      * @param jdbc         runs the SQL
      * @param transactions keeps the increment and the read in one transaction
      */
-    public JdbcOrderNumberSequence(JdbcExecutor jdbc, JdbcTransactionRunner transactions) {
+    @Inject
+    public JdbcOrderNumberSequence(JdbcExecutor jdbc, TransactionRunner transactions) {
         this.jdbc = jdbc;
         this.transactions = transactions;
+    }
+
+    /** For the CDI container's client proxy only; never called by the application. */
+    protected JdbcOrderNumberSequence() {
+        this(null, null);
     }
 
     @Override

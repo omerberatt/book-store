@@ -13,10 +13,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+
 /**
  * Stores categories in the {@code categories} table. The tree is small, so it is always loaded in
  * one query and rebuilt in memory.
  */
+@ApplicationScoped
 public class JdbcCategoryRepository implements CategoryRepository {
 
     private final JdbcExecutor jdbc;
@@ -26,8 +30,14 @@ public class JdbcCategoryRepository implements CategoryRepository {
      *
      * @param jdbc runs the SQL
      */
+    @Inject
     public JdbcCategoryRepository(JdbcExecutor jdbc) {
         this.jdbc = jdbc;
+    }
+
+    /** For the CDI container's client proxy only; never called by the application. */
+    protected JdbcCategoryRepository() {
+        this(null);
     }
 
     @Override

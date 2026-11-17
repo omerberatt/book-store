@@ -40,15 +40,15 @@ public class JdbcExecutor {
     /** Error code for an update that lost the race against a concurrent update. */
     public static final String CONCURRENT_MODIFICATION = "concurrent-modification";
 
-    private final JdbcTransactionRunner transactions;
+    private final ConnectionProvider connections;
 
     /**
      * Creates the executor.
      *
-     * @param transactions supplies the current connection
+     * @param connections supplies the connection: the current transaction's, or the container's
      */
-    public JdbcExecutor(JdbcTransactionRunner transactions) {
-        this.transactions = Objects.requireNonNull(transactions, "transactions");
+    public JdbcExecutor(ConnectionProvider connections) {
+        this.connections = Objects.requireNonNull(connections, "connections");
     }
 
     /**
@@ -148,7 +148,7 @@ public class JdbcExecutor {
      * @return the generated id
      */
     public long insert(String sql, Object... params) {
-        return transactions.withConnection(connection -> {
+        return connections.withConnection(connection -> {
             try (PreparedStatement statement = connection.prepareStatement(sql, GENERATED_ID)) {
                 bind(statement, params);
                 statement.executeUpdate();
@@ -172,7 +172,7 @@ public class JdbcExecutor {
         if (rows.isEmpty()) {
             return;
         }
-        transactions.withConnection(connection -> {
+        connections.withConnection(connection -> {
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
                 for (Object[] params : rows) {
                     bind(statement, params);
@@ -214,7 +214,7 @@ public class JdbcExecutor {
     // ---------------------------------------------------------------- the fixed steps
 
     private <T> T execute(String sql, Object[] params, StatementCallback<T> callback) {
-        return transactions.withConnection(connection -> {
+        return connections.withConnection(connection -> {
             try (PreparedStatement statement = prepare(connection, sql)) {
                 bind(statement, params);
                 return callback.doWith(statement);

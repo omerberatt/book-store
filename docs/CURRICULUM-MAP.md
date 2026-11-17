@@ -178,13 +178,13 @@ Faz numaraları [ROADMAP.md](ROADMAP.md) içindeki aşamalardır; ADR'ler [docs/
 
 | Konu | Kitap mağazasında | Durum | Faz |
 | --- | --- | --- | --- |
-| WAR paketleme, Payara Micro 7 | `app` modülü → `bookstore.war` *(ADR-0010)* | ⏳ | 6 |
-| CDI: `beans.xml`, `annotated` keşif, kapsamlar, proxy | Servisler ve repository'ler `@ApplicationScoped` | ⏳ | 6 |
-| Producer'lar *(container'ın kuramadığı nesneler)* | `BookstoreWiring`: `Clock`, `DataSource`, kargo kuralı | ⏳ | 6 |
-| `@DataSourceDefinition` ve MicroProfile Config | Bağlantı bilgisi ortamdan, WAR'da parola yok | ⏳ | 6 |
-| Açılışta migration ve demo verisi | `BookstoreStartup` *(`bookstore.demo-data`)* | ⏳ | 6 |
-| JTA `@Transactional`, repository'ler commit etmez | `JdbcTransactionRunner`'ın yerini alır | ⏳ | 6 |
-| CDI olayları, `@Observes(during = AFTER_SUCCESS)` | `CdiDomainEventPublisher`, bildirim gözlemcisi | ⏳ | 6 |
+| WAR paketleme, Payara Micro 7 | `app` modülü → `bookstore.war`; Payara Micro 7.2026.10 *(MicroProfile 7.1)* | ⏳ | 6.2 |
+| CDI: `beans.xml`, `annotated` keşif, kapsamlar, proxy | Her modülde `META-INF/beans.xml` *(annotated)*; servisler ve repository'ler `@ApplicationScoped`, `@Inject` kurucu ve proxy için korumalı parametresiz kurucu; `CdiWiringTest` *(Weld SE)* | ✅ | 6.1 |
+| Producer'lar *(container'ın kuramadığı nesneler)* | `BookstoreWiring`: `Clock`, kargo kuralı, `JdbcExecutor`, parola, ödeme, bildirim; `BookstoreDataSource`: havuz ve `ConnectionProvider`; `@Typed` ile producer tiplerini sınırlamak *(`CdiWiringTest`)* | ✅ | 6.1 |
+| `@DataSourceDefinition` ve MicroProfile Config | `BookstoreDataSource` *(`${MPCONFIG=...}`)*; varsayılanlar `microprofile-config.properties`'te, parola ortamdan | 🔁 | 6.1, 6.4 *(sunucuda doğrulama)* |
+| Açılışta migration ve demo verisi | `BookstoreStartup` *(CDI `Startup` olayı, `bookstore.demo-data`)* | 🔁 | 6.1, 6.4 *(sunucuda doğrulama)* |
+| JTA `@Transactional`, repository'ler commit etmez | `JtaTransactionRunner`: `TransactionRunner` portunun `@Transactional` implementasyonu *(ADR-0010 notu)*; repository'ler havuzdan JTA'ya katılan bağlantı alır | 🔁 | 6.1, 6.4 *(sunucuda doğrulama)* |
+| CDI olayları, `@Observes(during = AFTER_SUCCESS)` | `CdiDomainEventPublisher`, `OrderNotificationObserver.onOrderEvent`; `domain_event_observers_wait_for_commit` | ✅ | 6.1 |
 | JAX-RS kaynakları, JSON-B, `ExceptionMapper` | Faz 5'teki HTTP katmanının taşınması | ⏳ | 6 |
 | JerseyTest | Faz 5'teki HTTP beklentileri aynen geçer | ⏳ | 6 |
 | MicroProfile OpenAPI | `/openapi` *(API-4)* | ⏳ | 6 |

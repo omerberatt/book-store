@@ -12,9 +12,13 @@ import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.kernel.paging.Page;
 import com.bookstore.shared.kernel.paging.PageRequest;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+
 /**
  * A customer's own orders (ORD-8).
  */
+@ApplicationScoped
 public class OrderService implements OrderFacade {
 
     private final OrderRepository orders;
@@ -24,8 +28,14 @@ public class OrderService implements OrderFacade {
      *
      * @param orders where orders are stored
      */
+    @Inject
     public OrderService(OrderRepository orders) {
         this.orders = orders;
+    }
+
+    /** For the CDI container's client proxy only; never called by the application. */
+    protected OrderService() {
+        this(null);
     }
 
     /**

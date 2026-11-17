@@ -32,6 +32,9 @@ import java.time.Year;
 import java.util.List;
 import java.util.Map;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+
 /**
  * Turns a customer's cart into an order (ORD-1 to ORD-5, ORD-9 to ORD-11).
  *
@@ -49,6 +52,7 @@ import java.util.Map;
  * ({@link StockFacade}, {@link CustomerDirectory}). Notifications are sent only after the second
  * transaction has committed.
  */
+@ApplicationScoped
 public class CheckoutService implements CheckoutFacade {
 
     private final CustomerDirectory customers;
@@ -76,6 +80,7 @@ public class CheckoutService implements CheckoutFacade {
      * @param events         receives the events of stored orders
      * @param clock          the clock giving order times
      */
+    @Inject
     public CheckoutService(CustomerDirectory customers, CartRepository carts, StockFacade stock,
                            OrderRepository orders, OrderNumberSequence orderNumbers, PaymentGateway paymentGateway,
                            ShippingPolicy shippingPolicy, TransactionRunner transactions,
@@ -90,6 +95,11 @@ public class CheckoutService implements CheckoutFacade {
         this.transactions = transactions;
         this.events = events;
         this.clock = clock;
+    }
+
+    /** For the CDI container's client proxy only; never called by the application. */
+    protected CheckoutService() {
+        this(null, null, null, null, null, null, null, null, null, null);
     }
 
     /**

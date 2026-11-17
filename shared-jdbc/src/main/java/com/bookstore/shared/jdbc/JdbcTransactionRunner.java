@@ -19,7 +19,7 @@ import javax.sql.DataSource;
  * <p>A transaction started inside another one joins it (the outer transaction decides). Calls made
  * outside any transaction get a short-lived connection in auto-commit mode.
  */
-public class JdbcTransactionRunner implements TransactionRunner {
+public class JdbcTransactionRunner implements TransactionRunner, ConnectionProvider {
 
     private final DataSource dataSource;
     private final ThreadLocal<Connection> current = new ThreadLocal<>();
@@ -74,7 +74,8 @@ public class JdbcTransactionRunner implements TransactionRunner {
      * @param <T>      result type
      * @return what the callback returned
      */
-    <T> T withConnection(ConnectionCallback<T> callback) {
+    @Override
+    public <T> T withConnection(ConnectionCallback<T> callback) {
         Connection transactional = current.get();
         try {
             if (transactional != null) {
@@ -113,21 +114,4 @@ public class JdbcTransactionRunner implements TransactionRunner {
         }
     }
 
-    /**
-     * JDBC code that needs a connection.
-     *
-     * @param <T> result type
-     */
-    @FunctionalInterface
-    interface ConnectionCallback<T> {
-
-        /**
-         * Runs the code.
-         *
-         * @param connection an open connection; do not close it
-         * @return the result
-         * @throws SQLException passed on to the runner, which wraps it
-         */
-        T doWith(Connection connection) throws SQLException;
-    }
 }

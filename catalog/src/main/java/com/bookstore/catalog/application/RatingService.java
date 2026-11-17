@@ -9,9 +9,13 @@ import com.bookstore.shared.kernel.transaction.TransactionRunner;
 
 import java.util.function.Consumer;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+
 /**
  * Keeps the rating totals on books up to date for the review module.
  */
+@ApplicationScoped
 public class RatingService implements RatingFacade {
 
     private final BookRepository books;
@@ -23,9 +27,15 @@ public class RatingService implements RatingFacade {
      * @param books        where books are stored
      * @param transactions runs work in a transaction; joins the caller's if there is one
      */
+    @Inject
     public RatingService(BookRepository books, TransactionRunner transactions) {
         this.books = books;
         this.transactions = transactions;
+    }
+
+    /** For the CDI container's client proxy only; never called by the application. */
+    protected RatingService() {
+        this(null, null);
     }
 
     @Override

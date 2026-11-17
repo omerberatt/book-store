@@ -12,10 +12,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+
 /**
  * Stores customers' carts: one {@code carts} row per customer and one {@code cart_items} row per
  * line. Saving replaces all lines, because carts are small.
  */
+@ApplicationScoped
 public class JdbcCartRepository implements CartRepository {
 
     private final JdbcExecutor jdbc;
@@ -25,8 +29,14 @@ public class JdbcCartRepository implements CartRepository {
      *
      * @param jdbc runs the SQL
      */
+    @Inject
     public JdbcCartRepository(JdbcExecutor jdbc) {
         this.jdbc = jdbc;
+    }
+
+    /** For the CDI container's client proxy only; never called by the application. */
+    protected JdbcCartRepository() {
+        this(null);
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.bookstore.app;
 
+import com.bookstore.customer.api.AccountFacade;
 import com.bookstore.catalog.domain.Author;
 import com.bookstore.catalog.domain.Book;
 import com.bookstore.catalog.domain.Category;
@@ -46,15 +47,19 @@ public final class DemoData {
     }
 
     /**
-     * Stores the demo data in a freshly migrated, empty database.
+     * Stores the demo data, unless the catalog already has books (for example after a restart on
+     * PostgreSQL).
      *
      * @param dataSource the database
-     * @param bookstore  the wired application
+     * @param accounts   the account use cases, to register the demo customer
      * @param hasher     the password hasher the application uses
      * @param clock      the clock the application uses
      */
-    public static void load(DataSource dataSource, BookstoreModule bookstore, PasswordHasher hasher, Clock clock) {
+    public static void load(DataSource dataSource, AccountFacade accounts, PasswordHasher hasher, Clock clock) {
         JdbcExecutor jdbc = new JdbcExecutor(new JdbcTransactionRunner(dataSource));
+        if (jdbc.queryForLong("SELECT COUNT(*) FROM books") > 0) {
+            return;
+        }
         JdbcCategoryRepository categories = new JdbcCategoryRepository(jdbc);
         JdbcAuthorRepository authors = new JdbcAuthorRepository(jdbc);
         JdbcBookRepository books = new JdbcBookRepository(jdbc, categories);
@@ -85,9 +90,9 @@ public final class DemoData {
 
         new JdbcCustomerRepository(jdbc).save(Customer.createAdmin(Email.of(ADMIN_EMAIL),
                 new PersonName("Site", "Yöneticisi"), hasher.hash(PASSWORD), clock));
-        CustomerView ayse = bookstore.accounts().register(
+        CustomerView ayse = accounts.register(
                 new RegistrationCommand(CUSTOMER_EMAIL, "Ayşe", "Yılmaz", PASSWORD));
-        bookstore.accounts().addAddress(ayse.id(), "Ev", new Address("Ayşe Yılmaz", "05551234567",
+        accounts.addAddress(ayse.id(), "Ev", new Address("Ayşe Yılmaz", "05551234567",
                 "Kitap Sokak No: 5 Daire: 3", "Kadıköy", "İstanbul", "34710"), true);
     }
 

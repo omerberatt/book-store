@@ -22,10 +22,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+
 /**
  * Browsing and searching the catalog, as customers see it: deactivated books are invisible. Implements
  * the {@link CatalogFacade} contract; {@link CatalogMapper} turns books into its DTOs.
  */
+@ApplicationScoped
 public class CatalogService implements CatalogFacade {
 
     private final BookRepository books;
@@ -37,9 +41,15 @@ public class CatalogService implements CatalogFacade {
      * @param books      where books are stored
      * @param categories where categories are stored
      */
+    @Inject
     public CatalogService(BookRepository books, CategoryRepository categories) {
         this.books = books;
         this.categories = categories;
+    }
+
+    /** For the CDI container's client proxy only; never called by the application. */
+    protected CatalogService() {
+        this(null, null);
     }
 
     @Override

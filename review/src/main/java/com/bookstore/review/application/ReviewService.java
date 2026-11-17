@@ -27,6 +27,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+
 /**
  * Writing, editing, deleting and listing reviews (REV-1 to REV-6).
  *
@@ -34,6 +37,7 @@ import java.util.stream.Collectors;
  * transaction, so the average shown in lists always matches the reviews (ADR-0012). The catalog,
  * sales and customer modules are reached only through their {@code api} packages.
  */
+@ApplicationScoped
 public class ReviewService implements ReviewFacade {
 
     private static final String UNKNOWN_AUTHOR = "—";
@@ -55,6 +59,7 @@ public class ReviewService implements ReviewFacade {
      * @param transactions runs work in a transaction
      * @param clock        the clock giving review times
      */
+    @Inject
     public ReviewService(ReviewRepository reviews, RatingFacade ratings, PurchaseHistory purchases,
                          CustomerDirectory customers, TransactionRunner transactions, Clock clock) {
         this.reviews = reviews;
@@ -63,6 +68,11 @@ public class ReviewService implements ReviewFacade {
         this.customers = customers;
         this.transactions = transactions;
         this.clock = clock;
+    }
+
+    /** For the CDI container's client proxy only; never called by the application. */
+    protected ReviewService() {
+        this(null, null, null, null, null, null);
     }
 
     /**

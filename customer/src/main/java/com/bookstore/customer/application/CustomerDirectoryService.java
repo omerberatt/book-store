@@ -12,9 +12,13 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+
 /**
  * Answers other modules' questions about customers.
  */
+@ApplicationScoped
 public class CustomerDirectoryService implements CustomerDirectory {
 
     private final CustomerRepository customers;
@@ -24,8 +28,14 @@ public class CustomerDirectoryService implements CustomerDirectory {
      *
      * @param customers where customers are stored
      */
+    @Inject
     public CustomerDirectoryService(CustomerRepository customers) {
         this.customers = customers;
+    }
+
+    /** For the CDI container's client proxy only; never called by the application. */
+    protected CustomerDirectoryService() {
+        this(null);
     }
 
     @Override

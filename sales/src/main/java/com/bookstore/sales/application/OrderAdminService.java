@@ -17,10 +17,14 @@ import com.bookstore.shared.kernel.transaction.TransactionRunner;
 
 import java.time.Clock;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+
 /**
  * Order management for administrators (ADM-5): listing every order and moving orders through
  * their statuses. Customers are notified of every change (ORD-9).
  */
+@ApplicationScoped
 public class OrderAdminService implements OrderAdminFacade {
 
     private final OrderRepository orders;
@@ -38,6 +42,7 @@ public class OrderAdminService implements OrderAdminFacade {
      * @param events       receives the events of stored orders
      * @param clock        the clock giving status change times
      */
+    @Inject
     public OrderAdminService(OrderRepository orders, StockFacade stock, TransactionRunner transactions,
                              DomainEventPublisher events, Clock clock) {
         this.orders = orders;
@@ -45,6 +50,11 @@ public class OrderAdminService implements OrderAdminFacade {
         this.transactions = transactions;
         this.events = events;
         this.clock = clock;
+    }
+
+    /** For the CDI container's client proxy only; never called by the application. */
+    protected OrderAdminService() {
+        this(null, null, null, null, null);
     }
 
     /**

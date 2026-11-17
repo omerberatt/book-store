@@ -24,10 +24,14 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+
 /**
  * Stores orders in {@code orders} and their lines in {@code order_lines}. Once placed, only an
  * order's status changes, so an update touches the {@code orders} row only.
  */
+@ApplicationScoped
 public class JdbcOrderRepository implements OrderRepository {
 
     private static final String COLUMNS = "o.id, o.version, o.order_number, o.user_id, o.status, o.payment_method, "
@@ -45,8 +49,14 @@ public class JdbcOrderRepository implements OrderRepository {
      *
      * @param jdbc runs the SQL
      */
+    @Inject
     public JdbcOrderRepository(JdbcExecutor jdbc) {
         this.jdbc = jdbc;
+    }
+
+    /** For the CDI container's client proxy only; never called by the application. */
+    protected JdbcOrderRepository() {
+        this(null);
     }
 
     // ---------------------------------------------------------------- queries

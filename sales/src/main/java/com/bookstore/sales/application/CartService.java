@@ -20,12 +20,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+
 /**
  * Cart use cases for visitors and customers (CRT-1 to CRT-5).
  *
  * <p>Every operation returns the cart as it should be shown: checked against the current catalog,
  * priced with current prices and with any adjustments listed.
  */
+@ApplicationScoped
 public class CartService implements CartFacade {
 
     private final StockFacade stock;
@@ -41,12 +45,18 @@ public class CartService implements CartFacade {
      * @param shippingPolicy the rule for the shipping cost
      * @param transactions   runs work in a transaction
      */
+    @Inject
     public CartService(StockFacade stock, CartRepository carts, ShippingPolicy shippingPolicy,
                        TransactionRunner transactions) {
         this.stock = stock;
         this.carts = carts;
         this.shippingPolicy = shippingPolicy;
         this.transactions = transactions;
+    }
+
+    /** For the CDI container's client proxy only; never called by the application. */
+    protected CartService() {
+        this(null, null, null, null);
     }
 
     /**

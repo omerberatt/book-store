@@ -35,7 +35,7 @@ class BookstoreHttpTest {
         Pbkdf2PasswordHasher hasher = new Pbkdf2PasswordHasher(1_000);
         BookstoreModule bookstore = new BookstoreModule(database.dataSource(), new BookstoreModule.Adapters(
                 TestClock.CLOCK, DemoAdapters.approvingPayments(), hasher, notified::add));
-        DemoData.load(database.dataSource(), bookstore, hasher, TestClock.CLOCK);
+        DemoData.load(database.dataSource(), bookstore.accounts(), hasher, TestClock.CLOCK);
         api = BookstoreApi.of(bookstore).start(0);
         visitor = new HttpTestClient(api);
         admin = visitor.as(DemoData.ADMIN_EMAIL, DemoData.PASSWORD);

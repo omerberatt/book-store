@@ -35,6 +35,9 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+
 /**
  * Stores books in the {@code books} table and their authors in {@code book_authors}.
  *
@@ -42,6 +45,7 @@ import java.util.stream.Stream;
  * for all their authors, and one for the category tree. This avoids running one author query per
  * book (the "N+1 queries" problem).
  */
+@ApplicationScoped
 public class JdbcBookRepository implements BookRepository {
 
     private static final String COLUMNS = "b.id, b.version, b.isbn, b.title, b.category_id, b.publisher, "
@@ -57,9 +61,15 @@ public class JdbcBookRepository implements BookRepository {
      * @param jdbc       runs the SQL
      * @param categories loads the category tree that books point into
      */
+    @Inject
     public JdbcBookRepository(JdbcExecutor jdbc, JdbcCategoryRepository categories) {
         this.jdbc = jdbc;
         this.categories = categories;
+    }
+
+    /** For the CDI container's client proxy only; never called by the application. */
+    protected JdbcBookRepository() {
+        this(null, null);
     }
 
     // ---------------------------------------------------------------- queries
