@@ -197,3 +197,26 @@ address { font-style: normal; }
 .cover { display: block; width: 100%; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 6px; background: var(--accent-soft); }
 .cover.placeholder { display: grid; place-items: center; font-size: 2.5rem; font-weight: 700; color: var(--accent); }
 .detail-cover { float: right; width: min(180px, 40%); margin: 0 0 1rem 1rem; }
+
+/* Administration pages (ADR-0021). */
+.tabs { display: flex; flex-wrap: wrap; gap: .25rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--line); }
+.tabs a { padding: .5rem .9rem; color: var(--muted); text-decoration: none; border-bottom: 2px solid transparent; }
+.tabs a[aria-current="page"] { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+.heading-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .75rem; margin-bottom: 1rem; }
+.heading-row h1 { margin: 0; }
+.heading-row label.inline select { width: auto; }
+.figures { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+.figure { display: grid; gap: .2rem; }
+.figure-label { color: var(--muted); font-size: .9rem; }
+.figure-value { font-size: 2rem; line-height: 1.1; }
+.plain-list { list-style: none; padding: 0; margin: 0; display: grid; gap: .4rem; }
+.editable li { display: flex; justify-content: space-between; align-items: center; gap: .5rem; padding: .35rem 0; border-bottom: 1px solid var(--line); }
+.editable li .actions { margin: 0; }
+tr.muted td { color: var(--muted); }
+button.small { padding: .2rem .6rem; font-size: .85rem; }
+input.short { width: 7rem; }
+#search input[type="search"] { max-width: 420px; }
+.wide-first { grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr); }
+@media (max-width: 760px) { .wide-first { grid-template-columns: 1fr; } }
+.admin-cover { max-width: 200px; margin-bottom: 1rem; }
+select[multiple] { min-height: 8rem; }

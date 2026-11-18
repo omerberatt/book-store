@@ -10,10 +10,11 @@ let caller = null;
 /**
  * Starts a page: loads the texts, finds out who is signed in and draws the header.
  *
- * @param {{signInRequired?: boolean}} [options] whether the page is for signed-in customers only
+ * @param {{signInRequired?: boolean, adminRequired?: boolean}} [options] whether the page is for signed-in
+ *   customers or for administrators only; the API checks the role again (ACC-6)
  * @returns {Promise<object|null>} the signed-in customer's profile, or null for a visitor
  */
-export async function startPage({ signInRequired = false } = {}) {
+export async function startPage({ signInRequired = false, adminRequired = false } = {}) {
   await loadDictionary();
   caller = await api.get('/session').catch((error) => {
     if (error instanceof ApiError && error.status === 401) {
@@ -21,8 +22,13 @@ export async function startPage({ signInRequired = false } = {}) {
     }
     throw error;
   });
-  if (signInRequired && !caller) {
-    location.replace(`login.html?next=${encodeURIComponent(location.pathname.replace(/^\//, '') + location.search)}`);
+  const here = encodeURIComponent(location.pathname.replace(/^\//, '') + location.search);
+  if ((signInRequired || adminRequired) && !caller) {
+    location.replace(`login.html?next=${here}`);
+    return new Promise(() => {});
+  }
+  if (adminRequired && caller.role !== 'ADMIN') {
+    location.replace('index.html');
     return new Promise(() => {});
   }
   drawHeader();
@@ -46,6 +52,9 @@ function drawHeader() {
   const nav = h('nav', { 'aria-label': t('nav.label') },
     link('index.html', 'nav.catalog'),
     h('a', { href: 'cart.html', class: 'cart-link' }, t('nav.cart'), ' ', h('span', { id: 'cart-badge', class: 'badge' }, '0')));
+  if (caller?.role === 'ADMIN') {
+    nav.append(link('admin.html', 'nav.admin'));
+  }
   if (caller) {
     nav.append(link('orders.html', 'nav.orders'), link('account.html', 'nav.account'),
       h('button', { type: 'button', class: 'link-button', onclick: signOut }, t('nav.signOut')));

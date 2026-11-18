@@ -67,3 +67,29 @@ export function query(values) {
   const text = parameters.toString();
   return text ? `?${text}` : '';
 }
+
+/**
+ * Sends a file as the body of a PUT, for example a cover image (ADR-0021).
+ *
+ * @param {string} path the path under /api/v1
+ * @param {File} file the file; its type becomes the Content-Type
+ * @returns {Promise<object>} the parsed JSON answer
+ */
+export async function upload(path, file) {
+  let response;
+  try {
+    response = await fetch(`/api/v1${path}`, {
+      method: 'PUT',
+      headers: { [CLIENT_HEADER]: 'web', Accept: 'application/json', 'Content-Type': file.type || 'application/octet-stream' },
+      credentials: 'same-origin',
+      body: file,
+    });
+  } catch (networkFailure) {
+    throw new ApiError(0, { code: 'network', detail: networkFailure.message });
+  }
+  const data = (response.headers.get('Content-Type') ?? '').includes('json') ? await response.json() : null;
+  if (!response.ok) {
+    throw new ApiError(response.status, data);
+  }
+  return data;
+}

@@ -14,7 +14,7 @@ Hangi konunun hangi fazda işlendiği [CURRICULUM-MAP.md](CURRICULUM-MAP.md) iç
 | **5** | ✅ | HTTP sınırı *(elle)* | 13 | JDK HTTP sunucusu, DTO'lar, Bean Validation, RFC 9457 |
 | **6** | ✅ | Uygulama sunucusu | 14 | Payara Micro 7 üzerinde WAR: CDI, JTA, CDI olayları, JAX-RS, JSON-B, MicroProfile Config ve OpenAPI |
 | **7** | ✅ | Güvenlik ve arayüz | — | Jakarta Security, BCrypt, oturumda misafir sepeti, HTML ve JavaScript sayfaları, iki dilli arayüz |
-| **8** | | Yönetim paneli | — | Kitap/yazar/kategori, kapak görseli, sipariş, kullanıcı ve yorum yönetimi |
+| **8** | ✅ | Yönetim paneli | — | Kitap/yazar/kategori, kapak görseli, sipariş, kullanıcı ve yorum yönetimi |
 | **9** | | Lab ilerisi ve sağlamlaştırma | 11–14 soruları | CI, Transactional Outbox, ETag, Idempotency-Key, sağlık kontrolü, performans hedefi, JPA |
 
 ---
@@ -103,7 +103,7 @@ Ders kapsamı dışındadır *(ADR-0011)*.
 | 8.1 ✅ | Katalog yönetimi: `CatalogAdminFacade`, `/api/v1/admin/books`, `/admin/authors`, `/admin/categories`, `/admin/books/stats`; ADR-0021 |
 | 8.2 ✅ | Kapak görseli: `FileStorage` portu, dosya sistemi uygulaması, yükleme ve sunma |
 | 8.3 ✅ | Kullanıcı ve yorum yönetimi: `CustomerAdminFacade`, `ReviewAdminFacade` |
-| 8.4 | Yönetim sayfaları *(özet, kitaplar, yazarlar ve kategoriler, siparişler, kullanıcılar, yorumlar)* |
+| 8.4 ✅ | Yönetim sayfaları *(özet, kitaplar, yazarlar ve kategoriler, siparişler, kullanıcılar, yorumlar)* |
 
 ## Faz 9 — Lab ilerisi ve sağlamlaştırma
 
@@ -121,6 +121,13 @@ Ders notlarının soru bölümlerinde Lab projesine bırakılan konular ve son k
 ---
 
 ## Tamamlanan fazların notları
+
+### Faz 8
+
+- Dört commit: katalog yönetimi ve ADR-0021; kapak görselleri; kullanıcı ve yorum yönetimi; yönetim sayfaları.
+- Sipariş yönetimi Faz 5'ten beri vardı; bu fazda yalnızca sayfası yazıldı.
+- Payara üzerinde `curl` ve uygulama içi tarayıcıyla denendi: özet ekranı, stok değişikliği, yazar ve kitap ekleme, kapak yükleme ve ETag ile 304, sipariş durumu, kullanıcıyı kapatınca açık oturumunun da kapanması, yöneticinin kapatılamaması. Bu deneme, girişten sonra tireli sayfa adlarına *(`admin-orders.html`)* dönülmediğini gösterdi; düzeltildi.
+- Test sayısı: 512 koşan, 38 Docker'a bağlı.
 
 ### Faz 7
 

@@ -12,7 +12,7 @@ const form = $('#login');
 /** Only pages of this site are followed after signing in. */
 function nextPage() {
   const next = param('next');
-  return next && /^[a-z]+\.html(\?[^\s]*)?$/.test(next) ? next : 'index.html';
+  return next && /^[a-z][a-z-]*\.html(\?[^\s]*)?$/.test(next) ? next : 'index.html';
 }
 
 if (caller) {

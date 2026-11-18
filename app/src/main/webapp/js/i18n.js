@@ -61,7 +61,7 @@ export function t(key, values = {}) {
 }
 
 /**
- * Fills the elements marked with data-i18n (text), data-i18n-placeholder and data-i18n-title.
+ * Fills the elements marked with data-i18n (text), data-i18n-placeholder, data-i18n-title and data-i18n-label (aria-label).
  *
  * @param {ParentNode} [root] where to look
  */
@@ -74,6 +74,9 @@ export function translate(root = document) {
   });
   root.querySelectorAll('[data-i18n-title]').forEach((element) => {
     element.title = t(element.dataset.i18nTitle);
+  });
+  root.querySelectorAll('[data-i18n-label]').forEach((element) => {
+    element.setAttribute('aria-label', t(element.dataset.i18nLabel));
   });
 }
 

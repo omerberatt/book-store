@@ -3,6 +3,7 @@ package com.bookstore.app;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.bookstore.catalog.domain.InsufficientStockException;
+import com.bookstore.catalog.domain.Language;
 import com.bookstore.sales.api.CartChangedException;
 import com.bookstore.sales.api.PaymentDeclinedException;
 import com.bookstore.sales.domain.OrderStatus;
@@ -11,6 +12,7 @@ import com.bookstore.sales.domain.StockShortageException;
 import com.bookstore.shared.kernel.error.AccessDeniedException;
 import com.bookstore.shared.kernel.error.NotFoundException;
 import com.bookstore.shared.kernel.error.ValidationException;
+import com.bookstore.shared.web.Caller;
 import com.bookstore.shared.web.ProblemMapper;
 import com.bookstore.shared.web.WebException;
 
@@ -40,7 +42,7 @@ import org.junit.jupiter.api.Test;
 class WebPagesTest {
 
     private static final Path WEBAPP = Path.of("src/main/webapp");
-    private static final Pattern HTML_KEY = Pattern.compile("data-i18n(?:-placeholder|-title)?=\"([^\"]+)\"");
+    private static final Pattern HTML_KEY = Pattern.compile("data-i18n(?:-placeholder|-title|-label)?=\"([^\"]+)\"");
     private static final Pattern JS_LITERAL = Pattern.compile("'([a-z]+\\.[A-Za-z_.-]+)'");
     private static final Pattern LINK = Pattern.compile("(?:href|src)=\"([^\"#?:]+)[^\"]*\"");
 
@@ -73,10 +75,12 @@ class WebPagesTest {
     }
 
     @Test
-    void everyStatusPaymentMethodAndLanguageHasAName() {
+    void everyStatusPaymentMethodLanguageAndRoleHasAName() {
         Arrays.stream(OrderStatus.values()).forEach(status -> assertThat(turkish).containsKey("status." + status));
+        Arrays.stream(OrderStatus.values()).forEach(status -> assertThat(turkish).containsKey("admin.moveTo." + status));
         Arrays.stream(PaymentMethod.values()).forEach(method -> assertThat(turkish).containsKey("payment." + method));
-        assertThat(turkish).containsKeys("language.tr", "language.en");
+        Arrays.stream(Language.values()).forEach(language -> assertThat(turkish).containsKey("language." + language.code()));
+        assertThat(turkish).containsKeys("role." + Caller.CUSTOMER, "role." + Caller.ADMIN);
     }
 
     @Test
@@ -91,7 +95,10 @@ class WebPagesTest {
                 WebException.methodNotAllowed("GET", "/").code(), WebException.unsupportedMediaType().code(),
                 // Codes written where they are thrown.
                 "email.taken", "book.inactive", "review.duplicate", "review.not-eligible", "cart.empty",
-                "order.empty-cart", "order.illegal-transition", "request.bad-parameter", "request.malformed-json"));
+                "order.empty-cart", "order.illegal-transition", "request.bad-parameter", "request.malformed-json",
+                // Phase 8, the administrator's endpoints (ADR-0021).
+                "book.isbn-taken", "author.in-use", "category.in-use", "category.has-children", "category.name-taken",
+                "customer.admin-protected", "request.unreadable"));
         codes.forEach(code -> assertThat(turkish).as(code).containsKey("problem." + code));
     }
 
