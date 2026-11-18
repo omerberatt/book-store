@@ -4,7 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.bookstore.catalog.api.BookSearchQuery;
 import com.bookstore.catalog.api.BookSummary;
+import com.bookstore.catalog.api.CatalogAdminFacade;
 import com.bookstore.catalog.api.CatalogFacade;
+import com.bookstore.catalog.application.CatalogAdminService;
 import com.bookstore.catalog.application.CatalogService;
 import com.bookstore.catalog.application.RatingService;
 import com.bookstore.catalog.application.StockService;
@@ -69,7 +71,7 @@ import org.junit.jupiter.api.Test;
 class CdiWiringTest {
 
     private static final List<Class<?>> APPLICATION_BEANS = List.of(
-            CatalogService.class, StockService.class, RatingService.class,
+            CatalogService.class, CatalogAdminService.class, StockService.class, RatingService.class,
             JdbcBookRepository.class, JdbcAuthorRepository.class, JdbcCategoryRepository.class,
             AccountService.class, CustomerDirectoryService.class, JdbcCustomerRepository.class,
             CartService.class, CheckoutService.class, OrderService.class, OrderAdminService.class,
@@ -110,6 +112,10 @@ class CdiWiringTest {
         assertThat(container.select(OrderAdminFacade.class).get().order(order.orderNumber()).total())
                 .isEqualTo(order.total());
         assertThat(container.select(ReviewFacade.class).get().canReview(ayse.id(), dune.getFirst().id())).isFalse();
+        CatalogAdminFacade catalogAdmin = container.select(CatalogAdminFacade.class).get();
+        assertThat(catalogAdmin.book(dune.getFirst().id()).stock())
+                .isEqualTo(container.select(CatalogFacade.class).get().book(dune.getFirst().id()).stock());
+        assertThat(catalogAdmin.stats(5).totalBooks()).isEqualTo(8);
     }
 
     /** The test's stand-ins for the server: an H2 data source, JDBC transactions, a recording notifier. */

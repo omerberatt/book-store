@@ -11,6 +11,7 @@ import com.bookstore.catalog.domain.BookSpecifications.InStock;
 import com.bookstore.catalog.domain.BookSpecifications.MatchesText;
 import com.bookstore.catalog.domain.BookSpecifications.PricedFrom;
 import com.bookstore.catalog.domain.BookSpecifications.PricedUpTo;
+import com.bookstore.catalog.domain.BookSpecifications.StockBelow;
 import com.bookstore.shared.jdbc.JdbcExecutor;
 import com.bookstore.shared.kernel.paging.SortOrder;
 import com.bookstore.shared.kernel.specification.AndSpecification;
@@ -72,6 +73,10 @@ final class BookSearchSql {
         return switch (rule) {
             case Active active -> "b.active = TRUE";
             case InStock inStock -> "b.stock > 0";
+            case StockBelow below -> {
+                params.add(below.limit());
+                yield "b.stock < ?";
+            }
             case InCategories in -> {
                 params.addAll(in.categoryIds());
                 yield "b.category_id IN (" + JdbcExecutor.placeholders(in.categoryIds().size()) + ")";

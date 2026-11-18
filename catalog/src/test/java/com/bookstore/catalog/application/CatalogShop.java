@@ -6,6 +6,7 @@ import com.bookstore.catalog.domain.Book;
 import com.bookstore.catalog.domain.Category;
 import com.bookstore.catalog.domain.Isbn;
 import com.bookstore.catalog.domain.Stock;
+import com.bookstore.catalog.persistence.InMemoryAuthorRepository;
 import com.bookstore.catalog.persistence.InMemoryBookRepository;
 import com.bookstore.catalog.persistence.InMemoryCategoryRepository;
 import com.bookstore.shared.kernel.money.Money;
@@ -20,11 +21,13 @@ public final class CatalogShop {
 
     public final InMemoryBookRepository books = new InMemoryBookRepository();
     public final InMemoryCategoryRepository categories = new InMemoryCategoryRepository();
+    public final InMemoryAuthorRepository authors = new InMemoryAuthorRepository();
     public final DirectTransactions transactions = new DirectTransactions();
 
     public final CatalogService catalog = new CatalogService(books, categories);
     public final StockService stock = new StockService(books, transactions);
     public final RatingService ratings = new RatingService(books, transactions);
+    public final CatalogAdminService admin = new CatalogAdminService(books, authors, categories, transactions);
 
     /** "Literature", with the subcategories "Novel" and "Poetry". */
     public final Category literature;
@@ -47,6 +50,11 @@ public final class CatalogShop {
         Author author = Author.create(name);
         author.markPersisted(AuthorId.of(500 + counter.incrementAndGet()), 0);
         return author;
+    }
+
+    /** Stores an author, as the administrator would. */
+    public Author storedAuthor(String name) {
+        return authors.save(Author.create(name));
     }
 
     /** Stores an active novel. */

@@ -27,11 +27,13 @@ import java.util.List;
  * @param averageRating   the average rating; {@code null} if nobody rated the book
  * @param ratingCount     the number of ratings
  * @param coverImage      the storage key of the cover image; {@code null} if there is none
+ * @param active          whether the book is sold; customers only ever see books on sale
  */
 public record BookDetails(BookId id, String isbn, String title, List<AuthorRef> authors, long categoryId,
                           List<String> categoryPath, String publisher, Year publicationYear,
                           String language, int pageCount, String description, Money price, int stock,
-                          boolean inStock, BigDecimal averageRating, int ratingCount, String coverImage) {
+                          boolean inStock, BigDecimal averageRating, int ratingCount, String coverImage,
+                          boolean active) {
 
     /** Copies the lists. */
     public BookDetails {

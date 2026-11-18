@@ -98,7 +98,7 @@ Faz numaraları [ROADMAP.md](ROADMAP.md) içindeki aşamalardır; ADR'ler [docs/
 | --- | --- | --- | --- |
 | Strategy | `ShippingPolicy` / `FreeShippingThreshold`, `BookSortField` | ✅ | 1 |
 | Strategy için lambda | `ShippingPolicy.alwaysFree()`, testte `subtotal -> …` | ✅ | 1 |
-| Specification *(kuralı veri haline getirmek)* | `shared-kernel`: `Specification<T>` *(`and` / `or` / `not`, `all()`)*, `AndSpecification`, `OrSpecification`, `NotSpecification`, `MatchAll`; `catalog.domain.BookSpecifications`: `active`, `inStock`, `inCategories`, `byAuthor`, `pricedFrom`, `pricedUpTo`, `inLanguage`, `matchingText` | ✅ | 4.3 |
+| Specification *(kuralı veri haline getirmek)* | `shared-kernel`: `Specification<T>` *(`and` / `or` / `not`, `all()`)*, `AndSpecification`, `OrSpecification`, `NotSpecification`, `MatchAll`; `catalog.domain.BookSpecifications`: `active`, `inStock`, `inCategories`, `byAuthor`, `pricedFrom`, `pricedUpTo`, `inLanguage`, `matchingText`, `stockBelow` *(8.1, stoğu azalan kitaplar)* | ✅ | 4.3, 8.1 |
 | Specification'ı SQL'e çevirmek | `BookSearchSql`, `Specification` ağacını desen eşleme *(`switch`)* ile `WHERE` koşuluna çevirir; `and` / `or` / `not` dahil. `JdbcCatalogRepositoryTest` SQL ile bellek içi sonucu her kural ve sıralama için karşılaştırır *(ders bunu "bir sonraki adım" olarak bırakıyor)* | ✅ | 3, 4.3 |
 | Repository deseni, arayüzün yeri | Arayüzler domain'de *(ders ADR-0003'ün risk notu baştan önlendi)* | ✅ | 1 |
 | Mapper *(domain ↔ DTO)* | Modül başına mapper: `CatalogMapper`, `CustomerMapper`, `SalesMapper`, `ReviewMapper` *(application paketinde, paket içi)*; modüller arası `sales.application.Products` *(`BookOffer` → `ProductSnapshot`)*. Domain nesnesi modülden çıkmaz | ✅ | 4.1, 4.4 |
@@ -222,6 +222,7 @@ Bunlar ders notlarında yok; kitap mağazasının ihtiyacından doğdu ya da Faz
 | Eşzamanlılık testleri *(`ExecutorService`, `CountDownLatch`)* | `JdbcSalesRepositoriesTest.OrderNumbers`, `CheckoutWithDatabaseTest` |
 | Kimlik doğrulama, BCrypt | ✅ Faz 7.1–7.2 *(ADR-0011, ADR-0020)*: `BcryptPasswordHasher`, `BookstoreAuthenticationMechanism`, `AccountIdentityStore`, `/api/v1/session`, `ClientHeaderFilter` |
 | HTML / JavaScript arayüz | ✅ Faz 7.4 *(ADR-0011)*: `app/src/main/webapp`, `js/api.js`, `js/i18n.js`, sayfa başına `js/pages/…`, `i18n/tr.json` ve `en.json`; `WebPagesTest` |
+| Yönetim paneli | Faz 8 *(ADR-0021)*: 8.1 ✅ `CatalogAdminFacade`, `CatalogAdminService`, `AdminBookResource`, `AdminAuthorResource`, `AdminCategoryResource` |
 
 ## Plandan çıkarılanlar
 

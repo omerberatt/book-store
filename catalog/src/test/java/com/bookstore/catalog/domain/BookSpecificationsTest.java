@@ -45,6 +45,12 @@ class BookSpecificationsTest {
     }
 
     @Test
+    void stockBelowFindsBooksRunningLowAndNeedsAPositiveLimit() {
+        assertThat(search(BookSpecifications.stockBelow(3))).containsExactlyInAnyOrder(dune, calikusu);
+        assertThatThrownBy(() -> BookSpecifications.stockBelow(0)).isInstanceOf(ValidationException.class);
+    }
+
+    @Test
     void textMatchesTitlesIgnoringCaseAndTurkishLetters() {
         assertThat(search(matchingText("CALIKUSU"))).containsExactly(calikusu);
         assertThat(search(matchingText("mantolu"))).containsExactly(madonna);

@@ -1,9 +1,12 @@
 package com.bookstore.app;
 
+import com.bookstore.catalog.api.CatalogAdminFacade;
 import com.bookstore.catalog.api.CatalogFacade;
+import com.bookstore.catalog.application.CatalogAdminService;
 import com.bookstore.catalog.application.CatalogService;
 import com.bookstore.catalog.application.RatingService;
 import com.bookstore.catalog.application.StockService;
+import com.bookstore.catalog.persistence.JdbcAuthorRepository;
 import com.bookstore.catalog.persistence.JdbcBookRepository;
 import com.bookstore.catalog.persistence.JdbcCategoryRepository;
 import com.bookstore.customer.api.AccountFacade;
@@ -61,6 +64,7 @@ public final class BookstoreModule {
     private final DataSource dataSource;
 
     private final CatalogFacade catalog;
+    private final CatalogAdminFacade catalogAdmin;
     private final AccountFacade accounts;
     private final CartFacade cart;
     private final CheckoutFacade checkout;
@@ -89,6 +93,8 @@ public final class BookstoreModule {
         StockService stock = new StockService(bookRepository, transactions);
         RatingService ratings = new RatingService(bookRepository, transactions);
         this.catalog = new CatalogService(bookRepository, categoryRepository);
+        this.catalogAdmin = new CatalogAdminService(bookRepository, new JdbcAuthorRepository(jdbc), categoryRepository,
+                transactions);
 
         // customer
         JdbcCustomerRepository customerRepository = new JdbcCustomerRepository(jdbc);
@@ -124,6 +130,11 @@ public final class BookstoreModule {
     /** @return browsing and searching the catalog */
     public CatalogFacade catalog() {
         return catalog;
+    }
+
+    /** @return managing books, authors and categories */
+    public CatalogAdminFacade catalogAdmin() {
+        return catalogAdmin;
     }
 
     /** @return registration, sign-in data, profile and address book */

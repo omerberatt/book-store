@@ -8,6 +8,7 @@ import static com.bookstore.catalog.domain.BookSpecifications.inStock;
 import static com.bookstore.catalog.domain.BookSpecifications.matchingText;
 import static com.bookstore.catalog.domain.BookSpecifications.pricedFrom;
 import static com.bookstore.catalog.domain.BookSpecifications.pricedUpTo;
+import static com.bookstore.catalog.domain.BookSpecifications.stockBelow;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -270,6 +271,8 @@ abstract class CatalogRepositoryContract {
             assertThat(search(inCategories(Set.of(novels.id()))))
                     .containsExactly("Çalıkuşu", "Kürk Mantolu Madonna");
             assertThat(search(byAuthor(ali.id()))).containsExactly("Kürk Mantolu Madonna");
+            assertThat(search(stockBelow(3))).containsExactly("Çalıkuşu", "Dune");
+            assertThat(search(active().and(stockBelow(6)))).containsExactly("Çalıkuşu", "Dune", "Kürk Mantolu Madonna");
         }
 
         @Test
@@ -301,7 +304,8 @@ abstract class CatalogRepositoryContract {
             List<Book> all = List.of(madonna, dune, calikusu, hidden);
             List<Specification<Book>> rules = List.of(Specification.all(), active(), inStock().not(),
                     active().and(matchingText("dune").or(byAuthor(ali.id()))),
-                    inCategories(Set.of(novels.id())).and(pricedUpTo(Money.of("100")).not()));
+                    inCategories(Set.of(novels.id())).and(pricedUpTo(Money.of("100")).not()),
+                    stockBelow(5).or(active().not()));
             for (Specification<Book> rule : rules) {
                 for (BookSortField field : BookSortField.values()) {
                     for (SortOrder order : SortOrder.values()) {

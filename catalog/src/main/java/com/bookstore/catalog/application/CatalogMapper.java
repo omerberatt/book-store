@@ -1,5 +1,7 @@
 package com.bookstore.catalog.application;
 
+import com.bookstore.catalog.api.AdminBookRow;
+import com.bookstore.catalog.api.AuthorView;
 import com.bookstore.catalog.api.BookDetails;
 import com.bookstore.catalog.api.BookSearchQuery;
 import com.bookstore.catalog.api.BookSummary;
@@ -35,7 +37,16 @@ final class CatalogMapper {
                 book.category().path(), book.publisher(), book.publicationYear().orElse(null),
                 book.language().code(), book.pageCount(), book.description(), book.price(), book.stock().quantity(),
                 book.isAvailableForSale(), book.ratings().average().orElse(null), book.ratings().count(),
-                book.coverImage().orElse(null));
+                book.coverImage().orElse(null), book.isActive());
+    }
+
+    static AdminBookRow rowOf(Book book) {
+        return new AdminBookRow(book.id(), book.isbn().value(), book.title(), book.authorNames(), book.category().name(),
+                book.price(), book.stock().quantity(), book.isActive());
+    }
+
+    static AuthorView authorViewOf(Author author) {
+        return new AuthorView(author.id().value(), author.name());
     }
 
     static CategoryNode nodeOf(Category category) {

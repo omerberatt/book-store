@@ -2,6 +2,9 @@ package com.bookstore.app;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.bookstore.catalog.rest.AdminAuthorResource;
+import com.bookstore.catalog.rest.AdminBookResource;
+import com.bookstore.catalog.rest.AdminCategoryResource;
 import com.bookstore.catalog.rest.CatalogResource;
 import com.bookstore.catalog.rest.CategoryResource;
 import com.bookstore.customer.rest.AccountAuthenticator;
@@ -52,7 +55,8 @@ class BookstoreHttpTest {
                 new RegistrationResource(bookstore.accounts()), new AccountResource(bookstore.accounts()),
                 new CartResource(bookstore.cart(), () -> visitorCart), new OrderResource(bookstore.checkout(), bookstore.orders()),
                 new OrderAdminResource(bookstore.orderAdmin()), new ReviewResource(bookstore.reviews()),
-                new RatingResource(bookstore.reviews()));
+                new RatingResource(bookstore.reviews()), new AdminBookResource(bookstore.catalogAdmin()),
+                new AdminAuthorResource(bookstore.catalogAdmin()), new AdminCategoryResource(bookstore.catalogAdmin()));
         visitor = server.client();
         admin = visitor.as(DemoData.ADMIN_EMAIL, DemoData.PASSWORD);
     }
@@ -117,6 +121,25 @@ class BookstoreHttpTest {
                 .get("addresses").size()).isEqualTo(1);
         assertThat(visitor.as(DemoData.CUSTOMER_EMAIL, "wrong").get("/api/v1/me").status()).isEqualTo(401);
         assertThat(visitor.get("/api/v1/orders").status()).isEqualTo(401);
+    }
+
+    @Test
+    void theAdministratorAddsABookThatVisitorsThenFind() {
+        long author = admin.post("/api/v1/admin/authors", "{\"name\": \"Yaşar Kemal\"}").json().get("id").asLong();
+        long category = admin.post("/api/v1/admin/categories", "{\"name\": \"Destan\"}").json().get("id").asLong();
+
+        HttpTestClient.Reply created = admin.post("/api/v1/admin/books", """
+                {"isbn": "9789750807145", "title": "İnce Memed", "authorIds": [%d], "categoryId": %d,
+                 "language": "tr", "pageCount": 436, "price": 210.00, "stock": 3}
+                """.formatted(author, category));
+
+        assertThat(created.status()).isEqualTo(201);
+        assertThat(visitor.get("/api/v1/books?q=ince+memed").json().get("content").findValuesAsText("title"))
+                .containsExactly("İnce Memed");
+        assertThat(admin.get("/api/v1/admin/books/stats").json().get("lowStock").findValuesAsText("title"))
+                .contains("İnce Memed");
+        assertThat(visitor.as(DemoData.CUSTOMER_EMAIL, DemoData.PASSWORD).get("/api/v1/admin/books").status())
+                .isEqualTo(403);
     }
 
     @Test

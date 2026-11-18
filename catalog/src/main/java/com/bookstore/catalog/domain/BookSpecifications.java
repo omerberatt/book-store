@@ -43,6 +43,14 @@ public final class BookSpecifications {
     }
 
     /**
+     * @param limit the number of copies
+     * @return books with fewer copies in stock than the limit (ADM-8)
+     */
+    public static Specification<Book> stockBelow(int limit) {
+        return new StockBelow(limit);
+    }
+
+    /**
      * @param categoryIds the categories, at least one
      * @return books in one of the categories
      */
@@ -96,7 +104,7 @@ public final class BookSpecifications {
 
     /** The rules a book search can contain; the JDBC repository translates each of them. */
     public sealed interface BookSpecification extends Specification<Book>
-            permits Active, InStock, InCategories, ByAuthor, PricedFrom, PricedUpTo, InLanguage, MatchesText {
+            permits Active, InStock, StockBelow, InCategories, ByAuthor, PricedFrom, PricedUpTo, InLanguage, MatchesText {
     }
 
     /** Books that are still sold. */
@@ -150,6 +158,24 @@ public final class BookSpecifications {
         @Override
         public boolean isSatisfiedBy(Book book) {
             return book.authors().stream().anyMatch(author -> !author.isNew() && author.id().equals(authorId));
+        }
+    }
+
+    /**
+     * Books with fewer copies in stock than a limit.
+     *
+     * @param limit the number of copies, at least one
+     */
+    public record StockBelow(int limit) implements BookSpecification {
+
+        /** Rejects a limit below one, which no book could meet. */
+        public StockBelow {
+            Guard.requirePositive(limit, "limit");
+        }
+
+        @Override
+        public boolean isSatisfiedBy(Book book) {
+            return book.stock().quantity() < limit;
         }
     }
 
