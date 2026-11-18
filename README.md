@@ -1,4 +1,4 @@
-# Book Store
+# Book Store 
 
 Java ile yazılmış, modüler bir çevrimiçi kitap mağazası.
 
