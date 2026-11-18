@@ -13,7 +13,7 @@ Hangi konunun hangi fazda işlendiği [CURRICULUM-MAP.md](CURRICULUM-MAP.md) iç
 | **4** | ✅ | Dersle hizalama | 4–12 | İş alanına göre modüller, ArchUnit, tipli kimlikler, `api` sözleşmesi, olay yayıncısı, PostgreSQL ve sözleşme testleri |
 | **5** | ✅ | HTTP sınırı *(elle)* | 13 | JDK HTTP sunucusu, DTO'lar, Bean Validation, RFC 9457 |
 | **6** | ✅ | Uygulama sunucusu | 14 | Payara Micro 7 üzerinde WAR: CDI, JTA, CDI olayları, JAX-RS, JSON-B, MicroProfile Config ve OpenAPI |
-| **7** | | Güvenlik ve arayüz | — | Jakarta Security, BCrypt, HTML ve JavaScript sayfaları, iki dilli arayüz |
+| **7** | ✅ | Güvenlik ve arayüz | — | Jakarta Security, BCrypt, oturumda misafir sepeti, HTML ve JavaScript sayfaları, iki dilli arayüz |
 | **8** | | Yönetim paneli | — | Kitap/yazar/kategori, kapak görseli, sipariş, kullanıcı ve yorum yönetimi |
 | **9** | | Lab ilerisi ve sağlamlaştırma | 11–14 soruları | CI, Transactional Outbox, ETag, Idempotency-Key, sağlık kontrolü, performans hedefi, JPA |
 
@@ -90,7 +90,7 @@ Ders kapsamı dışındadır *(ADR-0011)*.
 | 7.1 ✅ | `BcryptPasswordHasher` *(eski PBKDF2 özetleri geçerli)*; ADR-0020 |
 | 7.2 ✅ | Jakarta Security: `BookstoreAuthenticationMechanism`, `AccountIdentityStore`, `/api/v1/session`, CSRF başlığı |
 | 7.3 ✅ | Misafir sepeti oturumda *(`SessionGuestCart`, CDI `@SessionScoped`)*; girişte birleşir |
-| 7.4 | HTML, CSS ve JavaScript sayfaları; Türkçe ve İngilizce sözlükler |
+| 7.4 ✅ | HTML, CSS ve JavaScript sayfaları *(katalog, kitap ve yorumlar, sepet, sipariş, siparişlerim, hesap, giriş, kayıt)*; Türkçe ve İngilizce sözlükler |
 
 ## Faz 8 — Yönetim paneli
 
@@ -114,6 +114,13 @@ Ders notlarının soru bölümlerinde Lab projesine bırakılan konular ve son k
 ---
 
 ## Tamamlanan fazların notları
+
+### Faz 7
+
+- Dört commit: BCrypt ve ADR-0020; Jakarta Security; oturumda misafir sepeti; sayfalar ve sözlükler.
+- Payara, Türkçe yerel ayarda çerez ayarlarını okurken açılamıyor *(`dynamic` → `DYNAMİC`)*; sunucu `-Duser.language=en` ile başlatılıyor *(ADR-0020 notu)*. `SameSite` niteliğini Payara yalnızca `glassfish-web.xml`'den okuyor.
+- Payara üzerinde `curl` ve uygulama içi tarayıcıyla denendi: Basic ve oturumla giriş, 403 veren CSRF başlığı denetimi, ziyaretçinin sepeti girişte hesaba geçti, sipariş verildi, kayıt sonrası otomatik giriş, sunucu hatasının alanın yanında Türkçe ya da İngilizce gösterilmesi.
+- Test sayısı: 476 koşan, 38 Docker'a bağlı.
 
 ### Faz 5
 

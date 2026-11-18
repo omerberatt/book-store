@@ -4,7 +4,7 @@ Java ile yazılmış, modüler bir çevrimiçi kitap mağazası.
 
 Projenin amacı: çalışan bir e-ticaret uygulaması ortaya koymak.
 
-> **Durum:** Faz 0–6 tamamlandı. Faz 7 sürüyor: parolalar BCrypt ile özetleniyor, giriş Jakarta Security ile yapılıyor. Kod iş alanına göre modüllerde *(katalog, müşteri, satış, yorum)*; modüller birbirini yalnızca `api` paketleriyle kullanıyor. Bu kural ve mimari kararların diğer kuralları ArchUnit testleriyle korunuyor. Veritabanı PostgreSQL 17; Payara Micro 7 üzerinde JAX-RS ile bir REST API var *(aşağıda nasıl çalıştırılacağı; tarif `/openapi` adresinde)*. Web sayfaları henüz yok. Ayrıntılar [yol haritasında](docs/ROADMAP.md).
+> **Durum:** Faz 0–7 tamamlandı: parolalar BCrypt ile özetleniyor, giriş Jakarta Security ile yapılıyor ve müşteri sayfaları Türkçe ve İngilizce çalışıyor. Kod iş alanına göre modüllerde *(katalog, müşteri, satış, yorum)*; modüller birbirini yalnızca `api` paketleriyle kullanıyor. Bu kural ve mimari kararların diğer kuralları ArchUnit testleriyle korunuyor. Veritabanı PostgreSQL 17; Payara Micro 7 üzerinde JAX-RS ile bir REST API var *(aşağıda nasıl çalıştırılacağı; tarif `/openapi` adresinde)*. Yönetim sayfaları Faz 8'de gelecek. Ayrıntılar [yol haritasında](docs/ROADMAP.md).
 
 ## Dokümanlar
 
@@ -57,7 +57,7 @@ mvnw.cmd verify
 
 ## API'yi çalıştırma
 
-Uygulama, Payara Micro 7 üzerinde çalışan bir WAR'dır *([ADR-0010](docs/adr/ADR-0010.md))*. Web sayfaları Faz 7'de gelecek. Önce bütün modülleri derleyin:
+Uygulama, Payara Micro 7 üzerinde çalışan bir WAR'dır *([ADR-0010](docs/adr/ADR-0010.md))*. Önce bütün modülleri derleyin:
 
 ```bash
 ./mvnw install -DskipTests
@@ -69,7 +69,7 @@ Sonra sunucuyu başlatın. Maven, Payara Micro'yu indirip WAR'ı onunla açar:
 ./mvnw -pl app -Ppayara package exec:exec
 ```
 
-API `http://localhost:8080/api/v1` adresindedir. Sunucu, Payara'nın Türkçe yerel ayardaki bir hatası yüzünden İngilizce yerel ayarla *(`-Duser.language=en`)* başlatılır; profil bunu kendisi yapar. Veritabanı belirtilmezse bellek içi bir H2 veritabanı kullanılır ve demo verisi yüklenir: 8 kitap, bir müşteri (`ayse@bookstore.local`) ve bir yönetici (`admin@bookstore.local`). İkisinin parolası `kitap2026`. Sunucu durunca veriler silinir.
+Mağaza `http://localhost:8080/` adresinde açılır; API `http://localhost:8080/api/v1` adresindedir. Sunucu, Payara'nın Türkçe yerel ayardaki bir hatası yüzünden İngilizce yerel ayarla *(`-Duser.language=en`)* başlatılır; profil bunu kendisi yapar. Veritabanı belirtilmezse bellek içi bir H2 veritabanı kullanılır ve demo verisi yüklenir: 8 kitap, bir müşteri (`ayse@bookstore.local`) ve bir yönetici (`admin@bookstore.local`). İkisinin parolası `kitap2026`. Sunucu durunca veriler silinir.
 
 Örnek istekler:
 

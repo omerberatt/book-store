@@ -221,7 +221,7 @@ Bunlar ders notlarında yok; kitap mağazasının ihtiyacından doğdu ya da Faz
 | Java serileştirmesi | ✅ `GuestCart` ve `SessionGuestCart` *(misafir sepeti HTTP oturumunda, ADR-0020)* |
 | Eşzamanlılık testleri *(`ExecutorService`, `CountDownLatch`)* | `JdbcSalesRepositoriesTest.OrderNumbers`, `CheckoutWithDatabaseTest` |
 | Kimlik doğrulama, BCrypt | ✅ Faz 7.1–7.2 *(ADR-0011, ADR-0020)*: `BcryptPasswordHasher`, `BookstoreAuthenticationMechanism`, `AccountIdentityStore`, `/api/v1/session`, `ClientHeaderFilter` |
-| HTML / JavaScript arayüz | Faz 7 *(ADR-0011)* |
+| HTML / JavaScript arayüz | ✅ Faz 7.4 *(ADR-0011)*: `app/src/main/webapp`, `js/api.js`, `js/i18n.js`, sayfa başına `js/pages/…`, `i18n/tr.json` ve `en.json`; `WebPagesTest` |
 
 ## Plandan çıkarılanlar
 
