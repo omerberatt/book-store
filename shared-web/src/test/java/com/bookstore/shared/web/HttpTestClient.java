@@ -116,6 +116,71 @@ public final class HttpTestClient {
     }
 
     /**
+     * Sends a file as the body of a {@code PUT}, as a browser's {@code fetch} does with a file input.
+     *
+     * @param path        the path
+     * @param contentType the file's media type
+     * @param content     the bytes
+     * @return the reply
+     */
+    public Reply upload(String path, String contentType, byte[] content) {
+        HttpRequest.Builder request = HttpRequest.newBuilder(baseUri.resolve(path))
+                .PUT(HttpRequest.BodyPublishers.ofByteArray(content))
+                .header("Content-Type", contentType);
+        HttpResponse<String> response = exchange(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        return new Reply(response.statusCode(), response.body(),
+                response.headers().firstValue("Content-Type").orElse(""),
+                response.headers().firstValue("Location").orElse(null),
+                response.headers().firstValue("WWW-Authenticate").orElse(null));
+    }
+
+    /**
+     * Downloads a file.
+     *
+     * @param path        the path
+     * @param ifNoneMatch an entity tag for {@code If-None-Match}, or {@code null}
+     * @return the reply with the raw bytes
+     */
+    public FileReply download(String path, String ifNoneMatch) {
+        HttpRequest.Builder request = HttpRequest.newBuilder(baseUri.resolve(path)).GET();
+        if (ifNoneMatch != null) {
+            request.header("If-None-Match", ifNoneMatch);
+        }
+        HttpResponse<byte[]> response = exchange(request, HttpResponse.BodyHandlers.ofByteArray());
+        return new FileReply(response.statusCode(), response.body(),
+                response.headers().firstValue("Content-Type").orElse(""),
+                response.headers().firstValue("ETag").orElse(null));
+    }
+
+    private <T> HttpResponse<T> exchange(HttpRequest.Builder request, HttpResponse.BodyHandler<T> body) {
+        if (authorization != null) {
+            request.header("Authorization", authorization);
+        }
+        if (browser) {
+            request.header(Callers.CLIENT_HEADER, "web");
+        }
+        try {
+            return client.send(request.build(), body);
+        } catch (IOException e) {
+            throw new IllegalStateException(request.build().uri() + " failed", e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(request.build().uri() + " was interrupted", e);
+        }
+    }
+
+    /**
+     * A reply with a file.
+     *
+     * @param status      the status code
+     * @param body        the bytes
+     * @param contentType the {@code Content-Type} header
+     * @param etag        the {@code ETag} header, or {@code null}
+     */
+    public record FileReply(int status, byte[] body, String contentType, String etag) {
+    }
+
+    /**
      * An HTTP reply.
      *
      * @param status      the status code

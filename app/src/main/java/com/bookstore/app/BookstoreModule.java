@@ -6,6 +6,8 @@ import com.bookstore.catalog.application.CatalogAdminService;
 import com.bookstore.catalog.application.CatalogService;
 import com.bookstore.catalog.application.RatingService;
 import com.bookstore.catalog.application.StockService;
+import com.bookstore.catalog.domain.FileStorage;
+import com.bookstore.catalog.persistence.FileSystemFileStorage;
 import com.bookstore.catalog.persistence.JdbcAuthorRepository;
 import com.bookstore.catalog.persistence.JdbcBookRepository;
 import com.bookstore.catalog.persistence.JdbcCategoryRepository;
@@ -39,6 +41,7 @@ import com.bookstore.shared.jdbc.ModuleMigrations;
 import com.bookstore.shared.kernel.event.InProcessEventPublisher;
 import com.bookstore.shared.kernel.event.Notifier;
 
+import java.nio.file.Path;
 import java.time.Clock;
 import java.util.Objects;
 import javax.sql.DataSource;
@@ -92,9 +95,9 @@ public final class BookstoreModule {
         JdbcBookRepository bookRepository = new JdbcBookRepository(jdbc, categoryRepository);
         StockService stock = new StockService(bookRepository, transactions);
         RatingService ratings = new RatingService(bookRepository, transactions);
-        this.catalog = new CatalogService(bookRepository, categoryRepository);
+        this.catalog = new CatalogService(bookRepository, categoryRepository, adapters.files());
         this.catalogAdmin = new CatalogAdminService(bookRepository, new JdbcAuthorRepository(jdbc), categoryRepository,
-                transactions);
+                transactions, adapters.files());
 
         // customer
         JdbcCustomerRepository customerRepository = new JdbcCustomerRepository(jdbc);
@@ -174,9 +177,10 @@ public final class BookstoreModule {
      * @param paymentGateway charges cards
      * @param passwordHasher hashes and checks passwords
      * @param notifier       tells customers about their orders; {@link OrderNotificationObserver} feeds it
+     * @param files          keeps uploaded cover images
      */
     public record Adapters(Clock clock, PaymentGateway paymentGateway, PasswordHasher passwordHasher,
-                           Notifier notifier) {
+                           Notifier notifier, FileStorage files) {
 
         /** Rejects missing adapters. */
         public Adapters {
@@ -184,6 +188,20 @@ public final class BookstoreModule {
             Objects.requireNonNull(paymentGateway, "paymentGateway");
             Objects.requireNonNull(passwordHasher, "passwordHasher");
             Objects.requireNonNull(notifier, "notifier");
+            Objects.requireNonNull(files, "files");
+        }
+
+        /**
+         * Uses a directory under the system's temporary directory for uploaded files.
+         *
+         * @param clock          the clock
+         * @param paymentGateway the payment gateway
+         * @param passwordHasher the password hasher
+         * @param notifier       the notifier
+         */
+        public Adapters(Clock clock, PaymentGateway paymentGateway, PasswordHasher passwordHasher, Notifier notifier) {
+            this(clock, paymentGateway, passwordHasher, notifier, new FileSystemFileStorage(
+                    Path.of(System.getProperty("java.io.tmpdir"), "bookstore-files")));
         }
     }
 }

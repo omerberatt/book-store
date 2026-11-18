@@ -10,6 +10,8 @@ import com.bookstore.catalog.application.CatalogAdminService;
 import com.bookstore.catalog.application.CatalogService;
 import com.bookstore.catalog.application.RatingService;
 import com.bookstore.catalog.application.StockService;
+import com.bookstore.catalog.domain.FileStorage;
+import com.bookstore.catalog.persistence.InMemoryFileStorage;
 import com.bookstore.catalog.persistence.JdbcAuthorRepository;
 import com.bookstore.catalog.persistence.JdbcBookRepository;
 import com.bookstore.catalog.persistence.JdbcCategoryRepository;
@@ -118,7 +120,7 @@ class CdiWiringTest {
         assertThat(catalogAdmin.stats(5).totalBooks()).isEqualTo(8);
     }
 
-    /** The test's stand-ins for the server: an H2 data source, JDBC transactions, a recording notifier. */
+    /** The test's stand-ins for the server: an H2 data source, JDBC transactions, a recording notifier, files in memory. */
     @ApplicationScoped
     public static class TestPlatform {
 
@@ -163,6 +165,13 @@ class CdiWiringTest {
         @Priority(1)
         public Notifier recordingNotifier() {
             return NOTIFIED::add;
+        }
+
+        /** @return files kept in memory instead of the configured directory */
+        @Produces
+        @Singleton
+        public FileStorage files() {
+            return new InMemoryFileStorage();
         }
     }
 }

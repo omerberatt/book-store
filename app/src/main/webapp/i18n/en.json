@@ -54,6 +54,7 @@
   "book.year": "Published",
   "book.language": "Language",
   "book.pages": "Pages",
+  "book.coverOf": "Cover of {title}",
 
   "reviews.heading": "Reviews",
   "reviews.ratings": "Ratings",

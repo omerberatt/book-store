@@ -13,7 +13,10 @@ import com.bookstore.shared.kernel.money.Money;
 import com.bookstore.shared.web.Callers;
 import com.bookstore.shared.web.PageResponse;
 import com.bookstore.shared.web.Params;
+import com.bookstore.shared.web.WebException;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -46,6 +49,7 @@ import jakarta.ws.rs.core.SecurityContext;
  *   <tr><td>{@code PUT /api/v1/admin/books/{id}/price}</td><td>change the price</td></tr>
  *   <tr><td>{@code PUT /api/v1/admin/books/{id}/stock}</td><td>set the stock</td></tr>
  *   <tr><td>{@code PUT /api/v1/admin/books/{id}/active}</td><td>take off sale or put back</td></tr>
+ *   <tr><td>{@code PUT /api/v1/admin/books/{id}/cover}</td><td>upload the cover: the JPEG or PNG itself, at most 2 MB</td></tr>
  * </table>
  */
 @Path("admin/books")
@@ -160,6 +164,29 @@ public class AdminBookResource {
                               @Valid @NotNull ActiveRequest change) {
         Callers.administrator(security);
         return catalog.setActive(book(id), change.active());
+    }
+
+    /**
+     * Uploads the cover image (ADM-4). The body is the image itself; at most one byte more than the
+     * limit is read, so a huge upload cannot fill the memory.
+     *
+     * @param security the request's security
+     * @param id       the book
+     * @param image    the JPEG or PNG
+     * @return the book
+     */
+    @PUT
+    @Path("{id}/cover")
+    @Consumes({"image/jpeg", "image/png"})
+    public BookDetails cover(@Context SecurityContext security, @PathParam("id") String id, InputStream image) {
+        Callers.administrator(security);
+        byte[] content;
+        try {
+            content = image.readNBytes(CatalogAdminFacade.MAX_COVER_BYTES + 1);
+        } catch (IOException e) {
+            throw WebException.badRequest("request.unreadable", "The image could not be read");
+        }
+        return catalog.attachCover(book(id), content);
     }
 
     private static BookId book(String id) {

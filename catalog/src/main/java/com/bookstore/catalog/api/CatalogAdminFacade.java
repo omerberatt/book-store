@@ -16,6 +16,9 @@ import java.util.List;
  */
 public interface CatalogAdminFacade {
 
+    /** The largest cover image accepted, in bytes (ADM-4): 2 MB. */
+    int MAX_COVER_BYTES = 2 * 1024 * 1024;
+
     /**
      * Lists every book, deactivated ones too, by title.
      *
@@ -80,6 +83,16 @@ public interface CatalogAdminFacade {
      * @return the changed book
      */
     BookDetails setActive(BookId bookId, boolean active);
+
+    /**
+     * Uploads a book's cover image (ADM-4); the previous one is deleted.
+     *
+     * @param bookId  the book
+     * @param content the image, a JPEG or PNG of at most {@link #MAX_COVER_BYTES} bytes
+     * @return the changed book
+     * @throws ValidationException if the file is not such an image
+     */
+    BookDetails attachCover(BookId bookId, byte[] content);
 
     /** @return every author, by name */
     List<AuthorView> authors();

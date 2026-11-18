@@ -52,6 +52,9 @@ async function showBook() {
     ['book.pages', book.pageCount > 0 ? book.pageCount : null],
   ].filter(([, value]) => value !== null && value !== undefined && value !== '');
   fill(box,
+    book.coverImage
+      ? h('img', { class: 'cover detail-cover', src: `/api/v1/books/${bookId}/cover`, alt: t('book.coverOf', { title: book.title }) })
+      : null,
     h('h1', {}, book.title),
     h('p', { class: 'authors' }, book.authors.map((author) => author.name).join(', ')),
     h('p', { class: 'price' }, formatMoney(book.price)),

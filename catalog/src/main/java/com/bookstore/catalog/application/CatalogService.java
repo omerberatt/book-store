@@ -5,6 +5,7 @@ import com.bookstore.catalog.api.BookSearchQuery;
 import com.bookstore.catalog.api.BookSummary;
 import com.bookstore.catalog.api.CatalogFacade;
 import com.bookstore.catalog.api.CategoryNode;
+import com.bookstore.catalog.api.CoverFile;
 import com.bookstore.catalog.domain.AuthorId;
 import com.bookstore.catalog.domain.Book;
 import com.bookstore.catalog.domain.BookRepository;
@@ -12,6 +13,8 @@ import com.bookstore.catalog.domain.BookSpecifications;
 import com.bookstore.catalog.domain.Category;
 import com.bookstore.catalog.domain.CategoryId;
 import com.bookstore.catalog.domain.CategoryRepository;
+import com.bookstore.catalog.domain.CoverImage;
+import com.bookstore.catalog.domain.FileStorage;
 import com.bookstore.shared.kernel.error.NotFoundException;
 import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.paging.Page;
@@ -19,6 +22,7 @@ import com.bookstore.shared.kernel.paging.PageRequest;
 import com.bookstore.shared.kernel.specification.Specification;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -34,22 +38,25 @@ public class CatalogService implements CatalogFacade {
 
     private final BookRepository books;
     private final CategoryRepository categories;
+    private final FileStorage files;
 
     /**
      * Creates the service.
      *
      * @param books      where books are stored
      * @param categories where categories are stored
+     * @param files      where cover images are kept
      */
     @Inject
-    public CatalogService(BookRepository books, CategoryRepository categories) {
+    public CatalogService(BookRepository books, CategoryRepository categories, FileStorage files) {
         this.books = books;
         this.categories = categories;
+        this.files = files;
     }
 
     /** For the CDI container's client proxy only; never called by the application. */
     protected CatalogService() {
-        this(null, null);
+        this(null, null, null);
     }
 
     @Override
@@ -88,6 +95,15 @@ public class CatalogService implements CatalogFacade {
     @Override
     public List<CategoryNode> categoryTree() {
         return categories.findRoots().stream().map(CatalogMapper::nodeOf).toList();
+    }
+
+    /** Covers of books off sale are served too: the administrator's pages show them. */
+    @Override
+    public Optional<CoverFile> cover(BookId bookId) {
+        Book book = books.findById(bookId).orElseThrow(() -> new NotFoundException("Book", bookId));
+        return book.coverImage().flatMap(key -> files.load(key).map(content -> new CoverFile(key,
+                CoverImage.Type.ofKey(key).map(CoverImage.Type::mediaType).orElse("application/octet-stream"),
+                content)));
     }
 
     private Set<CategoryId> categoryAndDescendantIds(CategoryId categoryId) {

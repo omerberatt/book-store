@@ -101,7 +101,7 @@ Ders kapsamı dışındadır *(ADR-0011)*.
 | Adım | İş |
 | --- | --- |
 | 8.1 ✅ | Katalog yönetimi: `CatalogAdminFacade`, `/api/v1/admin/books`, `/admin/authors`, `/admin/categories`, `/admin/books/stats`; ADR-0021 |
-| 8.2 | Kapak görseli: `FileStorage` portu, dosya sistemi uygulaması, yükleme ve sunma |
+| 8.2 ✅ | Kapak görseli: `FileStorage` portu, dosya sistemi uygulaması, yükleme ve sunma |
 | 8.3 | Kullanıcı ve yorum yönetimi: `CustomerAdminFacade`, `ReviewAdminFacade` |
 | 8.4 | Yönetim sayfaları *(özet, kitaplar, yazarlar ve kategoriler, siparişler, kullanıcılar, yorumlar)* |
 

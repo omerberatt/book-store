@@ -91,7 +91,7 @@ Tarayıcı ise parolayı bir kez `POST /api/v1/session` ile gönderir ve sonra o
 curl -c cerez.txt -H "X-Bookstore-Client: web" -H "Content-Type: application/json" -d '{"email": "ayse@bookstore.local", "password": "kitap2026"}' http://localhost:8080/api/v1/session
 ```
 
-Kalıcı bir PostgreSQL için önce `docker compose up -d`, sonra sunucuyu başlatmadan önce şu ortam değişkenleri *(MicroProfile Config)*: `BOOKSTORE_DB_CLASS_NAME=org.postgresql.ds.PGSimpleDataSource`, `BOOKSTORE_DB_URL=jdbc:postgresql://localhost:5432/bookstore`, `BOOKSTORE_DB_USER=bookstore`, `BOOKSTORE_DB_PASSWORD=bookstore`; demo verisi istenmiyorsa `BOOKSTORE_DEMO_DATA=false`.
+Kalıcı bir PostgreSQL için önce `docker compose up -d`, sonra sunucuyu başlatmadan önce şu ortam değişkenleri *(MicroProfile Config)*: `BOOKSTORE_DB_CLASS_NAME=org.postgresql.ds.PGSimpleDataSource`, `BOOKSTORE_DB_URL=jdbc:postgresql://localhost:5432/bookstore`, `BOOKSTORE_DB_USER=bookstore`, `BOOKSTORE_DB_PASSWORD=bookstore`; demo verisi istenmiyorsa `BOOKSTORE_DEMO_DATA=false`. Yüklenen kapak görselleri varsayılan olarak sistemin geçici dizinindeki `bookstore-files` klasörüne yazılır; kalıcı bir yer için `BOOKSTORE_FILES_DIRECTORY`.
 
 Uçların listesi her modülün `rest` paketindeki `…Resource` sınıflarının açıklamasındadır; hatalar RFC 9457 biçiminde döner *([ADR-0009](docs/adr/ADR-0009.md))*.
 

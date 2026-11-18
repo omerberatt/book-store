@@ -9,6 +9,7 @@ import com.bookstore.catalog.domain.Stock;
 import com.bookstore.catalog.persistence.InMemoryAuthorRepository;
 import com.bookstore.catalog.persistence.InMemoryBookRepository;
 import com.bookstore.catalog.persistence.InMemoryCategoryRepository;
+import com.bookstore.catalog.persistence.InMemoryFileStorage;
 import com.bookstore.shared.kernel.money.Money;
 import com.bookstore.shared.kernel.testing.DirectTransactions;
 
@@ -23,11 +24,12 @@ public final class CatalogShop {
     public final InMemoryCategoryRepository categories = new InMemoryCategoryRepository();
     public final InMemoryAuthorRepository authors = new InMemoryAuthorRepository();
     public final DirectTransactions transactions = new DirectTransactions();
+    public final InMemoryFileStorage files = new InMemoryFileStorage();
 
-    public final CatalogService catalog = new CatalogService(books, categories);
+    public final CatalogService catalog = new CatalogService(books, categories, files);
     public final StockService stock = new StockService(books, transactions);
     public final RatingService ratings = new RatingService(books, transactions);
-    public final CatalogAdminService admin = new CatalogAdminService(books, authors, categories, transactions);
+    public final CatalogAdminService admin = new CatalogAdminService(books, authors, categories, transactions, files);
 
     /** "Literature", with the subcategories "Novel" and "Poetry". */
     public final Category literature;

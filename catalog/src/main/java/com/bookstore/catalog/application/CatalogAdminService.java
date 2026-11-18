@@ -17,6 +17,8 @@ import com.bookstore.catalog.domain.BookSpecifications;
 import com.bookstore.catalog.domain.Category;
 import com.bookstore.catalog.domain.CategoryId;
 import com.bookstore.catalog.domain.CategoryRepository;
+import com.bookstore.catalog.domain.CoverImage;
+import com.bookstore.catalog.domain.FileStorage;
 import com.bookstore.catalog.domain.Isbn;
 import com.bookstore.catalog.domain.Language;
 import com.bookstore.catalog.domain.Stock;
@@ -36,6 +38,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -54,12 +57,16 @@ public class CatalogAdminService implements CatalogAdminFacade {
     /** The most books listed as running low on the overview. */
     static final int LOW_STOCK_LIST_SIZE = 20;
 
+    /** The storage folder of cover images. */
+    static final String COVER_FOLDER = "covers";
+
     private static final Collator TURKISH = Collator.getInstance(Locale.forLanguageTag("tr"));
 
     private final BookRepository books;
     private final AuthorRepository authors;
     private final CategoryRepository categories;
     private final TransactionRunner transactions;
+    private final FileStorage files;
 
     /**
      * Creates the service.
@@ -68,19 +75,21 @@ public class CatalogAdminService implements CatalogAdminFacade {
      * @param authors      where authors are stored
      * @param categories   where categories are stored
      * @param transactions runs each change in a transaction
+     * @param files        where cover images are kept
      */
     @Inject
     public CatalogAdminService(BookRepository books, AuthorRepository authors, CategoryRepository categories,
-                               TransactionRunner transactions) {
+                               TransactionRunner transactions, FileStorage files) {
         this.books = books;
         this.authors = authors;
         this.categories = categories;
         this.transactions = transactions;
+        this.files = files;
     }
 
     /** For the CDI container's client proxy only; never called by the application. */
     protected CatalogAdminService() {
-        this(null, null, null, null);
+        this(null, null, null, null, null);
     }
 
     @Override
@@ -148,6 +157,32 @@ public class CatalogAdminService implements CatalogAdminFacade {
                 book.deactivate();
             }
         });
+    }
+
+    /**
+     * Stores the file first and records its key in the book's transaction. If that fails, the new
+     * file is deleted again; once it succeeded, the replaced file goes.
+     */
+    @Override
+    public BookDetails attachCover(BookId bookId, byte[] content) {
+        CoverImage image = CoverImage.of(content);
+        load(bookId);
+        String key = files.store(COVER_FOLDER, image.content(), image.type().extension());
+        AtomicReference<String> replaced = new AtomicReference<>();
+        BookDetails details;
+        try {
+            details = change(bookId, book -> {
+                replaced.set(book.coverImage().orElse(null));
+                book.attachCover(key);
+            });
+        } catch (RuntimeException e) {
+            files.delete(key);
+            throw e;
+        }
+        if (replaced.get() != null) {
+            files.delete(replaced.get());
+        }
+        return details;
     }
 
     @Override

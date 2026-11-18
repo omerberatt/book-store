@@ -11,10 +11,12 @@ import com.bookstore.catalog.api.CatalogStats;
 import com.bookstore.catalog.api.CategoryNode;
 import com.bookstore.catalog.domain.Author;
 import com.bookstore.catalog.domain.Book;
+import com.bookstore.catalog.domain.CatalogTestData;
 import com.bookstore.shared.kernel.error.ConflictException;
 import com.bookstore.shared.kernel.error.DomainException;
 import com.bookstore.shared.kernel.error.NotFoundException;
 import com.bookstore.shared.kernel.error.ValidationException;
+import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.money.Money;
 import com.bookstore.shared.kernel.paging.PageRequest;
 
@@ -167,6 +169,34 @@ class CatalogAdminServiceTest {
             assertThatThrownBy(() -> shop.admin.removeCategory(shop.novels.id().value()))
                     .isInstanceOfSatisfying(ConflictException.class, e -> assertThat(e.code()).isEqualTo("category.in-use"));
         }
+    }
+
+    @Test
+    void aCoverIsStoredServedAndReplaced() {
+        BookDetails created = shop.admin.createBook(madonna("9789753638029"));
+        assertThat(shop.catalog.cover(created.id())).isEmpty();
+
+        BookDetails withCover = shop.admin.attachCover(created.id(), CatalogTestData.png());
+        assertThat(withCover.coverImage()).endsWith(".png");
+        assertThat(shop.catalog.cover(created.id())).hasValueSatisfying(cover -> {
+            assertThat(cover.mediaType()).isEqualTo("image/png");
+            assertThat(cover.content()).isEqualTo(CatalogTestData.png());
+        });
+
+        BookDetails replaced = shop.admin.attachCover(created.id(), CatalogTestData.jpeg());
+        assertThat(shop.files.keys()).containsExactly(replaced.coverImage());
+        assertThat(shop.catalog.cover(created.id()).orElseThrow().mediaType()).isEqualTo("image/jpeg");
+    }
+
+    @Test
+    void aWrongFileOrAnUnknownBookStoresNothing() {
+        BookDetails created = shop.admin.createBook(madonna("9789753638029"));
+
+        assertThatThrownBy(() -> shop.admin.attachCover(created.id(), "GIF89a".getBytes()))
+                .isInstanceOf(ValidationException.class);
+        assertThatThrownBy(() -> shop.admin.attachCover(BookId.of(999),
+                CatalogTestData.png())).isInstanceOf(NotFoundException.class);
+        assertThat(shop.files.keys()).isEmpty();
     }
 
     @Test

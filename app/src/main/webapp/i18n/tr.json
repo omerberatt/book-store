@@ -54,6 +54,7 @@
   "book.year": "Yayın yılı",
   "book.language": "Dil",
   "book.pages": "Sayfa sayısı",
+  "book.coverOf": "{title} kapağı",
 
   "reviews.heading": "Yorumlar",
   "reviews.ratings": "Puanlar",

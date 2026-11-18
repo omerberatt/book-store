@@ -93,7 +93,11 @@ function bookCard(book) {
     await refreshCartBadge(cart);
     showMessage(t('cart.added', { title: book.title }), 'success');
   }));
+  const cover = book.coverImage
+    ? h('img', { class: 'cover', src: `/api/v1/books/${book.id}/cover`, alt: '', loading: 'lazy' })
+    : h('div', { class: 'cover placeholder', 'aria-hidden': 'true' }, book.title.charAt(0));
   return h('li', {}, h('article', { class: 'book-card panel' },
+    h('a', { href: `book.html?id=${book.id}`, tabindex: -1 }, cover),
     h('h3', {}, h('a', { href: `book.html?id=${book.id}` }, book.title)),
     h('p', { class: 'authors' }, book.authorNames),
     book.ratingCount > 0 && book.averageRating != null

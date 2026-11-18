@@ -7,6 +7,7 @@ import com.bookstore.shared.kernel.paging.Page;
 import com.bookstore.shared.kernel.paging.PageRequest;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * What customers can do with the catalog: browse, search and look at a book (CAT-1 – CAT-7).
@@ -39,4 +40,13 @@ public interface CatalogFacade {
      * @return the top-level categories with their subcategories
      */
     List<CategoryNode> categoryTree();
+
+    /**
+     * Returns a book's cover image, if one was uploaded (CAT-2).
+     *
+     * @param bookId the book
+     * @return the image; empty if the book has none
+     * @throws NotFoundException if there is no such book
+     */
+    Optional<CoverFile> cover(BookId bookId);
 }

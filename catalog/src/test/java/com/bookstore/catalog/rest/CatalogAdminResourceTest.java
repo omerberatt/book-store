@@ -5,11 +5,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.bookstore.catalog.application.CatalogShop;
 import com.bookstore.catalog.domain.Author;
 import com.bookstore.catalog.domain.Book;
+import com.bookstore.catalog.domain.CatalogTestData;
 import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.web.Caller;
 import com.bookstore.shared.web.HttpTestClient;
 import com.bookstore.shared.web.RestTestServer;
 
+import java.util.Arrays;
 import java.util.Optional;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -105,6 +107,39 @@ class CatalogAdminResourceTest {
         assertThat(admin.delete("/api/v1/admin/categories/" + artId).code()).isEqualTo("category.has-children");
         assertThat(admin.delete("/api/v1/admin/categories/" + shop.novels.id().value()).code())
                 .isEqualTo("category.in-use");
+    }
+
+    @Test
+    void aCoverIsUploadedAndServedWithAnEntityTag() {
+        String cover = "/api/v1/admin/books/" + dune.id().value() + "/cover";
+        String publicCover = "/api/v1/books/" + dune.id().value() + "/cover";
+        assertThat(anonymous.download(publicCover, null).status()).isEqualTo(404);
+        assertThat(customer.upload(cover, "image/png", CatalogTestData.png()).status()).isEqualTo(403);
+
+        HttpTestClient.Reply uploaded = admin.upload(cover, "image/png", CatalogTestData.png());
+        assertThat(uploaded.status()).isEqualTo(200);
+        assertThat(uploaded.json().get("coverImage").asText()).endsWith(".png");
+
+        HttpTestClient.FileReply served = anonymous.download(publicCover, null);
+        assertThat(served.status()).isEqualTo(200);
+        assertThat(served.contentType()).isEqualTo("image/png");
+        assertThat(served.body()).isEqualTo(CatalogTestData.png());
+        assertThat(anonymous.download(publicCover, served.etag()).status()).isEqualTo(304);
+
+        admin.upload(cover, "image/jpeg", CatalogTestData.jpeg());
+        assertThat(anonymous.download(publicCover, served.etag()).status()).isEqualTo(200);
+    }
+
+    @Test
+    void onlySmallJpegAndPngFilesAreAccepted() {
+        String cover = "/api/v1/admin/books/" + dune.id().value() + "/cover";
+
+        HttpTestClient.Reply gif = admin.upload(cover, "image/png", "GIF89a".getBytes());
+        assertThat(gif.status()).isEqualTo(422);
+        assertThat(gif.code()).isEqualTo("validation.failed");
+        assertThat(admin.upload(cover, "image/gif", "GIF89a".getBytes()).status()).isEqualTo(415);
+        byte[] large = Arrays.copyOf(CatalogTestData.png(), 3 * 1024 * 1024);
+        assertThat(admin.upload(cover, "image/png", large).body()).contains("2 MB");
     }
 
     @Test
