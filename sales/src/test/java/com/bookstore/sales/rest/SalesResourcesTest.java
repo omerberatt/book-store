@@ -31,9 +31,9 @@ class SalesResourcesTest {
 
     SalesResourcesTest() {
         server = RestTestServer.start((user, password) -> switch (user) {
-            case "ayse" -> Optional.of(new Caller(ayseId, "ayse@example.com", "CUSTOMER"));
-            case "mehmet" -> Optional.of(new Caller(mehmetId, "mehmet@example.com", "CUSTOMER"));
-            case "admin" -> Optional.of(new Caller(CustomerId.of(999), "admin@example.com", Caller.ADMIN));
+            case "ayse" -> Optional.of(new Caller(ayseId, "CUSTOMER"));
+            case "mehmet" -> Optional.of(new Caller(mehmetId, "CUSTOMER"));
+            case "admin" -> Optional.of(new Caller(CustomerId.of(999), Caller.ADMIN));
             default -> Optional.empty();
         }, new CartResource(shop.cart), new OrderResource(shop.checkout, shop.myOrders),
                 new OrderAdminResource(shop.orderAdmin));

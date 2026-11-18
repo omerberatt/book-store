@@ -195,7 +195,7 @@ Sipariş öncesinde sepet ayrı bir transaction'da güncel katalogla karşılaş
 | Olaylar | `CdiDomainEventPublisher`; gözlemciler `@Observes(during = AFTER_SUCCESS)`. |
 | HTTP | JAX-RS kaynakları `/api/v1`, JSON-B, `ExceptionMapper`. OpenAPI `/openapi`. |
 | Arayüz | `src/main/webapp` altındaki HTML, CSS ve JavaScript; API'yi `fetch` ile çağırır *(ADR-0011)*. |
-| Güvenlik | Jakarta Security: tarayıcı için form, API için HTTP Basic; roller `CUSTOMER`, `ADMIN` *(Faz 7)*. |
+| Güvenlik | Jakarta Security: tarayıcı için oturum, API için HTTP Basic; roller `CUSTOMER`, `ADMIN`; oturum çerezli isteklerde `X-Bookstore-Client` başlığı *(ADR-0020)*. |
 
 ## 5. Veritabanı
 
@@ -228,7 +228,7 @@ erDiagram
 
 | Konu | Yaklaşım |
 | --- | --- |
-| Kimlik doğrulama | Jakarta Security; tarayıcıda form, API'de HTTP Basic |
+| Kimlik doğrulama | Jakarta Security; tarayıcıda `POST /api/v1/session` ve oturum çerezi, API'de HTTP Basic *(ADR-0020)* |
 | Parola | `PasswordHasher` portu, BCrypt uygulaması; `PasswordPolicy` ile kural denetimi |
 | Yetkilendirme | Rol kuralları *(`/api/v1/admin/**` → `ADMIN`)* ve servis seviyesinde sahiplik denetimi *(müşteri yalnızca kendi siparişini görür)* |
 | SQL enjeksiyonu | Yalnızca `PreparedStatement` *(testle doğrulandı)* |
@@ -263,7 +263,7 @@ Ayrıntıları ve ArchUnit karşılıkları ADR-0004 ve ADR-0005'tedir:
 | --- | --- | --- | --- |
 | Modüller | ✅ İş alanına göre modüller, `shared-kernel`, `shared-jdbc`, `app`, mimari testler | — | 4.1 |
 | Migration'lar | ✅ Modül başına dosya ve Flyway geçmişi | — | 4.1 |
-| Web | ✅ JAX-RS üzerinde REST API *(Payara Micro 7, JSON-B, HTTP Basic filtresi)* | Jakarta Security, statik arayüz | 7 |
+| Web | ✅ JAX-RS üzerinde REST API *(Payara Micro 7, JSON-B)*; ✅ Jakarta Security *(HTTP Basic ve oturum, ADR-0020)* | Misafir sepeti oturumda, statik arayüz | 7 |
 | Mimari kurallar | ✅ ADR-0003–0008'in ArchUnit kuralları *(`rest` kuralları Faz 5'te dolar)* | — | 4.2 |
 | Kimlikler | ✅ Tipli kimlikler *(`BookId`, `CustomerId` shared-kernel'de)* | — | 4.3 |
 | Hatalar | ✅ `DomainException` + `Kind` + `code` | — | 4.3 |

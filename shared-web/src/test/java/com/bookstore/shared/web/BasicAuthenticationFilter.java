@@ -6,24 +6,19 @@ import java.util.Base64;
 import java.util.Objects;
 
 import jakarta.annotation.Priority;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 import jakarta.ws.rs.Priorities;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.SecurityContext;
-import jakarta.ws.rs.ext.Provider;
 
 /**
- * Signs the caller in from the {@code Authorization: Basic} header before any resource runs
- * (ADR-0019): a request without the header stays anonymous, wrong credentials are a 401. The
- * caller is put into the request's {@link SecurityContext}, where {@link Callers} finds it. Phase 7
- * replaces this filter with Jakarta Security.
+ * Stands in for the server's Jakarta Security in the HTTP tests (ADR-0020): signs the caller in
+ * from the {@code Authorization: Basic} header and fills the request's {@link SecurityContext} the
+ * way the server does, with the customer's id as the principal's name and the role as a group. A
+ * request without the header stays anonymous, wrong credentials are a 401.
  */
-@Provider
 @Priority(Priorities.AUTHENTICATION)
-@ApplicationScoped
 public class BasicAuthenticationFilter implements ContainerRequestFilter {
 
     private final Authenticator authenticator;
@@ -33,14 +28,8 @@ public class BasicAuthenticationFilter implements ContainerRequestFilter {
      *
      * @param authenticator checks user names and passwords
      */
-    @Inject
     public BasicAuthenticationFilter(Authenticator authenticator) {
         this.authenticator = Objects.requireNonNull(authenticator, "authenticator");
-    }
-
-    /** For the CDI container's client proxy only; never called by the application. */
-    protected BasicAuthenticationFilter() {
-        this.authenticator = null;
     }
 
     @Override
@@ -72,25 +61,13 @@ public class BasicAuthenticationFilter implements ContainerRequestFilter {
                 .orElseThrow(WebException::unauthenticated);
     }
 
-    /**
-     * The signed-in caller as a JAX-RS principal.
-     *
-     * @param caller the caller
-     */
-    record CallerPrincipal(Caller caller) implements Principal {
-
-        @Override
-        public String getName() {
-            return caller.email();
-        }
-    }
-
-    /** A security context that knows the signed-in caller. */
+    /** A security context that knows the signed-in caller, shaped like the server's. */
     private record CallerContext(Caller caller, boolean secure) implements SecurityContext {
 
         @Override
         public Principal getUserPrincipal() {
-            return new CallerPrincipal(caller);
+            String name = Long.toString(caller.customerId().value());
+            return () -> name;
         }
 
         @Override

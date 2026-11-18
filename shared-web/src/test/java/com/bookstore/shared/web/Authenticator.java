@@ -3,9 +3,8 @@ package com.bookstore.shared.web;
 import java.util.Optional;
 
 /**
- * Checks the user name and password of an HTTP Basic request (ADR-0019). The {@code app} module
- * implements it with the customer module's {@code AccountFacade}; Phase 7 replaces it with
- * Jakarta Security.
+ * Checks the user name and password of an HTTP Basic request in the HTTP tests, where
+ * {@link BasicAuthenticationFilter} stands in for the server's Jakarta Security (ADR-0020).
  */
 @FunctionalInterface
 public interface Authenticator {

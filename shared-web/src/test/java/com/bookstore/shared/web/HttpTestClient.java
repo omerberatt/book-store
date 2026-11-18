@@ -21,6 +21,7 @@ public final class HttpTestClient {
     private final HttpClient client = HttpClient.newHttpClient();
     private final URI baseUri;
     private final String authorization;
+    private final boolean browser;
 
     /**
      * Creates an anonymous client.
@@ -28,12 +29,13 @@ public final class HttpTestClient {
      * @param root the server's root, for example {@code http://127.0.0.1:8080/}
      */
     public HttpTestClient(URI root) {
-        this(root, null);
+        this(root, null, false);
     }
 
-    private HttpTestClient(URI baseUri, String authorization) {
+    private HttpTestClient(URI baseUri, String authorization, boolean browser) {
         this.baseUri = baseUri;
         this.authorization = authorization;
+        this.browser = browser;
     }
 
     /**
@@ -45,7 +47,16 @@ public final class HttpTestClient {
      */
     public HttpTestClient as(String email, String password) {
         String token = Base64.getEncoder().encodeToString((email + ":" + password).getBytes(StandardCharsets.UTF_8));
-        return new HttpTestClient(baseUri, "Basic " + token);
+        return new HttpTestClient(baseUri, "Basic " + token, browser);
+    }
+
+    /**
+     * Returns a client that sends {@link Callers#CLIENT_HEADER}, as the browser pages do.
+     *
+     * @return the client
+     */
+    public HttpTestClient asBrowser() {
+        return new HttpTestClient(baseUri, authorization, true);
     }
 
     /** Sends a {@code GET}. @param path the path and query @return the reply */
@@ -86,12 +97,16 @@ public final class HttpTestClient {
         if (authorization != null) {
             request.header("Authorization", authorization);
         }
+        if (browser) {
+            request.header(Callers.CLIENT_HEADER, "web");
+        }
         try {
             HttpResponse<String> response = client.send(request.build(),
                     HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             return new Reply(response.statusCode(), response.body(),
                     response.headers().firstValue("Content-Type").orElse(""),
-                    response.headers().firstValue("Location").orElse(null));
+                    response.headers().firstValue("Location").orElse(null),
+                    response.headers().firstValue("WWW-Authenticate").orElse(null));
         } catch (IOException e) {
             throw new IllegalStateException(method + " " + path + " failed", e);
         } catch (InterruptedException e) {
@@ -107,8 +122,9 @@ public final class HttpTestClient {
      * @param body        the body as text
      * @param contentType the {@code Content-Type} header
      * @param location    the {@code Location} header, or {@code null}
+     * @param challenge   the {@code WWW-Authenticate} header, or {@code null}
      */
-    public record Reply(int status, String body, String contentType, String location) {
+    public record Reply(int status, String body, String contentType, String location, String challenge) {
 
         private static final ObjectMapper JSON = new ObjectMapper();
 

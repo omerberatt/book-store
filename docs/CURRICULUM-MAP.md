@@ -220,7 +220,7 @@ Bunlar ders notlarında yok; kitap mağazasının ihtiyacından doğdu ya da Faz
 | Diziler ve kontrol basamağı hesabı | `Isbn` *(ISBN-10 → ISBN-13)* |
 | Java serileştirmesi | `Cart` *(misafir sepeti oturumda; ADR-0011 ile yeniden değerlendirilecek)* |
 | Eşzamanlılık testleri *(`ExecutorService`, `CountDownLatch`)* | `JdbcSalesRepositoriesTest.OrderNumbers`, `CheckoutWithDatabaseTest` |
-| Kimlik doğrulama, BCrypt | Faz 7 *(ADR-0011)* |
+| Kimlik doğrulama, BCrypt | ✅ Faz 7.1–7.2 *(ADR-0011, ADR-0020)*: `BcryptPasswordHasher`, `BookstoreAuthenticationMechanism`, `AccountIdentityStore`, `/api/v1/session`, `ClientHeaderFilter` |
 | HTML / JavaScript arayüz | Faz 7 *(ADR-0011)* |
 
 ## Plandan çıkarılanlar

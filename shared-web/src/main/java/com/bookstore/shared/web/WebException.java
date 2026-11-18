@@ -65,7 +65,19 @@ public final class WebException extends RuntimeException {
     /** @return the exception for a request without valid credentials */
     public static WebException unauthenticated() {
         return new WebException(HttpStatus.UNAUTHORIZED, "authentication.required",
-                "Sign in with HTTP Basic to use this endpoint", List.of());
+                "Sign in to use this endpoint", List.of());
+    }
+
+    /** @return the exception for a sign-in with a wrong e-mail address, password or a disabled account */
+    public static WebException signInFailed() {
+        return new WebException(HttpStatus.UNAUTHORIZED, "authentication.failed",
+                "The e-mail address or the password is wrong", List.of());
+    }
+
+    /** @return the exception for a cookie-session request that changes state without the client header (ADR-0020) */
+    public static WebException clientHeaderMissing() {
+        return new WebException(HttpStatus.FORBIDDEN, "csrf.header-missing",
+                "Requests signed in with the session cookie must carry the X-Bookstore-Client header", List.of());
     }
 
     /** @return the exception for a signed-in caller who lacks the required role */

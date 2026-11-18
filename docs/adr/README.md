@@ -46,7 +46,7 @@ Bu klasörden önce kararlar `docs/DECISIONS.md` içinde **K-xx** numaralarıyla
 | K-03 Veri erişimi elle JDBC ile | ADR-0008 | Korundu; JPA ileri bir faza bırakıldı |
 | K-04 MySQL; testlerde H2 | ADR-0008 | MySQL yerine PostgreSQL 17 |
 | K-05 Thymeleaf + REST API | ADR-0009, ADR-0011 | Thymeleaf yerine REST API üzerinde HTML ve JavaScript |
-| K-06 Web'de oturum, API'de HTTP Basic | ADR-0011 | Jakarta Security ile yeniden ele alınacak |
+| K-06 Web'de oturum, API'de HTTP Basic | ADR-0011 | ADR-0020 ile Jakarta Security'de uygulandı |
 | K-07 Java 21, Spring Boot 4.1 | ADR-0010 | Spring Boot yerine Jakarta EE 11 ve Payara Micro 7 |
 | K-08 Kod İngilizce, doküman Türkçe | ADR-0005 | Korundu |
 | K-09 Kimliği repository atar | ADR-0004 | Tipli kimliklerle (*typed identity*) yeniden ele alındı |

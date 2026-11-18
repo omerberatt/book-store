@@ -31,7 +31,7 @@ class ReviewResourceTest {
             new ReviewFakes.FakeRatings(DUNE), purchases, new ReviewFakes.FakeNames(Map.of(AYSE, "Ayşe Y.")),
             new DirectTransactions(), TestClock.CLOCK);
     private final RestTestServer server = RestTestServer.start((user, password) -> "ayse".equals(user)
-                ? Optional.of(new Caller(AYSE, "ayse@example.com", "CUSTOMER"))
+                ? Optional.of(new Caller(AYSE, "CUSTOMER"))
                 : Optional.empty(),
             new ReviewResource(service), new RatingResource(service));
     private final HttpTestClient anonymous = server.client();

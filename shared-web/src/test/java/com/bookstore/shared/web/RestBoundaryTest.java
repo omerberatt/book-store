@@ -38,8 +38,8 @@ import org.junit.jupiter.api.Test;
 class RestBoundaryTest {
 
     private final RestTestServer server = RestTestServer.start((user, password) -> switch (user + ":" + password) {
-        case "ayse@example.com:secret" -> Optional.of(new Caller(CustomerId.of(1), user, "CUSTOMER"));
-        case "admin@example.com:secret" -> Optional.of(new Caller(CustomerId.of(2), user, Caller.ADMIN));
+        case "ayse@example.com:secret" -> Optional.of(new Caller(CustomerId.of(1), "CUSTOMER"));
+        case "admin@example.com:secret" -> Optional.of(new Caller(CustomerId.of(2), Caller.ADMIN));
         default -> Optional.empty();
     }, new Things());
     private final HttpTestClient anonymous = server.client();
@@ -105,6 +105,8 @@ class RestBoundaryTest {
     @Test
     void protectedEndpointsNeedTheRightCaller() {
         assertThat(anonymous.get("/api/v1/things/mine").status()).isEqualTo(401);
+        assertThat(anonymous.get("/api/v1/things/mine").challenge()).isEqualTo(Callers.BASIC_CHALLENGE);
+        assertThat(anonymous.asBrowser().get("/api/v1/things/mine").challenge()).isNull();
         assertThat(anonymous.as("ayse@example.com", "wrong").get("/api/v1/things/mine").status()).isEqualTo(401);
         assertThat(anonymous.as("ayse@example.com", "secret").get("/api/v1/things/mine").json().asLong())
                 .isEqualTo(1);
@@ -167,7 +169,7 @@ class RestBoundaryTest {
         @GET
         @Path("admin")
         public String admin(@Context SecurityContext security) {
-            return Callers.administrator(security).email();
+            return Callers.administrator(security).role();
         }
 
         @GET

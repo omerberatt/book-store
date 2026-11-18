@@ -198,6 +198,10 @@
                         <configuration>
                             <executable>${java.home}/bin/java</executable>
                             <arguments>
+                                <!-- Payara upper-cases its cookie settings with the default locale and cannot start
+                                     on a Turkish one ("dynamic" becomes "DYNAMİC"); see ADR-0020. -->
+                                <argument>-Duser.language=en</argument>
+                                <argument>-Duser.country=US</argument>
                                 <argument>-jar</argument>
                                 <argument>${project.build.directory}/payara-micro.jar</argument>
                                 <argument>--deploy</argument>

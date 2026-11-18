@@ -4,7 +4,7 @@ Java ile yazılmış, modüler bir çevrimiçi kitap mağazası.
 
 Projenin amacı: çalışan bir e-ticaret uygulaması ortaya koymak.
 
-> **Durum:** Faz 0–6 tamamlandı. Kod iş alanına göre modüllerde *(katalog, müşteri, satış, yorum)*; modüller birbirini yalnızca `api` paketleriyle kullanıyor. Bu kural ve mimari kararların diğer kuralları ArchUnit testleriyle korunuyor. Veritabanı PostgreSQL 17; Payara Micro 7 üzerinde JAX-RS ile bir REST API var *(aşağıda nasıl çalıştırılacağı; tarif `/openapi` adresinde)*. Web sayfaları henüz yok. Ayrıntılar [yol haritasında](docs/ROADMAP.md).
+> **Durum:** Faz 0–6 tamamlandı. Faz 7 sürüyor: parolalar BCrypt ile özetleniyor, giriş Jakarta Security ile yapılıyor. Kod iş alanına göre modüllerde *(katalog, müşteri, satış, yorum)*; modüller birbirini yalnızca `api` paketleriyle kullanıyor. Bu kural ve mimari kararların diğer kuralları ArchUnit testleriyle korunuyor. Veritabanı PostgreSQL 17; Payara Micro 7 üzerinde JAX-RS ile bir REST API var *(aşağıda nasıl çalıştırılacağı; tarif `/openapi` adresinde)*. Web sayfaları henüz yok. Ayrıntılar [yol haritasında](docs/ROADMAP.md).
 
 ## Dokümanlar
 
@@ -69,7 +69,7 @@ Sonra sunucuyu başlatın. Maven, Payara Micro'yu indirip WAR'ı onunla açar:
 ./mvnw -pl app -Ppayara package exec:exec
 ```
 
-API `http://localhost:8080/api/v1` adresindedir. Veritabanı belirtilmezse bellek içi bir H2 veritabanı kullanılır ve demo verisi yüklenir: 8 kitap, bir müşteri (`ayse@bookstore.local`) ve bir yönetici (`admin@bookstore.local`). İkisinin parolası `kitap2026`. Sunucu durunca veriler silinir.
+API `http://localhost:8080/api/v1` adresindedir. Sunucu, Payara'nın Türkçe yerel ayardaki bir hatası yüzünden İngilizce yerel ayarla *(`-Duser.language=en`)* başlatılır; profil bunu kendisi yapar. Veritabanı belirtilmezse bellek içi bir H2 veritabanı kullanılır ve demo verisi yüklenir: 8 kitap, bir müşteri (`ayse@bookstore.local`) ve bir yönetici (`admin@bookstore.local`). İkisinin parolası `kitap2026`. Sunucu durunca veriler silinir.
 
 Örnek istekler:
 
@@ -83,6 +83,12 @@ curl -u ayse@bookstore.local:kitap2026 http://localhost:8080/api/v1/me
 
 ```bash
 curl -u ayse@bookstore.local:kitap2026 -H "Content-Type: application/json" -d '{"bookId": 1, "quantity": 2}' http://localhost:8080/api/v1/cart/items
+```
+
+Tarayıcı ise parolayı bir kez `POST /api/v1/session` ile gönderir ve sonra oturum çereziyle çalışır; çerezle yapılan ve veriyi değiştiren istekler `X-Bookstore-Client` başlığını taşımak zorundadır *([ADR-0020](docs/adr/ADR-0020.md))*:
+
+```bash
+curl -c cerez.txt -H "X-Bookstore-Client: web" -H "Content-Type: application/json" -d '{"email": "ayse@bookstore.local", "password": "kitap2026"}' http://localhost:8080/api/v1/session
 ```
 
 Kalıcı bir PostgreSQL için önce `docker compose up -d`, sonra sunucuyu başlatmadan önce şu ortam değişkenleri *(MicroProfile Config)*: `BOOKSTORE_DB_CLASS_NAME=org.postgresql.ds.PGSimpleDataSource`, `BOOKSTORE_DB_URL=jdbc:postgresql://localhost:5432/bookstore`, `BOOKSTORE_DB_USER=bookstore`, `BOOKSTORE_DB_PASSWORD=bookstore`; demo verisi istenmiyorsa `BOOKSTORE_DEMO_DATA=false`.
