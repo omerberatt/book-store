@@ -28,7 +28,7 @@ class BookstoreAuthenticationMechanismTest {
     private final BookstoreAuthenticationMechanism mechanism = new BookstoreAuthenticationMechanism(
             credential -> credential instanceof UsernamePasswordCredential password
                     ? store.validate(password)
-                    : CredentialValidationResult.NOT_VALIDATED_RESULT);
+                    : CredentialValidationResult.NOT_VALIDATED_RESULT, shop.accounts);
     private final FakeHttp http = new FakeHttp();
 
     @Test
@@ -93,11 +93,22 @@ class BookstoreAuthenticationMechanismTest {
     @Test
     void theSessionIdentifiesTheCallerOfLaterRequests() {
         http.hasSession = true;
-        http.sessionAttributes.put(SessionCaller.ATTRIBUTE, new SessionCaller("42", Set.of("ADMIN")));
+        http.sessionAttributes.put(SessionCaller.ATTRIBUTE, new SessionCaller(Long.toString(ayse.value()), Set.of("CUSTOMER")));
 
         assertThat(run()).isEqualTo(AuthenticationStatus.SUCCESS);
-        assertThat(http.signedInAs).isEqualTo("42");
-        assertThat(http.signedInGroups).containsExactly("ADMIN");
+        assertThat(http.signedInAs).isEqualTo(Long.toString(ayse.value()));
+        assertThat(http.signedInGroups).containsExactly("CUSTOMER");
+    }
+
+    @Test
+    void theSessionOfAnAccountThatWasSwitchedOffEnds() {
+        http.hasSession = true;
+        http.sessionAttributes.put(SessionCaller.ATTRIBUTE, new SessionCaller(Long.toString(ayse.value()), Set.of("CUSTOMER")));
+        shop.admin.setActive(ayse, false);
+
+        assertThat(run()).isEqualTo(AuthenticationStatus.NOT_DONE);
+        assertThat(http.invalidated).isTrue();
+        assertThat(http.signedInAs).isNull();
     }
 
     @Test

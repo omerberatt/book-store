@@ -29,6 +29,7 @@ public final class CustomerShop {
 
     public final AccountService accounts = new AccountService(customers, passwordHasher, transactions, CLOCK);
     public final CustomerDirectoryService directory = new CustomerDirectoryService(customers);
+    public final CustomerAdminService admin = new CustomerAdminService(customers, transactions);
 
     /** Registers a customer with one saved default address and returns the customer's id. */
     public CustomerId customer(String email) {

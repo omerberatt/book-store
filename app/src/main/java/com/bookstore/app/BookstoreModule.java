@@ -12,11 +12,15 @@ import com.bookstore.catalog.persistence.JdbcAuthorRepository;
 import com.bookstore.catalog.persistence.JdbcBookRepository;
 import com.bookstore.catalog.persistence.JdbcCategoryRepository;
 import com.bookstore.customer.api.AccountFacade;
+import com.bookstore.customer.api.CustomerAdminFacade;
 import com.bookstore.customer.application.AccountService;
+import com.bookstore.customer.application.CustomerAdminService;
 import com.bookstore.customer.application.CustomerDirectoryService;
 import com.bookstore.customer.domain.PasswordHasher;
 import com.bookstore.customer.persistence.JdbcCustomerRepository;
+import com.bookstore.review.api.ReviewAdminFacade;
 import com.bookstore.review.api.ReviewFacade;
+import com.bookstore.review.application.ReviewAdminService;
 import com.bookstore.review.application.ReviewService;
 import com.bookstore.review.persistence.JdbcReviewRepository;
 import com.bookstore.sales.api.CartFacade;
@@ -74,6 +78,8 @@ public final class BookstoreModule {
     private final OrderFacade orders;
     private final OrderAdminFacade orderAdmin;
     private final ReviewFacade reviews;
+    private final CustomerAdminFacade customerAdmin;
+    private final ReviewAdminFacade reviewAdmin;
 
     /**
      * Wires the application.
@@ -102,6 +108,7 @@ public final class BookstoreModule {
         // customer
         JdbcCustomerRepository customerRepository = new JdbcCustomerRepository(jdbc);
         CustomerDirectoryService directory = new CustomerDirectoryService(customerRepository);
+        this.customerAdmin = new CustomerAdminService(customerRepository, transactions);
         this.accounts = new AccountService(customerRepository, adapters.passwordHasher(), transactions,
                 adapters.clock());
 
@@ -117,7 +124,9 @@ public final class BookstoreModule {
         PurchaseHistoryService purchases = new PurchaseHistoryService(orderRepository);
 
         // review
-        this.reviews = new ReviewService(new JdbcReviewRepository(jdbc), ratings, purchases, directory,
+        JdbcReviewRepository reviewRepository = new JdbcReviewRepository(jdbc);
+        this.reviewAdmin = new ReviewAdminService(reviewRepository, ratings, directory, transactions);
+        this.reviews = new ReviewService(reviewRepository, ratings, purchases, directory,
                 transactions, adapters.clock());
     }
 
@@ -163,6 +172,16 @@ public final class BookstoreModule {
     /** @return order management for administrators */
     public OrderAdminFacade orderAdmin() {
         return orderAdmin;
+    }
+
+    /** @return managing user accounts */
+    public CustomerAdminFacade customerAdmin() {
+        return customerAdmin;
+    }
+
+    /** @return moderating reviews */
+    public ReviewAdminFacade reviewAdmin() {
+        return reviewAdmin;
     }
 
     /** @return reviews and ratings */

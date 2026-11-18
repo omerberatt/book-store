@@ -22,10 +22,7 @@ import com.bookstore.shared.kernel.transaction.TransactionRunner;
 
 import java.time.Clock;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -39,8 +36,6 @@ import jakarta.inject.Inject;
  */
 @ApplicationScoped
 public class ReviewService implements ReviewFacade {
-
-    private static final String UNKNOWN_AUTHOR = "—";
 
     private final ReviewRepository reviews;
     private final RatingFacade ratings;
@@ -145,10 +140,7 @@ public class ReviewService implements ReviewFacade {
      */
     @Override
     public Page<ReviewView> reviewsOf(BookId bookId, PageRequest page) {
-        Page<Review> found = reviews.findByBookId(bookId, page);
-        Set<CustomerId> authorIds = found.content().stream().map(Review::customerId).collect(Collectors.toSet());
-        Map<CustomerId, String> names = customers.publicNames(authorIds);
-        return found.map(review -> ReviewMapper.viewOf(review, names.getOrDefault(review.customerId(), UNKNOWN_AUTHOR)));
+        return ReviewMapper.pageOf(reviews.findByBookId(bookId, page), customers);
     }
 
     /**
@@ -189,7 +181,7 @@ public class ReviewService implements ReviewFacade {
 
     private ReviewView view(Review review) {
         String name = customers.publicNames(List.of(review.customerId()))
-                .getOrDefault(review.customerId(), UNKNOWN_AUTHOR);
+                .getOrDefault(review.customerId(), ReviewMapper.UNKNOWN_AUTHOR);
         return ReviewMapper.viewOf(review, name);
     }
 

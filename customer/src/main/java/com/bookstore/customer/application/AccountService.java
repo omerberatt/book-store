@@ -110,6 +110,11 @@ public class AccountService implements AccountFacade {
                 .filter(account -> passwordHasher.matches(password, account.passwordHash()));
     }
 
+    @Override
+    public boolean isActive(CustomerId customerId) {
+        return customers.findById(customerId).map(Customer::isActive).orElse(false);
+    }
+
     /**
      * Returns a customer's profile.
      *

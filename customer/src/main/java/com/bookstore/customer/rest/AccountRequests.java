@@ -5,6 +5,7 @@ import com.bookstore.shared.kernel.address.Address;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
@@ -97,5 +98,13 @@ public final class AccountRequests {
         Address toAddress() {
             return new Address(recipient, phone, line, district, city, postalCode);
         }
+    }
+
+    /**
+     * Whether an account may sign in (ADM-6).
+     *
+     * @param active the new state
+     */
+    public record ActiveRequest(@NotNull Boolean active) {
     }
 }

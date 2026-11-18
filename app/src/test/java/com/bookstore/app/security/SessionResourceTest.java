@@ -51,7 +51,7 @@ class SessionResourceTest {
         BookstoreAuthenticationMechanism mechanism = new BookstoreAuthenticationMechanism(
                 credential -> credential instanceof UsernamePasswordCredential password
                         ? store.validate(password)
-                        : CredentialValidationResult.NOT_VALIDATED_RESULT);
+                        : CredentialValidationResult.NOT_VALIDATED_RESULT, bookstore.accounts());
         resource = new SessionResource(securityContextOver(mechanism), bookstore.accounts(), bookstore.cart(),
                 () -> visitorCart);
     }

@@ -26,6 +26,7 @@ final class FakeHttp {
     final Map<String, Object> sessionAttributes = new HashMap<>();
     boolean hasSession;
     int sessionIdChanges;
+    boolean invalidated;
     AuthenticationParameters authParameters;
 
     /** The response side. */
@@ -102,6 +103,12 @@ final class FakeHttp {
             case "getAttribute" -> sessionAttributes.get((String) args[0]);
             case "setAttribute" -> {
                 sessionAttributes.put((String) args[0], args[1]);
+                yield null;
+            }
+            case "invalidate" -> {
+                sessionAttributes.clear();
+                hasSession = false;
+                invalidated = true;
                 yield null;
             }
             default -> unexpected(method);

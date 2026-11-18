@@ -9,7 +9,9 @@ import com.bookstore.catalog.rest.CatalogResource;
 import com.bookstore.catalog.rest.CategoryResource;
 import com.bookstore.customer.rest.AccountAuthenticator;
 import com.bookstore.customer.rest.AccountResource;
+import com.bookstore.customer.rest.AdminCustomerResource;
 import com.bookstore.customer.rest.RegistrationResource;
+import com.bookstore.review.rest.AdminReviewResource;
 import com.bookstore.review.rest.RatingResource;
 import com.bookstore.review.rest.ReviewResource;
 import com.bookstore.sales.api.GuestCart;
@@ -56,7 +58,8 @@ class BookstoreHttpTest {
                 new CartResource(bookstore.cart(), () -> visitorCart), new OrderResource(bookstore.checkout(), bookstore.orders()),
                 new OrderAdminResource(bookstore.orderAdmin()), new ReviewResource(bookstore.reviews()),
                 new RatingResource(bookstore.reviews()), new AdminBookResource(bookstore.catalogAdmin()),
-                new AdminAuthorResource(bookstore.catalogAdmin()), new AdminCategoryResource(bookstore.catalogAdmin()));
+                new AdminAuthorResource(bookstore.catalogAdmin()), new AdminCategoryResource(bookstore.catalogAdmin()),
+                new AdminCustomerResource(bookstore.customerAdmin()), new AdminReviewResource(bookstore.reviewAdmin()));
         visitor = server.client();
         admin = visitor.as(DemoData.ADMIN_EMAIL, DemoData.PASSWORD);
     }
@@ -140,6 +143,19 @@ class BookstoreHttpTest {
                 .contains("İnce Memed");
         assertThat(visitor.as(DemoData.CUSTOMER_EMAIL, DemoData.PASSWORD).get("/api/v1/admin/books").status())
                 .isEqualTo(403);
+    }
+
+    @Test
+    void theAdministratorSwitchesOffACustomerWhoThenCannotSignIn() {
+        HttpTestClient ayse = visitor.as(DemoData.CUSTOMER_EMAIL, DemoData.PASSWORD);
+        long id = ayse.get("/api/v1/me").json().get("id").asLong();
+
+        assertThat(admin.get("/api/v1/admin/customers").json().get("totalElements").asInt()).isEqualTo(2);
+        assertThat(admin.put("/api/v1/admin/customers/" + id + "/active", "{\"active\": false}").status())
+                .isEqualTo(200);
+
+        assertThat(ayse.get("/api/v1/me").status()).isEqualTo(401);
+        assertThat(admin.get("/api/v1/admin/reviews").json().get("totalElements").asInt()).isZero();
     }
 
     @Test

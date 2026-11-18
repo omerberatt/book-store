@@ -1,5 +1,6 @@
 package com.bookstore.customer.application;
 
+import com.bookstore.customer.api.CustomerSummary;
 import com.bookstore.customer.api.CustomerView;
 import com.bookstore.customer.api.LoginAccount;
 import com.bookstore.customer.domain.Customer;
@@ -23,6 +24,11 @@ final class CustomerMapper {
     static CustomerView.AddressView addressOf(Customer owner, SavedAddress address) {
         boolean isDefault = owner.defaultAddress().map(address::equals).orElse(false);
         return new CustomerView.AddressView(address.id().value(), address.label(), address.address(), isDefault);
+    }
+
+    static CustomerSummary summaryOf(Customer customer) {
+        return new CustomerSummary(customer.id(), customer.email().value(), customer.name().firstName(),
+                customer.name().lastName(), customer.role().name(), customer.isActive(), customer.registeredAt());
     }
 
     static LoginAccount loginOf(Customer customer) {

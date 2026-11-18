@@ -43,6 +43,15 @@ public interface AccountFacade {
     Optional<LoginAccount> authenticate(String email, String password);
 
     /**
+     * Tells whether an account may still be used; the security layer ends the session of an account
+     * that was switched off (ACC-7, ADR-0021).
+     *
+     * @param customerId the account
+     * @return {@code true} if it exists and is active
+     */
+    boolean isActive(CustomerId customerId);
+
+    /**
      * Returns a customer's profile.
      *
      * @param customerId the customer

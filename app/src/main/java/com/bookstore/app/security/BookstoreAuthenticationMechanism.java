@@ -1,5 +1,7 @@
 package com.bookstore.app.security;
 
+import com.bookstore.customer.api.AccountFacade;
+import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.web.WebException;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -24,7 +26,8 @@ import jakarta.servlet.http.HttpSession;
  *       new session id.</li>
  *   <li>A request with {@code Authorization: Basic} is checked every time and never gets a
  *       session; wrong credentials are a 401 problem.</li>
- *   <li>A request whose session holds a caller is that caller.</li>
+ *   <li>A request whose session holds a caller is that caller, as long as the account is still active;
+ *       the session of an account the administrator switched off ends (ACC-7, ADR-0021).</li>
  *   <li>Every other request is anonymous.</li>
  * </ol>
  *
@@ -35,20 +38,23 @@ import jakarta.servlet.http.HttpSession;
 public class BookstoreAuthenticationMechanism implements HttpAuthenticationMechanism {
 
     private final IdentityStoreHandler identityStores;
+    private final AccountFacade accounts;
 
     /**
      * Creates the mechanism.
      *
      * @param identityStores the container's handler over the identity stores
+     * @param accounts       the accounts, to end the session of one that was switched off
      */
     @Inject
-    public BookstoreAuthenticationMechanism(IdentityStoreHandler identityStores) {
+    public BookstoreAuthenticationMechanism(IdentityStoreHandler identityStores, AccountFacade accounts) {
         this.identityStores = identityStores;
+        this.accounts = accounts;
     }
 
     /** For the CDI container's client proxy only; never called by the application. */
     protected BookstoreAuthenticationMechanism() {
-        this(null);
+        this(null, null);
     }
 
     @Override
@@ -64,6 +70,10 @@ public class BookstoreAuthenticationMechanism implements HttpAuthenticationMecha
         }
         HttpSession session = request.getSession(false);
         if (session != null && session.getAttribute(SessionCaller.ATTRIBUTE) instanceof SessionCaller caller) {
+            if (!accounts.isActive(CustomerId.of(Long.parseLong(caller.name())))) {
+                session.invalidate();
+                return context.doNothing();
+            }
             return context.notifyContainerAboutLogin(caller.name(), caller.groups());
         }
         return context.doNothing();

@@ -2,6 +2,7 @@ package com.bookstore.review.rest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.bookstore.review.application.ReviewAdminService;
 import com.bookstore.review.application.ReviewFakes;
 import com.bookstore.review.application.ReviewService;
 import com.bookstore.review.persistence.InMemoryReviewRepository;
@@ -27,13 +28,17 @@ class ReviewResourceTest {
     private static final String REVIEWS = "/api/v1/books/1/reviews";
 
     private final ReviewFakes.FakePurchases purchases = new ReviewFakes.FakePurchases();
-    private final ReviewService service = new ReviewService(new InMemoryReviewRepository(),
-            new ReviewFakes.FakeRatings(DUNE), purchases, new ReviewFakes.FakeNames(Map.of(AYSE, "Ayşe Y.")),
+    private final InMemoryReviewRepository repository = new InMemoryReviewRepository();
+    private final ReviewFakes.FakeRatings ratings = new ReviewFakes.FakeRatings(DUNE);
+    private final ReviewFakes.FakeNames names = new ReviewFakes.FakeNames(Map.of(AYSE, "Ayşe Y."));
+    private final ReviewService service = new ReviewService(repository, ratings, purchases, names,
             new DirectTransactions(), TestClock.CLOCK);
-    private final RestTestServer server = RestTestServer.start((user, password) -> "ayse".equals(user)
-                ? Optional.of(new Caller(AYSE, "CUSTOMER"))
-                : Optional.empty(),
-            new ReviewResource(service), new RatingResource(service));
+    private final RestTestServer server = RestTestServer.start((user, password) -> switch (user) {
+        case "ayse" -> Optional.of(new Caller(AYSE, Caller.CUSTOMER));
+        case "admin" -> Optional.of(new Caller(CustomerId.of(1), Caller.ADMIN));
+        default -> Optional.empty();
+    }, new ReviewResource(service), new RatingResource(service),
+            new AdminReviewResource(new ReviewAdminService(repository, ratings, names, new DirectTransactions())));
     private final HttpTestClient anonymous = server.client();
     private final HttpTestClient ayse = anonymous.as("ayse", "pw");
 
@@ -67,6 +72,22 @@ class ReviewResourceTest {
         assertThat(ayse.get(REVIEWS + "/mine").json().get("stars").asInt()).isEqualTo(5);
         assertThat(ayse.delete(REVIEWS + "/mine").status()).isEqualTo(204);
         assertThat(ayse.get(REVIEWS + "/mine").status()).isEqualTo(404);
+    }
+
+    @Test
+    void theAdministratorRemovesAnUnsuitableReview() {
+        purchases.received(AYSE, DUNE);
+        long id = ayse.post(REVIEWS, "{\"stars\": 1, \"comment\": \"spam\"}").json().get("id").asLong();
+        HttpTestClient admin = anonymous.as("admin", "pw");
+
+        assertThat(ayse.get("/api/v1/admin/reviews").status()).isEqualTo(403);
+        assertThat(admin.get("/api/v1/admin/reviews").json().get("content").findValuesAsText("comment"))
+                .containsExactly("spam");
+        assertThat(admin.delete("/api/v1/admin/reviews/" + id).status()).isEqualTo(204);
+
+        assertThat(anonymous.get(REVIEWS).json().get("totalElements").asInt()).isZero();
+        assertThat(ratings.count(DUNE)).isZero();
+        assertThat(admin.delete("/api/v1/admin/reviews/" + id).status()).isEqualTo(404);
     }
 
     @Test

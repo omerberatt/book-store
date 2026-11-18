@@ -16,11 +16,15 @@ import com.bookstore.catalog.persistence.JdbcAuthorRepository;
 import com.bookstore.catalog.persistence.JdbcBookRepository;
 import com.bookstore.catalog.persistence.JdbcCategoryRepository;
 import com.bookstore.customer.api.AccountFacade;
+import com.bookstore.customer.api.CustomerAdminFacade;
 import com.bookstore.customer.api.CustomerView;
 import com.bookstore.customer.application.AccountService;
+import com.bookstore.customer.application.CustomerAdminService;
 import com.bookstore.customer.application.CustomerDirectoryService;
 import com.bookstore.customer.persistence.JdbcCustomerRepository;
+import com.bookstore.review.api.ReviewAdminFacade;
 import com.bookstore.review.api.ReviewFacade;
+import com.bookstore.review.application.ReviewAdminService;
 import com.bookstore.review.application.ReviewService;
 import com.bookstore.review.persistence.JdbcReviewRepository;
 import com.bookstore.sales.api.CartFacade;
@@ -75,11 +79,12 @@ class CdiWiringTest {
     private static final List<Class<?>> APPLICATION_BEANS = List.of(
             CatalogService.class, CatalogAdminService.class, StockService.class, RatingService.class,
             JdbcBookRepository.class, JdbcAuthorRepository.class, JdbcCategoryRepository.class,
-            AccountService.class, CustomerDirectoryService.class, JdbcCustomerRepository.class,
+            AccountService.class, CustomerAdminService.class, CustomerDirectoryService.class,
+            JdbcCustomerRepository.class,
             CartService.class, CheckoutService.class, OrderService.class, OrderAdminService.class,
             PurchaseHistoryService.class, OrderNotificationObserver.class,
             JdbcCartRepository.class, JdbcOrderRepository.class, JdbcOrderNumberSequence.class,
-            ReviewService.class, JdbcReviewRepository.class,
+            ReviewService.class, ReviewAdminService.class, JdbcReviewRepository.class,
             BookstoreWiring.class, CdiDomainEventPublisher.class);
 
     private final WeldContainer container = new Weld()
@@ -118,6 +123,9 @@ class CdiWiringTest {
         assertThat(catalogAdmin.book(dune.getFirst().id()).stock())
                 .isEqualTo(container.select(CatalogFacade.class).get().book(dune.getFirst().id()).stock());
         assertThat(catalogAdmin.stats(5).totalBooks()).isEqualTo(8);
+        assertThat(container.select(CustomerAdminFacade.class).get().customers(PageRequest.first()).totalElements())
+                .isEqualTo(2);
+        assertThat(container.select(ReviewAdminFacade.class).get().reviews(PageRequest.first()).content()).isEmpty();
     }
 
     /** The test's stand-ins for the server: an H2 data source, JDBC transactions, a recording notifier, files in memory. */
