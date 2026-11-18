@@ -46,6 +46,7 @@
         <exec-plugin.version>3.6.4</exec-plugin.version>
         <war-plugin.version>3.5.1</war-plugin.version>
         <dependency-plugin.version>3.9.0</dependency-plugin.version>
+        <bcrypt.version>0.10.2</bcrypt.version>
         <jakartaee.version>11.0.0</jakartaee.version>
         <mp-config.version>3.1.2</mp-config.version>
         <mp-openapi.version>4.1.1</mp-openapi.version>
@@ -137,6 +138,11 @@
                 <groupId>org.hibernate.validator</groupId>
                 <artifactId>hibernate-validator</artifactId>
                 <version>${hibernate-validator.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>at.favre.lib</groupId>
+                <artifactId>bcrypt</artifactId>
+                <version>${bcrypt.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.postgresql</groupId>

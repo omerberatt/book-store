@@ -85,6 +85,13 @@ Ders kapsamı dışındadır *(ADR-0011)*.
 - Türkçe ve İngilizce metin sözlükleri *(NFR-4)*.
 - Misafir sepetinin nerede tutulacağı *(sunucu oturumu ya da tarayıcı)* bu fazın ADR'siyle kararlaştırılır.
 
+| Adım | İş |
+| --- | --- |
+| 7.1 ✅ | `BcryptPasswordHasher` *(eski PBKDF2 özetleri geçerli)*; ADR-0020 |
+| 7.2 | Jakarta Security: `BookstoreAuthenticationMechanism`, `AccountIdentityStore`, `/api/v1/session`, CSRF başlığı |
+| 7.3 | Misafir sepeti oturumda; girişte birleşir |
+| 7.4 | HTML, CSS ve JavaScript sayfaları; Türkçe ve İngilizce sözlükler |
+
 ## Faz 8 — Yönetim paneli
 
 - `catalog`, `customer` ve `review` modüllerinde yönetim façade'ları *(ADM-1 – ADM-8)*.

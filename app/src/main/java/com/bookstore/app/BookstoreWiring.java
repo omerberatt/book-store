@@ -47,11 +47,11 @@ public class BookstoreWiring {
         return new JdbcExecutor(connections);
     }
 
-    /** @return the password hasher (ADR-0019) */
+    /** @return the password hasher: BCrypt, still accepting the PBKDF2 hashes of Phase 5 and 6 (ADR-0020) */
     @Produces
     @Singleton
     public PasswordHasher passwordHasher() {
-        return new Pbkdf2PasswordHasher();
+        return new BcryptPasswordHasher();
     }
 
     /** @return the payment gateway; a demo one until a payment provider is chosen */
