@@ -25,8 +25,9 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.SecurityContext;
 
 /**
- * The signed-in customer's cart (CRT-1, CRT-3 – CRT-5). Every answer is the whole cart, checked
- * against the catalog. A visitor's cart is not served over HTTP yet (ADR-0019).
+ * The cart (CRT-1 – CRT-5): a signed-in customer's stored cart, or a visitor's cart in the HTTP
+ * session (ADR-0020), which is merged into the stored one when the visitor signs in. Every answer
+ * is the whole cart, checked against the catalog.
  *
  * <table>
  *   <caption>Endpoints</caption>
@@ -44,20 +45,23 @@ import jakarta.ws.rs.core.SecurityContext;
 public class CartResource {
 
     private final CartFacade cart;
+    private final GuestCartHolder guestCart;
 
     /**
      * Creates the resource.
      *
-     * @param cart the cart use cases
+     * @param cart      the cart use cases
+     * @param guestCart the visitor's cart
      */
     @Inject
-    public CartResource(CartFacade cart) {
+    public CartResource(CartFacade cart, GuestCartHolder guestCart) {
         this.cart = cart;
+        this.guestCart = guestCart;
     }
 
     /** For the CDI container's client proxy only; never called by the application. */
     protected CartResource() {
-        this(null);
+        this(null, null);
     }
 
     /** @param security the request's security @return the cart */
@@ -94,8 +98,10 @@ public class CartResource {
         return CartResponse.of(cart.remove(mine(security), book(bookId)));
     }
 
-    private static CartRef mine(SecurityContext security) {
-        return CartRef.customer(Callers.customer(security).customerId());
+    private CartRef mine(SecurityContext security) {
+        return Callers.of(security)
+                .<CartRef>map(caller -> CartRef.customer(caller.customerId()))
+                .orElseGet(() -> CartRef.guest(guestCart.cart()));
     }
 
     private static BookId book(String bookId) {

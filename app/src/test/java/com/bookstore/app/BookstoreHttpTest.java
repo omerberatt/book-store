@@ -9,6 +9,7 @@ import com.bookstore.customer.rest.AccountResource;
 import com.bookstore.customer.rest.RegistrationResource;
 import com.bookstore.review.rest.RatingResource;
 import com.bookstore.review.rest.ReviewResource;
+import com.bookstore.sales.api.GuestCart;
 import com.bookstore.sales.rest.CartResource;
 import com.bookstore.sales.rest.OrderAdminResource;
 import com.bookstore.sales.rest.OrderResource;
@@ -39,6 +40,7 @@ class BookstoreHttpTest {
     private final RestTestServer server;
     private final HttpTestClient visitor;
     private final HttpTestClient admin;
+    private final GuestCart visitorCart = new GuestCart();
 
     BookstoreHttpTest() {
         Pbkdf2PasswordHasher hasher = new Pbkdf2PasswordHasher(1_000);
@@ -48,7 +50,7 @@ class BookstoreHttpTest {
         server = RestTestServer.start(new AccountAuthenticator(bookstore.accounts()),
                 new CatalogResource(bookstore.catalog()), new CategoryResource(bookstore.catalog()),
                 new RegistrationResource(bookstore.accounts()), new AccountResource(bookstore.accounts()),
-                new CartResource(bookstore.cart()), new OrderResource(bookstore.checkout(), bookstore.orders()),
+                new CartResource(bookstore.cart(), () -> visitorCart), new OrderResource(bookstore.checkout(), bookstore.orders()),
                 new OrderAdminResource(bookstore.orderAdmin()), new ReviewResource(bookstore.reviews()),
                 new RatingResource(bookstore.reviews()));
         visitor = server.client();
@@ -114,7 +116,7 @@ class BookstoreHttpTest {
         assertThat(visitor.as(DemoData.CUSTOMER_EMAIL, DemoData.PASSWORD).get("/api/v1/me").json()
                 .get("addresses").size()).isEqualTo(1);
         assertThat(visitor.as(DemoData.CUSTOMER_EMAIL, "wrong").get("/api/v1/me").status()).isEqualTo(401);
-        assertThat(visitor.get("/api/v1/cart").status()).isEqualTo(401);
+        assertThat(visitor.get("/api/v1/orders").status()).isEqualTo(401);
     }
 
     @Test

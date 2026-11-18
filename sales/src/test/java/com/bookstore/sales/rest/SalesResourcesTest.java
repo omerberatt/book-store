@@ -2,6 +2,7 @@ package com.bookstore.sales.rest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.bookstore.sales.api.GuestCart;
 import com.bookstore.sales.application.FakeCatalog;
 import com.bookstore.sales.application.SalesShop;
 import com.bookstore.shared.kernel.identity.CustomerId;
@@ -28,6 +29,7 @@ class SalesResourcesTest {
     private final HttpTestClient ayse;
     private final HttpTestClient mehmet;
     private final HttpTestClient admin;
+    private final GuestCart visitorCart = new GuestCart();
 
     SalesResourcesTest() {
         server = RestTestServer.start((user, password) -> switch (user) {
@@ -35,7 +37,7 @@ class SalesResourcesTest {
             case "mehmet" -> Optional.of(new Caller(mehmetId, "CUSTOMER"));
             case "admin" -> Optional.of(new Caller(CustomerId.of(999), Caller.ADMIN));
             default -> Optional.empty();
-        }, new CartResource(shop.cart), new OrderResource(shop.checkout, shop.myOrders),
+        }, new CartResource(shop.cart, () -> visitorCart), new OrderResource(shop.checkout, shop.myOrders),
                 new OrderAdminResource(shop.orderAdmin));
         anonymous = server.client();
         ayse = anonymous.as("ayse", "pw");
@@ -49,9 +51,19 @@ class SalesResourcesTest {
     }
 
     @Test
-    void theCartBelongsToTheSignedInCustomer() {
-        assertThat(anonymous.get("/api/v1/cart").status()).isEqualTo(401);
+    void aVisitorHasACartOfTheirOwnThatSigningInDoesNotShow() {
+        JsonNode cart = anonymous.post("/api/v1/cart/items", "{\"bookId\": " + dune.id().value() + ", \"quantity\": 1}")
+                .json();
 
+        assertThat(cart.get("totalQuantity").asInt()).isEqualTo(1);
+        assertThat(visitorCart.quantityOf(dune.id())).isEqualTo(1);
+        assertThat(anonymous.get("/api/v1/cart").json().get("totalQuantity").asInt()).isEqualTo(1);
+        assertThat(ayse.get("/api/v1/cart").json().get("totalQuantity").asInt()).isZero();
+        assertThat(anonymous.delete("/api/v1/cart").json().get("lines").isEmpty()).isTrue();
+    }
+
+    @Test
+    void theCartBelongsToTheSignedInCustomer() {
         JsonNode cart = ayse.post("/api/v1/cart/items", "{\"bookId\": " + dune.id().value() + ", \"quantity\": 2}").json();
         assertThat(cart.get("totalQuantity").asInt()).isEqualTo(2);
         assertThat(cart.get("lines").get(0).get("bookId").asLong()).isEqualTo(dune.id().value());

@@ -89,7 +89,7 @@ Ders kapsamı dışındadır *(ADR-0011)*.
 | --- | --- |
 | 7.1 ✅ | `BcryptPasswordHasher` *(eski PBKDF2 özetleri geçerli)*; ADR-0020 |
 | 7.2 ✅ | Jakarta Security: `BookstoreAuthenticationMechanism`, `AccountIdentityStore`, `/api/v1/session`, CSRF başlığı |
-| 7.3 | Misafir sepeti oturumda; girişte birleşir |
+| 7.3 ✅ | Misafir sepeti oturumda *(`SessionGuestCart`, CDI `@SessionScoped`)*; girişte birleşir |
 | 7.4 | HTML, CSS ve JavaScript sayfaları; Türkçe ve İngilizce sözlükler |
 
 ## Faz 8 — Yönetim paneli
