@@ -22,7 +22,8 @@ public interface OrderEventOutbox {
     void append(List<? extends DomainEvent> events);
 
     /**
-     * Returns the events not published yet, oldest first.
+     * Returns the events not published yet, oldest first. Inside a transaction they stay reserved for
+     * the caller until it ends: another relay running at the same time gets the next ones instead.
      *
      * @param max how many at most
      * @return the events with their outbox ids

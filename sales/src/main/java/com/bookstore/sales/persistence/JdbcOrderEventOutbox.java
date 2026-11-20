@@ -25,7 +25,8 @@ import jakarta.inject.Inject;
 
 /**
  * Keeps order events in the {@code order_outbox} table (ADR-0022). Each event type has its own
- * columns; the type code is checked against the {@code order_event_types} reference table.
+ * columns; the type code is checked against the {@code order_event_types} reference table. Waiting
+ * rows are locked while a relay hands them on, so several servers can relay at once.
  */
 @ApplicationScoped
 public class JdbcOrderEventOutbox implements OrderEventOutbox {
@@ -78,8 +79,10 @@ public class JdbcOrderEventOutbox implements OrderEventOutbox {
 
     @Override
     public List<Pending> pending(int max) {
-        return jdbc.query("SELECT " + COLUMNS + " FROM order_outbox WHERE published_at IS NULL ORDER BY id LIMIT ?",
-                JdbcOrderEventOutbox::pendingOf, max);
+        // Locks the rows until the caller's transaction ends and skips those another relay holds, so
+        // relays on several servers never take the same event (PostgreSQL; H2 2.2 and later too).
+        return jdbc.query("SELECT " + COLUMNS + " FROM order_outbox WHERE published_at IS NULL ORDER BY id LIMIT ?"
+                + " FOR UPDATE SKIP LOCKED", JdbcOrderEventOutbox::pendingOf, max);
     }
 
     @Override

@@ -205,6 +205,7 @@ Mağazanın neredeyse her parçasını 10 dakikada görmek için:
 | Tarayıcı `localhost:8080`'i açamıyor | Sunucu henüz hazır değil *(“ready” yazısını bekleyin)* ya da durdu. Başlatma penceresine bakın. |
 | Başlatırken “Address already in use … 8080” | 8080 portunu başka bir program kullanıyor; o programı ya da önceki Payara'yı kapatın. |
 | Başlatırken “JDK 21 or newer is needed” | `JAVA_HOME` JDK 21'i göstermiyor; yukarıdaki gibi tanımlayın. |
+| `mvnw clean` “Failed to delete … payara-micro.jar” diyor | Sunucu açıkken bu dosya kullanımdadır. Önce sunucuyu `Ctrl+C` ile durdurun. |
 | “Sepetiniz katalogla karşılaştırıldı ve şunlar değişti” | Fiyat, stok ya da satış durumu değişmiş; sepet düzeltildi. Kontrol edip yeniden deneyin. |
 | “Bu kayıt siz okuduktan sonra başkası tarafından değiştirildi” | Başka bir yönetici aynı kitabı değiştirdi; sayfayı yenileyip tekrar deneyin. |
 | Bir sayfada birden giriş sayfasına yönlendirildiniz | Oturum bitti ya da hesabınız kapatıldı. Yeniden giriş yapın. |
