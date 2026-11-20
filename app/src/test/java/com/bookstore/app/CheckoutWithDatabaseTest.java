@@ -59,16 +59,40 @@ class CheckoutWithDatabaseTest {
      * the notification is lost. The Transactional Outbox of Phase 9 closes this gap.
      */
     @Test
-    void aFailingNotificationLeavesTheStoredOrderInPlaceAndIsLost() {
+    void aFailingNotificationKeepsTheEventInTheOutboxUntilItGetsThrough() {
         store.cart.add(CartRef.customer(ayse.id()), dune.id(), 2);
         store.notificationsFail.set(true);
 
-        assertThatThrownBy(() -> place(ayse)).hasMessage("Mail server unreachable");
+        OrderDetails order = place(ayse);
 
         assertThat(store.database.jdbc().queryForLong("SELECT COUNT(*) FROM orders")).isEqualTo(1);
         assertThat(stockOf(dune)).isEqualTo(3);
         assertThat(store.carts.findByCustomerId(ayse.id()).orElseThrow().isEmpty()).isTrue();
         assertThat(store.notified).isEmpty();
+        // Placed, then paid by card: two events.
+        assertThat(pendingEvents()).isEqualTo(2);
+
+        store.notificationsFail.set(false);
+        assertThat(store.module.orderEventRelay().relay()).isEqualTo(2);
+
+        assertThat(store.notified).hasSize(2)
+                .allSatisfy(event -> assertThat(event).hasFieldOrPropertyWithValue("orderNumber",
+                        new OrderNumber(order.orderNumber())));
+        assertThat(pendingEvents()).isZero();
+    }
+
+    @Test
+    void aDeclinedPaymentLeavesNoEventBehind() {
+        store.cart.add(CartRef.customer(ayse.id()), dune.id(), 1);
+        store.declineCards.set(true);
+
+        assertThatThrownBy(() -> place(ayse)).isInstanceOf(PaymentDeclinedException.class);
+
+        assertThat(store.database.jdbc().queryForLong("SELECT COUNT(*) FROM order_outbox")).isZero();
+    }
+
+    private long pendingEvents() {
+        return store.database.jdbc().queryForLong("SELECT COUNT(*) FROM order_outbox WHERE published_at IS NULL");
     }
 
     @Test

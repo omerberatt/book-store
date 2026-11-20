@@ -5,12 +5,12 @@ import com.bookstore.sales.api.OrderAdminFacade;
 import com.bookstore.sales.api.OrderDetails;
 import com.bookstore.sales.api.OrderSummary;
 import com.bookstore.sales.domain.Order;
+import com.bookstore.sales.domain.OrderEventOutbox;
 import com.bookstore.sales.domain.OrderNumber;
 import com.bookstore.sales.domain.OrderRepository;
 import com.bookstore.sales.domain.OrderStatus;
 import com.bookstore.shared.kernel.error.ConflictException;
 import com.bookstore.shared.kernel.error.NotFoundException;
-import com.bookstore.shared.kernel.event.DomainEventPublisher;
 import com.bookstore.shared.kernel.paging.Page;
 import com.bookstore.shared.kernel.paging.PageRequest;
 import com.bookstore.shared.kernel.transaction.TransactionRunner;
@@ -30,7 +30,8 @@ public class OrderAdminService implements OrderAdminFacade {
     private final OrderRepository orders;
     private final StockFacade stock;
     private final TransactionRunner transactions;
-    private final DomainEventPublisher events;
+    private final OrderEventOutbox outbox;
+    private final OrderEventRelay relay;
     private final Clock clock;
 
     /**
@@ -39,22 +40,24 @@ public class OrderAdminService implements OrderAdminFacade {
      * @param orders       where orders are stored
      * @param stock        the catalog's stock, for returning copies on cancellation
      * @param transactions runs work in a transaction
-     * @param events       receives the events of stored orders
+     * @param outbox       keeps the events of a changed order in its transaction
+     * @param relay        hands the events on once the order is stored
      * @param clock        the clock giving status change times
      */
     @Inject
     public OrderAdminService(OrderRepository orders, StockFacade stock, TransactionRunner transactions,
-                             DomainEventPublisher events, Clock clock) {
+                             OrderEventOutbox outbox, OrderEventRelay relay, Clock clock) {
         this.orders = orders;
         this.stock = stock;
         this.transactions = transactions;
-        this.events = events;
+        this.outbox = outbox;
+        this.relay = relay;
         this.clock = clock;
     }
 
     /** For the CDI container's client proxy only; never called by the application. */
     protected OrderAdminService() {
-        this(null, null, null, null, null);
+        this(null, null, null, null, null, null);
     }
 
     /**
@@ -112,9 +115,11 @@ public class OrderAdminService implements OrderAdminFacade {
                 case CANCELLED -> cancel(found);
                 case CREATED -> found.status().requireCanMoveTo(OrderStatus.CREATED);
             }
-            return orders.save(found);
+            Order saved = orders.save(found);
+            outbox.append(found.pullEvents());
+            return saved;
         });
-        events.publishAll(order.pullEvents());
+        relay.relayQuietly();
         return SalesMapper.detailsOf(order);
     }
 

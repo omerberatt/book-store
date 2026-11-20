@@ -30,6 +30,7 @@ import com.bookstore.sales.api.OrderFacade;
 import com.bookstore.sales.application.CartService;
 import com.bookstore.sales.application.CheckoutService;
 import com.bookstore.sales.application.OrderAdminService;
+import com.bookstore.sales.application.OrderEventRelay;
 import com.bookstore.sales.application.OrderNotificationObserver;
 import com.bookstore.sales.application.OrderService;
 import com.bookstore.sales.application.PurchaseHistoryService;
@@ -37,6 +38,7 @@ import com.bookstore.sales.domain.OrderEvent;
 import com.bookstore.sales.domain.PaymentGateway;
 import com.bookstore.sales.domain.ShippingPolicy;
 import com.bookstore.sales.persistence.JdbcCartRepository;
+import com.bookstore.sales.persistence.JdbcOrderEventOutbox;
 import com.bookstore.sales.persistence.JdbcOrderNumberSequence;
 import com.bookstore.sales.persistence.JdbcOrderRepository;
 import com.bookstore.sales.persistence.JdbcOrderRequestLog;
@@ -78,6 +80,7 @@ public final class BookstoreModule {
     private final CheckoutFacade checkout;
     private final OrderFacade orders;
     private final OrderAdminFacade orderAdmin;
+    private final OrderEventRelay relay;
     private final ReviewFacade reviews;
     private final CustomerAdminFacade customerAdmin;
     private final ReviewAdminFacade reviewAdmin;
@@ -116,13 +119,14 @@ public final class BookstoreModule {
         // sales
         JdbcCartRepository cartRepository = new JdbcCartRepository(jdbc);
         JdbcOrderRepository orderRepository = new JdbcOrderRepository(jdbc);
+        JdbcOrderEventOutbox outbox = new JdbcOrderEventOutbox(jdbc);
+        this.relay = new OrderEventRelay(outbox, events, transactions, adapters.clock());
         this.cart = new CartService(stock, cartRepository, shipping, transactions);
         this.checkout = new CheckoutService(directory, cartRepository, stock, orderRepository,
                 new JdbcOrderNumberSequence(jdbc, transactions), new JdbcOrderRequestLog(jdbc), adapters.paymentGateway(),
-                shipping, transactions,
-                events, adapters.clock());
+                shipping, transactions, outbox, relay, adapters.clock());
         this.orders = new OrderService(orderRepository);
-        this.orderAdmin = new OrderAdminService(orderRepository, stock, transactions, events, adapters.clock());
+        this.orderAdmin = new OrderAdminService(orderRepository, stock, transactions, outbox, relay, adapters.clock());
         PurchaseHistoryService purchases = new PurchaseHistoryService(orderRepository);
 
         // review
@@ -174,6 +178,11 @@ public final class BookstoreModule {
     /** @return order management for administrators */
     public OrderAdminFacade orderAdmin() {
         return orderAdmin;
+    }
+
+    /** @return the relay of order events from the outbox; tests run it as the server's timer would */
+    public OrderEventRelay orderEventRelay() {
+        return relay;
     }
 
     /** @return managing user accounts */

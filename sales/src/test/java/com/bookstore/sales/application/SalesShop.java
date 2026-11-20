@@ -9,6 +9,7 @@ import com.bookstore.sales.domain.PaymentGateway;
 import com.bookstore.sales.domain.ShippingPolicy;
 import com.bookstore.sales.persistence.InMemoryCartRepository;
 import com.bookstore.sales.persistence.InMemoryOrderNumberSequence;
+import com.bookstore.sales.persistence.InMemoryOrderEventOutbox;
 import com.bookstore.sales.persistence.InMemoryOrderRepository;
 import com.bookstore.sales.persistence.InMemoryOrderRequestLog;
 import com.bookstore.shared.kernel.address.Address;
@@ -48,13 +49,15 @@ public final class SalesShop {
     public final ScriptedPaymentGateway payments = new ScriptedPaymentGateway();
     public final InMemoryOrderNumberSequence orderNumbers = new InMemoryOrderNumberSequence();
     public final InMemoryOrderRequestLog requests = new InMemoryOrderRequestLog();
+    public final InMemoryOrderEventOutbox outbox = new InMemoryOrderEventOutbox();
+    public final OrderEventRelay relay = new OrderEventRelay(outbox, events, transactions, CLOCK);
     public final ShippingPolicy shipping = ShippingPolicy.standard();
 
     public final CartService cart = new CartService(catalog, carts, shipping, transactions);
     public final CheckoutService checkout = new CheckoutService(customers, carts, catalog, orders, orderNumbers,
-            requests, payments, shipping, transactions, events, CLOCK);
+            requests, payments, shipping, transactions, outbox, relay, CLOCK);
     public final OrderService myOrders = new OrderService(orders);
-    public final OrderAdminService orderAdmin = new OrderAdminService(orders, catalog, transactions, events, CLOCK);
+    public final OrderAdminService orderAdmin = new OrderAdminService(orders, catalog, transactions, outbox, relay, CLOCK);
     public final PurchaseHistoryService purchases = new PurchaseHistoryService(orders);
 
     /** Adds an active book to the fake catalog. */

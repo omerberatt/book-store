@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.bookstore.customer.domain.Customer;
+import com.bookstore.sales.domain.OrderEvent;
 import com.bookstore.sales.domain.OrderStatus;
 import com.bookstore.sales.domain.PaymentMethod;
 import com.bookstore.sales.domain.ProductSnapshot;
@@ -52,5 +53,8 @@ class SalesSchemaConstraintsTest {
                 .containsExactlyInAnyOrderElementsOf(Arrays.stream(OrderStatus.values()).map(Enum::name).toList());
         assertThat(db.jdbc.query("SELECT code FROM payment_methods", row -> row.getString("code")))
                 .containsExactlyInAnyOrderElementsOf(Arrays.stream(PaymentMethod.values()).map(Enum::name).toList());
+        assertThat(db.jdbc.query("SELECT code FROM order_event_types", row -> row.getString("code")))
+                .containsExactlyInAnyOrderElementsOf(JdbcOrderEventOutbox.EVENT_TYPES)
+                .hasSameSizeAs(OrderEvent.class.getPermittedSubclasses());
     }
 }

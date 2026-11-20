@@ -36,12 +36,14 @@ import com.bookstore.sales.api.PlaceOrderCommand;
 import com.bookstore.sales.application.CartService;
 import com.bookstore.sales.application.CheckoutService;
 import com.bookstore.sales.application.OrderAdminService;
+import com.bookstore.sales.application.OrderEventRelay;
 import com.bookstore.sales.application.OrderNotificationObserver;
 import com.bookstore.sales.application.OrderService;
 import com.bookstore.sales.application.PurchaseHistoryService;
 import com.bookstore.sales.domain.OrderPlaced;
 import com.bookstore.sales.persistence.JdbcCartRepository;
 import com.bookstore.sales.persistence.JdbcOrderNumberSequence;
+import com.bookstore.sales.persistence.JdbcOrderEventOutbox;
 import com.bookstore.sales.persistence.JdbcOrderRepository;
 import com.bookstore.sales.persistence.JdbcOrderRequestLog;
 import com.bookstore.shared.jdbc.ConnectionProvider;
@@ -85,6 +87,7 @@ class CdiWiringTest {
             CartService.class, CheckoutService.class, OrderService.class, OrderAdminService.class,
             PurchaseHistoryService.class, OrderNotificationObserver.class,
             JdbcCartRepository.class, JdbcOrderRepository.class, JdbcOrderNumberSequence.class, JdbcOrderRequestLog.class,
+            JdbcOrderEventOutbox.class, OrderEventRelay.class,
             ReviewService.class, ReviewAdminService.class, JdbcReviewRepository.class,
             BookstoreWiring.class, CdiDomainEventPublisher.class);
 

@@ -126,7 +126,7 @@ Kararlar [ADR-0022](adr/ADR-0022.md)'de.
 | 9.2 ✅ | Korelasyon kimliği *(`X-Correlation-Id`, problemlerde `correlationId`)*, MicroProfile Health readiness *(`/health/ready`)* |
 | 9.3 ✅ | `ETag` / `If-Match` ile kayıp güncelleme koruması *(yönetim API'sinde kitaplar)* |
 | 9.4 ✅ | Sipariş için `Idempotency-Key` |
-| 9.5 | Transactional Outbox |
+| 9.5 ✅ | Transactional Outbox |
 | 9.6 | Kapsam *(NFR-6, JaCoCo)* ve performans *(NFR-9)* hedefleri |
 | 9.7 | JPA ile ikinci persistence uygulaması *(isteğe bağlı)* |
 

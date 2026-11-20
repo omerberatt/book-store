@@ -8,11 +8,14 @@ import com.bookstore.customer.domain.Customer;
 import com.bookstore.sales.domain.Cart;
 import com.bookstore.sales.domain.CartItem;
 import com.bookstore.sales.domain.Order;
+import com.bookstore.sales.domain.OrderEventOutbox;
 import com.bookstore.sales.domain.OrderLine;
 import com.bookstore.sales.domain.OrderNumber;
+import com.bookstore.sales.domain.OrderPlaced;
 import com.bookstore.sales.domain.OrderRequest;
 import com.bookstore.sales.domain.OrderRequestLog;
 import com.bookstore.sales.domain.OrderStatus;
+import com.bookstore.sales.domain.OrderStatusChanged;
 import com.bookstore.sales.domain.PaymentMethod;
 import com.bookstore.sales.domain.ProductSnapshot;
 import com.bookstore.sales.domain.ShippingPolicy;
@@ -27,6 +30,7 @@ import com.bookstore.shared.kernel.testing.TestClock;
 
 import java.time.Clock;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.Year;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -217,6 +221,36 @@ abstract class SalesRepositoryContract {
                     new OrderNumber("BS-2026-000003"), TestClock.CLOCK.instant())))
                     .isInstanceOfSatisfying(ConflictException.class,
                             e -> assertThat(e.code()).isEqualTo(OrderRequestLog.DUPLICATE_KEY));
+        }
+    }
+
+    @Nested
+    class Outbox {
+
+        private final Instant at = TestClock.CLOCK.instant();
+        private final OrderPlaced placed = new OrderPlaced(new OrderNumber("BS-2026-000001"), CustomerId.of(10),
+                Money.of("144.90"), at);
+        private final OrderStatusChanged shipped = new OrderStatusChanged(new OrderNumber("BS-2026-000001"),
+                CustomerId.of(10), OrderStatus.PAID, OrderStatus.SHIPPED, at.plusSeconds(60));
+
+        @Test
+        void eventsComeBackWholeOldestFirstUntilPublished() {
+            db.outbox.append(List.of(placed, shipped));
+
+            List<OrderEventOutbox.Pending> pending = db.outbox.pending(10);
+            assertThat(pending).extracting(OrderEventOutbox.Pending::event).containsExactly(placed, shipped);
+            assertThat(db.outbox.pending(1)).hasSize(1);
+
+            db.outbox.markPublished(pending.getFirst().id(), at);
+            assertThat(db.outbox.pending(10)).extracting(OrderEventOutbox.Pending::event).containsExactly(shipped);
+        }
+
+        @Test
+        void anEventWithoutACustomerIsKeptToo() {
+            OrderPlaced anonymous = new OrderPlaced(new OrderNumber("BS-2026-000002"), null, Money.of("10.00"), at);
+            db.outbox.append(List.of(anonymous));
+
+            assertThat(db.outbox.pending(10)).extracting(OrderEventOutbox.Pending::event).containsExactly(anonymous);
         }
     }
 

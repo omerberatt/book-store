@@ -11,6 +11,7 @@ import com.bookstore.sales.domain.Cart;
 import com.bookstore.sales.domain.CartAdjustment;
 import com.bookstore.sales.domain.CartRepository;
 import com.bookstore.sales.domain.Order;
+import com.bookstore.sales.domain.OrderEventOutbox;
 import com.bookstore.sales.domain.OrderNumberSequence;
 import com.bookstore.sales.domain.OrderRepository;
 import com.bookstore.sales.domain.OrderRequest;
@@ -25,7 +26,6 @@ import com.bookstore.shared.kernel.error.ConflictException;
 import com.bookstore.shared.kernel.error.NotFoundException;
 import com.bookstore.shared.kernel.error.RuleViolationException;
 import com.bookstore.shared.kernel.error.ValidationException;
-import com.bookstore.shared.kernel.event.DomainEventPublisher;
 import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.kernel.transaction.TransactionRunner;
@@ -56,8 +56,8 @@ import jakarta.inject.Inject;
  * second order; the key is recorded before the payment (ADR-0022).
  *
  * <p>The catalog and customer modules are reached only through their {@code api} packages
- * ({@link StockFacade}, {@link CustomerDirectory}). Notifications are sent only after the second
- * transaction has committed.
+ * ({@link StockFacade}, {@link CustomerDirectory}). The order's events are kept in the outbox in the second
+ * transaction and handed on after it committed (ADR-0022).
  */
 @ApplicationScoped
 public class CheckoutService implements CheckoutFacade {
@@ -74,7 +74,8 @@ public class CheckoutService implements CheckoutFacade {
     private final PaymentGateway paymentGateway;
     private final ShippingPolicy shippingPolicy;
     private final TransactionRunner transactions;
-    private final DomainEventPublisher events;
+    private final OrderEventOutbox outbox;
+    private final OrderEventRelay relay;
     private final Clock clock;
 
     /**
@@ -89,7 +90,8 @@ public class CheckoutService implements CheckoutFacade {
      * @param paymentGateway charges cards
      * @param shippingPolicy the rule for the shipping cost
      * @param transactions   runs work in a transaction
-     * @param events         receives the events of stored orders
+     * @param outbox         keeps the events of a stored order in its transaction
+     * @param relay          hands the events on once the order is stored
      * @param clock          the clock giving order times
      */
     @Inject
@@ -97,7 +99,7 @@ public class CheckoutService implements CheckoutFacade {
                            OrderRepository orders, OrderNumberSequence orderNumbers, OrderRequestLog requests,
                            PaymentGateway paymentGateway,
                            ShippingPolicy shippingPolicy, TransactionRunner transactions,
-                           DomainEventPublisher events, Clock clock) {
+                           OrderEventOutbox outbox, OrderEventRelay relay, Clock clock) {
         this.customers = customers;
         this.carts = carts;
         this.stock = stock;
@@ -107,13 +109,14 @@ public class CheckoutService implements CheckoutFacade {
         this.paymentGateway = paymentGateway;
         this.shippingPolicy = shippingPolicy;
         this.transactions = transactions;
-        this.events = events;
+        this.outbox = outbox;
+        this.relay = relay;
         this.clock = clock;
     }
 
     /** For the CDI container's client proxy only; never called by the application. */
     protected CheckoutService() {
-        this(null, null, null, null, null, null, null, null, null, null, null);
+        this(null, null, null, null, null, null, null, null, null, null, null, null);
     }
 
     /**
@@ -154,7 +157,7 @@ public class CheckoutService implements CheckoutFacade {
             return earlierAnswer(command, fingerprint).orElseThrow(() -> duplicate);
         }
 
-        events.publishAll(order.pullEvents());
+        relay.relayQuietly();
         return SalesMapper.detailsOf(order);
     }
 
@@ -218,6 +221,7 @@ public class CheckoutService implements CheckoutFacade {
         }
 
         orders.save(order);
+        outbox.append(order.pullEvents());
         cart.clear();
         carts.save(cart);
         return order;

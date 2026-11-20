@@ -200,7 +200,7 @@ Ders, bazı konuları sorularda bırakıp Lab projesine erteliyor. Kitap mağaza
 | İyimser kilitleme, `version` kolonu *(12, 14)* | Tüm aggregate tabloları; [ADR-0015](adr/ADR-0015.md) | ✅ | 3 |
 | Aynı anda son kopyayı alan iki istemci *(14)* | `CheckoutWithDatabaseTest.twoCustomersRacingForTheLastCopyCannotBothGetIt` | ✅ | 3 |
 | Sipariş numarasında boşluk ve geri alma *(12)* | Geri alınan numara yeniden verilir; testle belgelendi | ✅ | 3 |
-| Transactional Outbox *(11, 12, 14)* | — | ⏳ | 9 |
+| Transactional Outbox *(11, 12, 14)* | `OrderEventOutbox` *(`JdbcOrderEventOutbox`, `order_outbox`, sales V3)*, `OrderEventRelay`, `OutboxRelayTimer` *(Jakarta Concurrency)* | ✅ | 9.5 |
 | `ETag` / `If-Match` *(13)* | `EntityTags` *(shared-web)*, `AdminBookResource`; `CatalogAdminFacade` beklenen sürümü alır; yönetim sayfaları `If-Match` gönderir | ✅ | 9.3 |
 | `Idempotency-Key` *(13)* | `OrderRequest`, `OrderRequestLog` *(`JdbcOrderRequestLog`, `order_requests` tablosu, sales V2)*; `CheckoutService` anahtarı ödemeden önce kaydeder; ödeme sayfası her açılışta anahtar üretir | ✅ | 9.4 |
 | Hata yanıtına korelasyon kimliği *(13)* | `CorrelationIds`, `CorrelationIdFilter` *(shared-web)*: `X-Correlation-Id` başlığı, problemlerde `correlationId`, beklenmeyen hatanın günlüğünde aynı kimlik | ✅ | 9.2 |
