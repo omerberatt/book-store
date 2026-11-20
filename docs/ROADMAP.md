@@ -123,7 +123,7 @@ Kararlar [ADR-0022](adr/ADR-0022.md)'de.
 | Adım | İş |
 | --- | --- |
 | 9.1 ✅ | GitHub Actions: `verify` ve PostgreSQL testleri *(`.github/workflows/build.yml`)* |
-| 9.2 | Korelasyon kimliği, MicroProfile Health readiness |
+| 9.2 ✅ | Korelasyon kimliği *(`X-Correlation-Id`, problemlerde `correlationId`)*, MicroProfile Health readiness *(`/health/ready`)* |
 | 9.3 | `ETag` / `If-Match` ile kayıp güncelleme koruması *(yönetim API'sinde kitaplar)* |
 | 9.4 | Sipariş için `Idempotency-Key` |
 | 9.5 | Transactional Outbox |

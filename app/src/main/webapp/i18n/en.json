@@ -278,7 +278,8 @@
   "admin.confirmRemoveReview": "Remove the review by {name}?",
   "admin.reviewRemoved": "The review has been removed and its rating taken out of the average.",
 
-  "problem.unknown":"Something unexpected went wrong.",
+  "problem.unknown": "Something unexpected went wrong.",
+  "problem.reference": "(Reference: {id})",
   "problem.network": "The server cannot be reached. Check your connection.",
   "problem.internal-error": "Something went wrong on the server. Please try again later.",
   "problem.authentication.required": "Please sign in to do this.",

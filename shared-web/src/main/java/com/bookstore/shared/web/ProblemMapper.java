@@ -73,7 +73,7 @@ public final class ProblemMapper {
             case ProcessingException processing when isUnreadableJson(processing) -> malformedJson();
             case JsonbException json -> malformedJson();
             default -> {
-                LOG.log(Level.ERROR, "Unexpected failure while handling a request", failure);
+                LOG.log(Level.ERROR, "Unexpected failure while handling request " + CorrelationIds.current(), failure);
                 yield Problem.of(HttpStatus.INTERNAL_SERVER_ERROR, INTERNAL_ERROR,
                         "An unexpected error occurred. It has been logged.", List.of());
             }

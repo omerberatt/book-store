@@ -133,7 +133,10 @@ export function showError(error, form) {
       unplaced.push(`${fieldError.field}: ${fieldError.message}`);
     }
   }
-  showMessage([problemMessage(error), ...unplaced].join(' '), 'error');
+  const reference = error?.status >= 500 && error.problem?.correlationId
+    ? t('problem.reference', { id: error.problem.correlationId })
+    : null;
+  showMessage([problemMessage(error), ...unplaced, reference].filter(Boolean).join(' '), 'error');
 }
 
 /**

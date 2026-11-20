@@ -31,6 +31,7 @@ public class BookstoreStartup {
     private final PasswordHasher hasher;
     private final Clock clock;
     private final boolean demoData;
+    private volatile boolean started;
 
     /**
      * Creates the startup step.
@@ -56,6 +57,11 @@ public class BookstoreStartup {
         this(null, null, null, null, false);
     }
 
+    /** @return whether the migrations and the demo data are done; the readiness check asks (ADR-0022) */
+    public boolean isStarted() {
+        return started;
+    }
+
     /**
      * Runs when the container has started the application.
      *
@@ -69,5 +75,6 @@ public class BookstoreStartup {
             LOG.log(Level.INFO, "Demo data ready; sign in as {0} or {1} with the password {2}",
                     DemoData.CUSTOMER_EMAIL, DemoData.ADMIN_EMAIL, DemoData.PASSWORD);
         }
+        started = true;
     }
 }

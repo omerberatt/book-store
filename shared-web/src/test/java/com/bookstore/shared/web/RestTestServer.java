@@ -35,7 +35,7 @@ public final class RestTestServer implements AutoCloseable {
     public static RestTestServer start(Authenticator authenticator, Object... resources) {
         ResourceConfig config = new ResourceConfig()
                 .registerInstances(resources)
-                .registerInstances(new BasicAuthenticationFilter(authenticator), new JsonbConfiguration(),
+                .registerInstances(new CorrelationIdFilter(), new BasicAuthenticationFilter(authenticator), new JsonbConfiguration(),
                         new ProblemExceptionMappers.AnyFailure(), new ProblemExceptionMappers.InvalidRequest())
                 // Bean Validation errors reach the problem mapper instead of Jersey's plain-text answer.
                 .property("jersey.config.beanValidation.enableOutputValidationErrorEntity.server", false);

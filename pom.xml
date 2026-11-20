@@ -50,6 +50,7 @@
         <jakartaee.version>11.0.0</jakartaee.version>
         <mp-config.version>3.1.2</mp-config.version>
         <mp-openapi.version>4.1.1</mp-openapi.version>
+        <mp-health.version>4.0.1</mp-health.version>
         <jersey.version>4.0.2</jersey.version>
         <weld.version>6.0.4.Final</weld.version>
         <payara-micro.version>7.2026.10</payara-micro.version>
@@ -109,6 +110,11 @@
                 <groupId>org.eclipse.microprofile.openapi</groupId>
                 <artifactId>microprofile-openapi-api</artifactId>
                 <version>${mp-openapi.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.microprofile.health</groupId>
+                <artifactId>microprofile-health-api</artifactId>
+                <version>${mp-health.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.glassfish.jersey</groupId>

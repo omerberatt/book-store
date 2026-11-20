@@ -278,7 +278,8 @@
   "admin.confirmRemoveReview": "{name} adlı kullanıcının yorumu kaldırılsın mı?",
   "admin.reviewRemoved": "Yorum kaldırıldı; puanı ortalamadan düşüldü.",
 
-  "problem.unknown":"Beklenmeyen bir hata oluştu.",
+  "problem.unknown": "Beklenmeyen bir hata oluştu.",
+  "problem.reference": "(Başvuru kodu: {id})",
   "problem.network": "Sunucuya ulaşılamadı. Bağlantınızı kontrol edin.",
   "problem.internal-error": "Sunucuda beklenmeyen bir hata oluştu. Lütfen daha sonra tekrar deneyin.",
   "problem.authentication.required": "Bu işlem için giriş yapmalısınız.",

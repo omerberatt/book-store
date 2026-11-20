@@ -3,10 +3,13 @@ package com.bookstore.shared.web;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
+import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -22,6 +25,7 @@ public final class HttpTestClient {
     private final URI baseUri;
     private final String authorization;
     private final boolean browser;
+    private final Map<String, String> extraHeaders;
 
     /**
      * Creates an anonymous client.
@@ -29,13 +33,14 @@ public final class HttpTestClient {
      * @param root the server's root, for example {@code http://127.0.0.1:8080/}
      */
     public HttpTestClient(URI root) {
-        this(root, null, false);
+        this(root, null, false, Map.of());
     }
 
-    private HttpTestClient(URI baseUri, String authorization, boolean browser) {
+    private HttpTestClient(URI baseUri, String authorization, boolean browser, Map<String, String> extraHeaders) {
         this.baseUri = baseUri;
         this.authorization = authorization;
         this.browser = browser;
+        this.extraHeaders = Map.copyOf(extraHeaders);
     }
 
     /**
@@ -47,7 +52,7 @@ public final class HttpTestClient {
      */
     public HttpTestClient as(String email, String password) {
         String token = Base64.getEncoder().encodeToString((email + ":" + password).getBytes(StandardCharsets.UTF_8));
-        return new HttpTestClient(baseUri, "Basic " + token, browser);
+        return new HttpTestClient(baseUri, "Basic " + token, browser, extraHeaders);
     }
 
     /**
@@ -56,7 +61,20 @@ public final class HttpTestClient {
      * @return the client
      */
     public HttpTestClient asBrowser() {
-        return new HttpTestClient(baseUri, authorization, true);
+        return new HttpTestClient(baseUri, authorization, true, extraHeaders);
+    }
+
+    /**
+     * Returns a client that also sends a header with every request.
+     *
+     * @param name  the header
+     * @param value its value
+     * @return the client
+     */
+    public HttpTestClient withHeader(String name, String value) {
+        Map<String, String> headers = new HashMap<>(extraHeaders);
+        headers.put(name, value);
+        return new HttpTestClient(baseUri, authorization, browser, headers);
     }
 
     /** Sends a {@code GET}. @param path the path and query @return the reply */
@@ -100,13 +118,14 @@ public final class HttpTestClient {
         if (browser) {
             request.header(Callers.CLIENT_HEADER, "web");
         }
+        extraHeaders.forEach(request::header);
         try {
             HttpResponse<String> response = client.send(request.build(),
                     HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             return new Reply(response.statusCode(), response.body(),
                     response.headers().firstValue("Content-Type").orElse(""),
                     response.headers().firstValue("Location").orElse(null),
-                    response.headers().firstValue("WWW-Authenticate").orElse(null));
+                    response.headers().firstValue("WWW-Authenticate").orElse(null), response.headers());
         } catch (IOException e) {
             throw new IllegalStateException(method + " " + path + " failed", e);
         } catch (InterruptedException e) {
@@ -131,7 +150,7 @@ public final class HttpTestClient {
         return new Reply(response.statusCode(), response.body(),
                 response.headers().firstValue("Content-Type").orElse(""),
                 response.headers().firstValue("Location").orElse(null),
-                response.headers().firstValue("WWW-Authenticate").orElse(null));
+                response.headers().firstValue("WWW-Authenticate").orElse(null), response.headers());
     }
 
     /**
@@ -159,6 +178,7 @@ public final class HttpTestClient {
         if (browser) {
             request.header(Callers.CLIENT_HEADER, "web");
         }
+        extraHeaders.forEach(request::header);
         try {
             return client.send(request.build(), body);
         } catch (IOException e) {
@@ -188,8 +208,15 @@ public final class HttpTestClient {
      * @param contentType the {@code Content-Type} header
      * @param location    the {@code Location} header, or {@code null}
      * @param challenge   the {@code WWW-Authenticate} header, or {@code null}
+     * @param headers     every header of the reply
      */
-    public record Reply(int status, String body, String contentType, String location, String challenge) {
+    public record Reply(int status, String body, String contentType, String location, String challenge,
+                        HttpHeaders headers) {
+
+        /** @param name a header @return its first value, or {@code null} */
+        public String header(String name) {
+            return headers.firstValue(name).orElse(null);
+        }
 
         private static final ObjectMapper JSON = new ObjectMapper();
 

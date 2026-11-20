@@ -1,5 +1,8 @@
 package com.bookstore.shared.web;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.ws.rs.core.Context;
@@ -36,15 +39,22 @@ public final class ProblemExceptionMappers {
 
     /**
      * Writes a problem as the response.
+     * The request's correlation id, if there is one, becomes the member {@value CorrelationIds#PROBLEM_MEMBER}
+     * (ADR-0022).
      *
      * @param problem   the problem
      * @param challenge whether a 401 asks for HTTP Basic
      * @return the response
      */
     public static Response responseOf(Problem problem, boolean challenge) {
+        Map<String, Object> body = new LinkedHashMap<>(problem.body());
+        String correlationId = CorrelationIds.current();
+        if (correlationId != null) {
+            body.put(CorrelationIds.PROBLEM_MEMBER, correlationId);
+        }
         Response.ResponseBuilder response = Response.status(problem.status())
                 .type(Problem.MEDIA_TYPE)
-                .entity(problem.body());
+                .entity(body);
         if (challenge && problem.status() == HttpStatus.UNAUTHORIZED) {
             response.header(HttpHeaders.WWW_AUTHENTICATE, Callers.BASIC_CHALLENGE);
         }

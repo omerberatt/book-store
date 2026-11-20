@@ -203,8 +203,8 @@ Ders, bazı konuları sorularda bırakıp Lab projesine erteliyor. Kitap mağaza
 | Transactional Outbox *(11, 12, 14)* | — | ⏳ | 9 |
 | `ETag` / `If-Match` *(13)* | — | ⏳ | 9 |
 | `Idempotency-Key` *(13)* | — | ⏳ | 9 |
-| Hata yanıtına korelasyon kimliği *(13)* | — | ⏳ | 9 |
-| MicroProfile Health readiness *(14)* | — | ⏳ | 9 |
+| Hata yanıtına korelasyon kimliği *(13)* | `CorrelationIds`, `CorrelationIdFilter` *(shared-web)*: `X-Correlation-Id` başlığı, problemlerde `correlationId`, beklenmeyen hatanın günlüğünde aynı kimlik | ✅ | 9.2 |
+| MicroProfile Health readiness *(14)* | `BookstoreReadiness` *(`/health/ready`: migration'lar ve veritabanı)* | ✅ | 9.2 |
 | PostgreSQL ile entegrasyon testi CI'da *(14)* | GitHub Actions: `.github/workflows/build.yml`, Testcontainers ile PostgreSQL 17 *(ADR-0022)* | ✅ | 9.1 |
 
 ## Dersin dışında kalan, projede uygulanan konular

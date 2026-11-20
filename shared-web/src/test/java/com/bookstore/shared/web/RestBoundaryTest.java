@@ -123,6 +123,24 @@ class RestBoundaryTest {
     }
 
     @Test
+    void everyAnswerCarriesACorrelationIdAndProblemsRepeatIt() {
+        HttpTestClient.Reply ok = anonymous.get("/api/v1/things/7");
+        assertThat(ok.header(CorrelationIds.HEADER)).matches("[0-9a-f-]{36}");
+
+        HttpTestClient.Reply missing = anonymous.withHeader(CorrelationIds.HEADER, "req-42").get("/api/v1/things/404");
+        assertThat(missing.header(CorrelationIds.HEADER)).isEqualTo("req-42");
+        assertThat(missing.json().get("correlationId").asText()).isEqualTo("req-42");
+
+        HttpTestClient.Reply boom = anonymous.withHeader(CorrelationIds.HEADER, "bad id with spaces").get("/api/v1/things/boom");
+        assertThat(boom.json().get("correlationId").asText())
+                .isEqualTo(boom.header(CorrelationIds.HEADER))
+                .isNotEqualTo("bad id with spaces");
+        assertThat(anonymous.as("ayse.com", "wrong").get("/api/v1/things/mine").json().has("correlationId"))
+                .isTrue();
+        assertThat(CorrelationIds.current()).isNull();
+    }
+
+    @Test
     void unexpectedFailuresAreOpaque500s() {
         HttpTestClient.Reply reply = anonymous.get("/api/v1/things/boom");
 
