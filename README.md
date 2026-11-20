@@ -12,9 +12,10 @@ Projenin amacı: çalışan bir e-ticaret uygulaması ortaya koymak.
 
 | Doküman | İçerik |
 | --- | --- |
+| [KULLANIM-KILAVUZU.md](docs/KULLANIM-KILAVUZU.md) | Mağazayı başlatmak, müşteri ve yönetici olarak kullanmak |
 | [SPEC.md](docs/SPEC.md) | Sistem ne yapar: aktörler, gereksinimler, kapsam dışı kalanlar |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Hedef mimari: modüller, paketler, uygulama sunucusu, veritabanı, test |
-| [adr/](docs/adr/README.md) | Mimari karar kayıtları *(ADR-0001 – ADR-0018)* |
+| [adr/](docs/adr/README.md) | Mimari karar kayıtları *(ADR-0001 – ADR-0023)* |
 | [CURRICULUM-MAP.md](docs/CURRICULUM-MAP.md) | Ders notlarının her bölümü projenin neresinde |
 | [ROADMAP.md](docs/ROADMAP.md) | Fazlar ve sıradaki adımlar |
 
@@ -59,7 +60,9 @@ mvnw.cmd verify
 
 ## API'yi çalıştırma
 
-Uygulama, Payara Micro 7 üzerinde çalışan bir WAR'dır *([ADR-0010](docs/adr/ADR-0010.md))*. Önce bütün modülleri derleyin:
+Uygulama, Payara Micro 7 üzerinde çalışan bir WAR'dır *([ADR-0010](docs/adr/ADR-0010.md))*. En kolayı, derleyip başlatan betik: Windows'ta `scripts\start.cmd`, Linux ve macOS'ta `./scripts/start.sh`. Mağazanın nasıl kullanılacağı [kullanma kılavuzunda](docs/KULLANIM-KILAVUZU.md).
+
+Adımları elle çalıştırmak için önce bütün modülleri derleyin:
 
 ```bash
 ./mvnw install -DskipTests
