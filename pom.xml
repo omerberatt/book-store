@@ -61,6 +61,8 @@
         <resources-plugin.version>3.5.0</resources-plugin.version>
         <install-plugin.version>3.1.4</install-plugin.version>
         <jacoco-plugin.version>0.8.13</jacoco-plugin.version>
+        <!-- JPA provider of the tests of the second persistence option (ADR-0023); Payara brings its own. -->
+        <hibernate.version>7.1.0.Final</hibernate.version>
         <!-- NFR-6: line coverage of every domain and application package (ADR-0022). -->
         <coverage.minimum>0.80</coverage.minimum>
     </properties>
@@ -113,6 +115,11 @@
                 <groupId>org.eclipse.microprofile.openapi</groupId>
                 <artifactId>microprofile-openapi-api</artifactId>
                 <version>${mp-openapi.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.hibernate.orm</groupId>
+                <artifactId>hibernate-core</artifactId>
+                <version>${hibernate.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.microprofile.health</groupId>

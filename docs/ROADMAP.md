@@ -15,7 +15,7 @@ Hangi konunun hangi fazda işlendiği [CURRICULUM-MAP.md](CURRICULUM-MAP.md) iç
 | **6** | ✅ | Uygulama sunucusu | 14 | Payara Micro 7 üzerinde WAR: CDI, JTA, CDI olayları, JAX-RS, JSON-B, MicroProfile Config ve OpenAPI |
 | **7** | ✅ | Güvenlik ve arayüz | — | Jakarta Security, BCrypt, oturumda misafir sepeti, HTML ve JavaScript sayfaları, iki dilli arayüz |
 | **8** | ✅ | Yönetim paneli | — | Kitap/yazar/kategori, kapak görseli, sipariş, kullanıcı ve yorum yönetimi |
-| **9** | | Lab ilerisi ve sağlamlaştırma | 11–14 soruları | CI, Transactional Outbox, ETag, Idempotency-Key, sağlık kontrolü, performans hedefi, JPA |
+| **9** | ✅ | Lab ilerisi ve sağlamlaştırma | 11–14 soruları | CI, Transactional Outbox, ETag, Idempotency-Key, sağlık kontrolü, performans hedefi, JPA |
 
 ---
 
@@ -128,14 +128,15 @@ Kararlar [ADR-0022](adr/ADR-0022.md)'de.
 | 9.4 ✅ | Sipariş için `Idempotency-Key` |
 | 9.5 ✅ | Transactional Outbox |
 | 9.6 ✅ | Kapsam *(NFR-6, JaCoCo)* ve performans *(NFR-9)* hedefleri |
-| 9.7 | JPA ile ikinci persistence uygulaması *(isteğe bağlı)* |
+| 9.7 ✅ | JPA ile ikinci persistence uygulaması: yorum modülü *(`JpaReviewRepository`, `ReviewEntity`; ADR-0023)* |
 
 ---
 
 ## Tamamlanan fazların notları
 
-### Faz 9 *(9.1 – 9.6)*
+### Faz 9
 
+- 9.7: Yorum modülü için JPA ile ikinci persistence uygulaması *(ADR-0023)*; aynı sözleşme testlerinden geçiyor. Sözleşmeye eklenen "eski kopya yeniyi ezemez" testini dört uygulama da geçiyor.
 - Yedi commit: CI ve ADR-0022 *(ilk CI koşusunun bulduğu bir hatanın düzeltmesiyle)*; korelasyon kimliği ve sağlık kontrolü; `ETag` / `If-Match`; `Idempotency-Key`; Transactional Outbox; kapsam ve performans hedefleri.
 - İlk CI koşusu, Docker'lı bir ortamda 38 PostgreSQL testini ilk kez koşturdu; hepsi geçti. Aynı koşu, Linux'ta 2 MB'ı aşan kapak yüklemesinin yanıtının bağlantı sıfırlanınca kaybolduğunu gösterdi; düzeltildi.
 - JDK HTTP test sunucusu başlık adlarının harf büyüklüğünü değiştiriyor; korelasyon filtresi başlığı harfe duyarsız arıyor.

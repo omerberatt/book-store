@@ -29,10 +29,24 @@ public final class ReviewDb {
      * @param database the database
      */
     public ReviewDb(TestDatabase database) {
+        this(database, new JdbcReviewRepository(database.jdbc()));
+    }
+
+    private ReviewDb(TestDatabase database, ReviewRepository reviews) {
         this.jdbc = database.jdbc();
         this.catalog = new CatalogDb(database);
         this.customers = new CustomerDb(database);
-        this.reviews = new JdbcReviewRepository(jdbc);
+        this.reviews = reviews;
+    }
+
+    /**
+     * Uses the JPA repository on a database that has every module's tables (ADR-0023).
+     *
+     * @param database the database
+     * @return the fixture
+     */
+    public static ReviewDb jpa(TestDatabase database) {
+        return new ReviewDb(database, new JpaReviewRepository(ReviewJpa.entityManagerFactory(database.dataSource())));
     }
 
     private ReviewDb(CatalogDb catalog, CustomerDb customers) {

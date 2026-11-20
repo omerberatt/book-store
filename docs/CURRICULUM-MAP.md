@@ -159,7 +159,7 @@ Faz numaraları [ROADMAP.md](ROADMAP.md) içindeki aşamalardır; ADR'ler [docs/
 | Bellek içi repository'nin kopya saklaması | `InMemoryStore` kopya saklar, her okumada yeni kopya verir ve eski sürümle kaydı `concurrent-modification` ile reddeder; kategori ağacı satır olarak tutulup her okumada yeniden kurulur. Paylaşılan referansa güvenen üç test ve bir kimlik karşılaştırması hatası düzeltildi | ✅ | 4.6 |
 | PostgreSQL ve Testcontainers | Migration'lar PostgreSQL 17 lehçesinde; hızlı testler H2 PostgreSQL modunda; `PostgresTestDatabase` *(Testcontainers 2.0.5, `postgres:17`)* her teste yeni bir veritabanı verir; `@EnabledIfDocker` Docker yoksa atlar; yerel veritabanı `docker-compose.yml` *(ADR-0008)* | ✅ | 4.6 |
 | Atomik kayıt, geri alma | `app` modülünde `CheckoutWithDatabaseTest.declinedPaymentRollsBack…`: başka bir modüldeki stok da geri alınıyor | ✅ | 3, 4.1 |
-| JPA'nın neleri ortadan kaldırdığı | Ayrı persistence modeliyle ikinci uygulama | ⏳ | 9 |
+| JPA'nın neleri ortadan kaldırdığı | `JpaReviewRepository` ve ayrı persistence modeli `ReviewEntity`; `ReviewRepositoryContract`'tan H2 ve PostgreSQL'de geçer *(ADR-0023)* | ✅ | 9.7 |
 
 ## Bölüm 13 — HTTP Boundary, DTO, Validasyon ve Hata Sözleşmeleri
 

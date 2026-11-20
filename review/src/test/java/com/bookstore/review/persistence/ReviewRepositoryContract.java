@@ -19,8 +19,8 @@ import java.time.Duration;
 import org.junit.jupiter.api.Test;
 
 /**
- * The contract of the review repository (ADR-0008): the in-memory, H2 and PostgreSQL
- * implementations must all pass these tests.
+ * The contract of the review repository (ADR-0008, ADR-0023): the in-memory, JDBC and JPA
+ * implementations, on H2 and on PostgreSQL, must all pass these tests.
  */
 abstract class ReviewRepositoryContract {
 
@@ -60,6 +60,24 @@ abstract class ReviewRepositoryContract {
         assertThatThrownBy(() -> reviews.save(Review.write(dune.id(), ayse.id(), Rating.of(1), null, TestClock.CLOCK)))
                 .isInstanceOfSatisfying(ConflictException.class,
                         e -> assertThat(e.code()).isEqualTo("review.duplicate"));
+    }
+
+    @Test
+    void anOutdatedCopyCannotOverwriteANewerOne() {
+        Review stored = reviews.save(Review.write(dune.id(), ayse.id(), Rating.of(4), "Güzel", TestClock.CLOCK));
+        Review first = reviews.findById(stored.id()).orElseThrow();
+        Review second = reviews.findById(stored.id()).orElseThrow();
+        Clock later = Clock.offset(TestClock.CLOCK, Duration.ofDays(1));
+
+        first.edit(Rating.of(2), "İlk", later);
+        reviews.save(first);
+        second.edit(Rating.of(5), "İkinci", later);
+
+        assertThatThrownBy(() -> reviews.save(second))
+                .isInstanceOfSatisfying(ConflictException.class,
+                        e -> assertThat(e.code()).isEqualTo(ConflictException.CONCURRENT_MODIFICATION));
+        assertThat(reviews.findById(stored.id()).orElseThrow().comment()).isEqualTo("İlk");
+        assertThat(first.version()).isGreaterThan(second.version());
     }
 
     @Test
