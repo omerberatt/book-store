@@ -259,7 +259,7 @@ Ayrıntıları ve ArchUnit karşılıkları ADR-0004 ve ADR-0005'tedir:
 
 ## 9. Bugünkü kodla hedef arasındaki farklar
 
-| Konu | Bugün *(Faz 7 sonu)* | Hedef | Adım |
+| Konu | Bugün *(Faz 9 sonu)* | Hedef | Adım |
 | --- | --- | --- | --- |
 | Modüller | ✅ İş alanına göre modüller, `shared-kernel`, `shared-jdbc`, `app`, mimari testler | — | 4.1 |
 | Migration'lar | ✅ Modül başına dosya ve Flyway geçmişi | — | 4.1 |
@@ -271,6 +271,6 @@ Ayrıntıları ve ArchUnit karşılıkları ADR-0004 ve ADR-0005'tedir:
 | Servis sonuçları | ✅ `api` paketinde komutlar, DTO'lar, façade'lar; `application` paketinde mapper'lar | — | 4.4 |
 | Bildirim | ✅ `DomainEventPublisher` + `InProcessEventPublisher` + `OrderNotificationObserver`; ✅ CDI olayları *(`AFTER_SUCCESS`)*; ✅ Transactional Outbox *(ADR-0022)* | — | 6, 9.5 |
 | Veritabanı | ✅ PostgreSQL 17 lehçesi, referans tablolar, H2 PostgreSQL modu, Testcontainers | — | 4.6 |
-| Composition root | ✅ `BookstoreModule` *(elle)* | CDI | 6 |
+| Composition root | ✅ CDI *(`BookstoreWiring`, `annotated` keşif)*; `BookstoreModule` elle, yalnızca H2 testleri için | — | 6 |
 | Repository testleri | ✅ Modül başına ortak sözleşme testleri *(bellek içi, H2, PostgreSQL)* | — | 4.6 |
-| Transaction | `TransactionRunner` portu, `JdbcTransactionRunner` | JTA `@Transactional` | 6 |
+| Transaction | ✅ `TransactionRunner` portu; sunucuda `JtaTransactionRunner` *(JTA `@Transactional`)*, testlerde `JdbcTransactionRunner` | — | 6 |

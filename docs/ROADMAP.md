@@ -129,6 +129,7 @@ Kararlar [ADR-0022](adr/ADR-0022.md)'de.
 | 9.5 ✅ | Transactional Outbox |
 | 9.6 ✅ | Kapsam *(NFR-6, JaCoCo)* ve performans *(NFR-9)* hedefleri |
 | 9.7 ✅ | JPA ile ikinci persistence uygulaması: yorum modülü *(`JpaReviewRepository`, `ReviewEntity`; ADR-0023)* |
+| 9.8 ✅ | CI'da Payara Micro + PostgreSQL 17 üzerinde uçtan uca duman testi *(`scripts/smoke-test.sh`)*; başlatma betikleri ve kullanma kılavuzu |
 
 ---
 

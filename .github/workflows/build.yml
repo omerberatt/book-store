@@ -45,3 +45,62 @@ jobs:
           name: test-reports
           path: '**/target/surefire-reports/'
           retention-days: 7
+
+  # Runs the WAR on Payara Micro against PostgreSQL 17, as in production, and walks the main
+  # customer and administrator flows over HTTP (scripts/smoke-test.sh, ADR-0022).
+  smoke:
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: bookstore
+          POSTGRES_USER: bookstore
+          POSTGRES_PASSWORD: bookstore
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U bookstore -d bookstore"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+    env:
+      BOOKSTORE_DB_CLASS_NAME: org.postgresql.ds.PGSimpleDataSource
+      BOOKSTORE_DB_URL: jdbc:postgresql://localhost:5432/bookstore
+      BOOKSTORE_DB_USER: bookstore
+      BOOKSTORE_DB_PASSWORD: bookstore
+      PGPASSWORD: bookstore
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Build without tests
+        run: ./mvnw -B -ntp install -DskipTests
+
+      - name: Start Payara Micro on PostgreSQL
+        env:
+          BOOKSTORE_FILES_DIRECTORY: ${{ runner.temp }}/bookstore-files
+        run: nohup ./mvnw -B -ntp -pl app -Ppayara package exec:exec -DskipTests > payara.log 2>&1 &
+
+      - name: Smoke test
+        run: WAIT_SECONDS=360 ./scripts/smoke-test.sh
+
+      - name: The data is in PostgreSQL and every order event left the outbox
+        run: |
+          orders=$(psql -h localhost -U bookstore -d bookstore -tAc "SELECT COUNT(*) FROM orders")
+          waiting=$(psql -h localhost -U bookstore -d bookstore -tAc "SELECT COUNT(*) FROM order_outbox WHERE published_at IS NULL")
+          echo "orders: $orders, events still in the outbox: $waiting"
+          test "$orders" -ge 1 && test "$waiting" -eq 0
+
+      - name: Keep the server log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: payara-log
+          path: payara.log
+          retention-days: 7

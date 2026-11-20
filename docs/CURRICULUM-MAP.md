@@ -114,7 +114,7 @@ Faz numaraları [ROADMAP.md](ROADMAP.md) içindeki aşamalardır; ADR'ler [docs/
 | Test fixture'ını `test-jar` ile paylaşmak | `shared-kernel` *(`InMemoryStore`, `DirectTransactions`, `TestClock`)*, `shared-jdbc` *(`TestDatabase`)*, `catalog` *(`CatalogDb`)*, `customer` *(`CustomerDb`)*, `sales` *(`SalesDb`)* | ✅ | 4.1 |
 | Uçtan uca smoke test | `app` modülünde dört modülü gerçek JDBC ile kuran `JdbcBookstore`; `CheckoutWithDatabaseTest`, `ReviewFlowTest` | ✅ | 4.1 |
 | ArchUnit ile mimari testler | `quality/architecture-tests`: modül sınırı *(`ModuleBoundaryTest`)*, paket matrisi *(`LayerDependencyTest`)*, domain *(`DomainModelRulesTest`)*, kodlama *(`CodingRulesTest`)*, application *(`ApplicationRulesTest`)*, olay *(`DomainEventRulesTest`)* ve persistence *(`PersistenceRulesTest`)* kuralları; kasıtlı ihlallerle doğrulandı | ✅ | 4.1, 4.2 |
-| `no_standard_streams`, `no_dumping_ground_packages` | [ADR-0005](adr/ADR-0005.md) | ⏳ | 4 |
+| `no_standard_streams`, `no_dumping_ground_packages` | [ADR-0005](adr/ADR-0005.md): `CodingRulesTest` | ✅ | 4.2 |
 
 ## Bölüm 10 — Uygulama Servisleri ve Manuel Dependency Injection
 
