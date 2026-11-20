@@ -201,7 +201,7 @@ Ders, bazı konuları sorularda bırakıp Lab projesine erteliyor. Kitap mağaza
 | Aynı anda son kopyayı alan iki istemci *(14)* | `CheckoutWithDatabaseTest.twoCustomersRacingForTheLastCopyCannotBothGetIt` | ✅ | 3 |
 | Sipariş numarasında boşluk ve geri alma *(12)* | Geri alınan numara yeniden verilir; testle belgelendi | ✅ | 3 |
 | Transactional Outbox *(11, 12, 14)* | — | ⏳ | 9 |
-| `ETag` / `If-Match` *(13)* | — | ⏳ | 9 |
+| `ETag` / `If-Match` *(13)* | `EntityTags` *(shared-web)*, `AdminBookResource`; `CatalogAdminFacade` beklenen sürümü alır; yönetim sayfaları `If-Match` gönderir | ✅ | 9.3 |
 | `Idempotency-Key` *(13)* | — | ⏳ | 9 |
 | Hata yanıtına korelasyon kimliği *(13)* | `CorrelationIds`, `CorrelationIdFilter` *(shared-web)*: `X-Correlation-Id` başlığı, problemlerde `correlationId`, beklenmeyen hatanın günlüğünde aynı kimlik | ✅ | 9.2 |
 | MicroProfile Health readiness *(14)* | `BookstoreReadiness` *(`/health/ready`: migration'lar ve veritabanı)* | ✅ | 9.2 |

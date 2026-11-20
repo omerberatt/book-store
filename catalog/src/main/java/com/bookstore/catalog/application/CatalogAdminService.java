@@ -127,8 +127,8 @@ public class CatalogAdminService implements CatalogAdminFacade {
     }
 
     @Override
-    public BookDetails updateBook(BookId bookId, BookCommand command) {
-        return change(bookId, book -> {
+    public BookDetails updateBook(BookId bookId, BookCommand command, Integer expectedVersion) {
+        return change(bookId, expectedVersion, book -> {
             book.changeDetails(command.title(), command.publisher(), yearOf(command.publicationYear()),
                     languageOf(command.language()), command.pageCount(), command.description());
             book.changeAuthors(authorsOf(command.authorIds()));
@@ -139,18 +139,18 @@ public class CatalogAdminService implements CatalogAdminFacade {
     }
 
     @Override
-    public BookDetails changePrice(BookId bookId, Money price) {
-        return change(bookId, book -> book.changePrice(price));
+    public BookDetails changePrice(BookId bookId, Money price, Integer expectedVersion) {
+        return change(bookId, expectedVersion, book -> book.changePrice(price));
     }
 
     @Override
-    public BookDetails changeStock(BookId bookId, int quantity) {
-        return change(bookId, book -> book.changeStock(quantity));
+    public BookDetails changeStock(BookId bookId, int quantity, Integer expectedVersion) {
+        return change(bookId, expectedVersion, book -> book.changeStock(quantity));
     }
 
     @Override
-    public BookDetails setActive(BookId bookId, boolean active) {
-        return change(bookId, book -> {
+    public BookDetails setActive(BookId bookId, boolean active, Integer expectedVersion) {
+        return change(bookId, expectedVersion, book -> {
             if (active) {
                 book.activate();
             } else {
@@ -171,7 +171,7 @@ public class CatalogAdminService implements CatalogAdminFacade {
         AtomicReference<String> replaced = new AtomicReference<>();
         BookDetails details;
         try {
-            details = change(bookId, book -> {
+            details = change(bookId, null, book -> {
                 replaced.set(book.coverImage().orElse(null));
                 book.attachCover(key);
             });
@@ -263,9 +263,17 @@ public class CatalogAdminService implements CatalogAdminFacade {
         return new CatalogStats(total, active, lowStockBelow, low);
     }
 
-    private BookDetails change(BookId bookId, Consumer<Book> change) {
+    /**
+     * Loads a book, checks the version the caller read, applies a change and saves, in one
+     * transaction. The repository also rejects a version that changed between the load and the save.
+     */
+    private BookDetails change(BookId bookId, Integer expectedVersion, Consumer<Book> change) {
         return transactions.inTransaction(() -> {
             Book book = load(bookId);
+            if (expectedVersion != null && book.version() != expectedVersion) {
+                throw new ConflictException(ConflictException.CONCURRENT_MODIFICATION, "Book " + bookId
+                        + " is at version " + book.version() + ", not " + expectedVersion);
+            }
             change.accept(book);
             return CatalogMapper.detailsOf(books.save(book));
         });

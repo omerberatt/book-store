@@ -95,6 +95,19 @@ class CatalogAdminServiceTest {
         }
 
         @Test
+        void aChangeMadeOnAnOutdatedVersionIsRefused() {
+            BookDetails created = shop.admin.createBook(madonna("9789753638029"));
+            BookDetails cheaper = shop.admin.changePrice(created.id(), Money.of("90.00"), created.version());
+
+            assertThat(cheaper.version()).isGreaterThan(created.version());
+            assertThatThrownBy(() -> shop.admin.changeStock(created.id(), 1, created.version()))
+                    .isInstanceOfSatisfying(ConflictException.class,
+                            e -> assertThat(e.code()).isEqualTo(ConflictException.CONCURRENT_MODIFICATION));
+            assertThat(shop.admin.book(created.id()).stock()).isEqualTo(12);
+            assertThat(shop.admin.setActive(created.id(), false, cheaper.version()).active()).isFalse();
+        }
+
+        @Test
         void priceAndStockChangeOnTheirOwn() {
             BookDetails created = shop.admin.createBook(madonna("9789753638029"));
 

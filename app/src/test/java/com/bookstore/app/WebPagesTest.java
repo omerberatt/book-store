@@ -10,6 +10,7 @@ import com.bookstore.sales.domain.OrderStatus;
 import com.bookstore.sales.domain.PaymentMethod;
 import com.bookstore.sales.domain.StockShortageException;
 import com.bookstore.shared.kernel.error.AccessDeniedException;
+import com.bookstore.shared.kernel.error.ConflictException;
 import com.bookstore.shared.kernel.error.NotFoundException;
 import com.bookstore.shared.kernel.error.ValidationException;
 import com.bookstore.shared.web.Caller;
@@ -98,7 +99,9 @@ class WebPagesTest {
                 "order.empty-cart", "order.illegal-transition", "request.bad-parameter", "request.malformed-json",
                 // Phase 8, the administrator's endpoints (ADR-0021).
                 "book.isbn-taken", "author.in-use", "category.in-use", "category.has-children", "category.name-taken",
-                "customer.admin-protected", "request.unreadable"));
+                "customer.admin-protected", "request.unreadable",
+                // Phase 9, lost updates (ADR-0022).
+                WebException.preconditionFailed().code(), ConflictException.CONCURRENT_MODIFICATION));
         codes.forEach(code -> assertThat(turkish).as(code).containsKey("problem." + code));
     }
 

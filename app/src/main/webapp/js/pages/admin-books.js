@@ -1,7 +1,7 @@
 // Every book, those off sale too (ADM-1, ADM-3): price and stock change in place, a switch takes a
 // book off sale or puts it back.
 
-import { api, query } from '../api.js';
+import { api, ifMatch, query } from '../api.js';
 import { $, fill, h } from '../dom.js';
 import { t } from '../i18n.js';
 import { busy, showError, showMessage } from '../layout.js';
@@ -32,22 +32,24 @@ async function show(page) {
 }
 
 function row(book) {
+  // The version this row last saw: every change sends it as If-Match and keeps the new one (ADR-0022).
+  let seen = book;
   const price = h('input', { type: 'number', min: '0.01', step: '0.01', value: book.price.amount, class: 'short',
     'aria-label': t('admin.priceOf', { title: book.title }) });
   price.addEventListener('change', () => busy(price, async () => {
-    await api.put(`/admin/books/${book.id}/price`, { price: Number(price.value) });
+    seen = await api.put(`/admin/books/${book.id}/price`, { price: Number(price.value) }, ifMatch(seen));
     showMessage(t('admin.saved', { title: book.title }), 'success');
   }));
   const stock = h('input', { type: 'number', min: 0, step: 1, value: book.stock, class: 'short',
     'aria-label': t('admin.stockOf', { title: book.title }) });
   stock.addEventListener('change', () => busy(stock, async () => {
-    await api.put(`/admin/books/${book.id}/stock`, { stock: Number(stock.value) });
+    seen = await api.put(`/admin/books/${book.id}/stock`, { stock: Number(stock.value) }, ifMatch(seen));
     showMessage(t('admin.saved', { title: book.title }), 'success');
   }));
   const active = h('input', { type: 'checkbox', checked: book.active, 'aria-label': t('admin.onSaleOf', { title: book.title }) });
   active.addEventListener('change', () => busy(active, async () => {
-    const changed = await api.put(`/admin/books/${book.id}/active`, { active: active.checked });
-    showMessage(t(changed.active ? 'admin.backOnSale' : 'admin.offSale', { title: book.title }), 'success');
+    seen = await api.put(`/admin/books/${book.id}/active`, { active: active.checked }, ifMatch(seen));
+    showMessage(t(seen.active ? 'admin.backOnSale' : 'admin.offSale', { title: book.title }), 'success');
   }));
   return h('tr', { class: book.active ? null : 'muted' },
     h('td', {}, h('a', { href: `admin-book.html?id=${book.id}` }, book.title),

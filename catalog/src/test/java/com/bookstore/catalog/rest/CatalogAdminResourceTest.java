@@ -77,6 +77,27 @@ class CatalogAdminResourceTest {
     }
 
     @Test
+    void theEntityTagGuardsAgainstLostUpdates() {
+        HttpTestClient.Reply created = admin.post("/api/v1/admin/books", madonna("9789753638029"));
+        String book = "/api/v1/admin/books/" + created.json().get("id").asLong();
+        String tag = admin.get(book).header("ETag");
+        assertThat(tag).isEqualTo(created.header("ETag")).matches("\"\\d+\"");
+
+        HttpTestClient.Reply first = admin.withHeader("If-Match", tag).put(book + "/price", "{\"price\": 90}");
+        assertThat(first.status()).isEqualTo(200);
+        assertThat(first.header("ETag")).isNotEqualTo(tag);
+
+        HttpTestClient.Reply second = admin.withHeader("If-Match", tag).put(book + "/stock", "{\"stock\": 1}");
+        assertThat(second.status()).isEqualTo(412);
+        assertThat(second.code()).isEqualTo("precondition.failed");
+        assertThat(admin.withHeader("If-Match", "W/\"1\"").put(book + "/stock", "{\"stock\": 1}").status())
+                .isEqualTo(412);
+        assertThat(admin.withHeader("If-Match", "*").put(book + "/stock", "{\"stock\": 1}").status()).isEqualTo(200);
+        assertThat(admin.put(book + "/stock", "{\"stock\": 2}").status()).isEqualTo(200);
+        assertThat(admin.get(book).json().get("stock").asInt()).isEqualTo(2);
+    }
+
+    @Test
     void mistakesComeBackAsProblems() {
         assertThat(admin.post("/api/v1/admin/books", "{\"title\": \"\"}").code()).isEqualTo("request.invalid");
         assertThat(admin.post("/api/v1/admin/books", madonna("12345")).code()).isEqualTo("validation.failed");

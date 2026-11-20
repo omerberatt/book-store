@@ -51,38 +51,88 @@ public interface CatalogAdminFacade {
     /**
      * Changes a book's details, authors, category, price and stock. The ISBN never changes.
      *
+     * @param bookId          the book
+     * @param command         the new values; its ISBN is ignored
+     * @param expectedVersion the version the caller read; {@code null} for no check
+     * @return the changed book
+     * @throws ConflictException {@link ConflictException#CONCURRENT_MODIFICATION} if the book has another
+     *                           version by now (ADR-0022)
+     */
+    BookDetails updateBook(BookId bookId, BookCommand command, Integer expectedVersion);
+
+    /**
+     * Changes a book's details without checking which version the caller read.
+     *
      * @param bookId  the book
      * @param command the new values; its ISBN is ignored
      * @return the changed book
      */
-    BookDetails updateBook(BookId bookId, BookCommand command);
+    default BookDetails updateBook(BookId bookId, BookCommand command) {
+        return updateBook(bookId, command, null);
+    }
 
     /**
      * Changes a book's price (ADM-3).
+     *
+     * @param bookId          the book
+     * @param price           the new price
+     * @param expectedVersion the version the caller read; {@code null} for no check
+     * @return the changed book
+     */
+    BookDetails changePrice(BookId bookId, Money price, Integer expectedVersion);
+
+    /**
+     * Changes a book's price without checking which version the caller read.
      *
      * @param bookId the book
      * @param price  the new price
      * @return the changed book
      */
-    BookDetails changePrice(BookId bookId, Money price);
+    default BookDetails changePrice(BookId bookId, Money price) {
+        return changePrice(bookId, price, null);
+    }
 
     /**
      * Sets the number of copies in stock (ADM-3).
+     *
+     * @param bookId          the book
+     * @param quantity        the copies, zero or more
+     * @param expectedVersion the version the caller read; {@code null} for no check
+     * @return the changed book
+     */
+    BookDetails changeStock(BookId bookId, int quantity, Integer expectedVersion);
+
+    /**
+     * Sets the stock without checking which version the caller read.
      *
      * @param bookId   the book
      * @param quantity the copies, zero or more
      * @return the changed book
      */
-    BookDetails changeStock(BookId bookId, int quantity);
+    default BookDetails changeStock(BookId bookId, int quantity) {
+        return changeStock(bookId, quantity, null);
+    }
 
     /**
      * Takes a book off sale or puts it back (ADM-1, CAT-7). Orders keep showing it either way.
+     *
+     * @param bookId          the book
+     * @param active          whether it is sold
+     * @param expectedVersion the version the caller read; {@code null} for no check
+     * @return the changed book
+     */
+    BookDetails setActive(BookId bookId, boolean active, Integer expectedVersion);
+
+    /**
+     * Takes a book off sale or puts it back without checking which version the caller read.
      *
      * @param bookId the book
      * @param active whether it is sold
      * @return the changed book
      */
-    BookDetails setActive(BookId bookId, boolean active);
+    default BookDetails setActive(BookId bookId, boolean active) {
+        return setActive(bookId, active, null);
+    }
 
     /**
      * Uploads a book's cover image (ADM-4); the previous one is deleted.

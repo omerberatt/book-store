@@ -280,6 +280,8 @@
 
   "problem.unknown": "Beklenmeyen bir hata oluştu.",
   "problem.reference": "(Başvuru kodu: {id})",
+  "problem.precondition.failed": "Bu kayıt siz okuduktan sonra başkası tarafından değiştirildi. Sayfayı yenileyip tekrar deneyin.",
+  "problem.concurrent-modification": "Bu kayıt aynı anda başka biri tarafından değiştirildi. Sayfayı yenileyip tekrar deneyin.",
   "problem.network": "Sunucuya ulaşılamadı. Bağlantınızı kontrol edin.",
   "problem.internal-error": "Sunucuda beklenmeyen bir hata oluştu. Lütfen daha sonra tekrar deneyin.",
   "problem.authentication.required": "Bu işlem için giriş yapmalısınız.",

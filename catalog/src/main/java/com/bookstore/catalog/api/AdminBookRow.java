@@ -14,7 +14,8 @@ import com.bookstore.shared.kernel.money.Money;
  * @param price       the current price
  * @param stock       copies in stock
  * @param active      whether the book is sold
+ * @param version     the stored version, for {@code If-Match} (ADR-0022)
  */
 public record AdminBookRow(BookId id, String isbn, String title, String authorNames, String category, Money price,
-                           int stock, boolean active) {
+                           int stock, boolean active, int version) {
 }

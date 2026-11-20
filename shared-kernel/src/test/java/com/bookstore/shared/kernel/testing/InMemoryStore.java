@@ -33,7 +33,7 @@ import java.util.function.Predicate;
 public abstract class InMemoryStore<I extends Identifier, T extends Entity<I>> {
 
     /** The error code the JDBC repositories use for a stale update. */
-    public static final String CONCURRENT_MODIFICATION = "concurrent-modification";
+    public static final String CONCURRENT_MODIFICATION = ConflictException.CONCURRENT_MODIFICATION;
 
     private final Map<I, T> byId = new ConcurrentHashMap<>();
     private final Map<I, Long> insertionOrder = new ConcurrentHashMap<>();

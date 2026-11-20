@@ -38,7 +38,7 @@ public class JdbcExecutor {
     private static final String[] GENERATED_ID = {"id"};
 
     /** Error code for an update that lost the race against a concurrent update. */
-    public static final String CONCURRENT_MODIFICATION = "concurrent-modification";
+    public static final String CONCURRENT_MODIFICATION = ConflictException.CONCURRENT_MODIFICATION;
 
     private final ConnectionProvider connections;
 

@@ -80,6 +80,12 @@ public final class WebException extends RuntimeException {
                 "Requests signed in with the session cookie must carry the X-Bookstore-Client header", List.of());
     }
 
+    /** @return the exception for a change whose {@code If-Match} names an outdated version (ADR-0022) */
+    public static WebException preconditionFailed() {
+        return new WebException(HttpStatus.PRECONDITION_FAILED, "precondition.failed",
+                "The record has changed since it was read; load it again", List.of());
+    }
+
     /** @return the exception for a signed-in caller who lacks the required role */
     public static WebException forbidden() {
         return new WebException(HttpStatus.FORBIDDEN, "access-denied", "This endpoint is for administrators",

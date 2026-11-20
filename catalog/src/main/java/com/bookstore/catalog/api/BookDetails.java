@@ -28,12 +28,13 @@ import java.util.List;
  * @param ratingCount     the number of ratings
  * @param coverImage      the storage key of the cover image; {@code null} if there is none
  * @param active          whether the book is sold; customers only ever see books on sale
+ * @param version         the stored version; the administrator's API answers it as the entity tag (ADR-0022)
  */
 public record BookDetails(BookId id, String isbn, String title, List<AuthorRef> authors, long categoryId,
                           List<String> categoryPath, String publisher, Year publicationYear,
                           String language, int pageCount, String description, Money price, int stock,
                           boolean inStock, BigDecimal averageRating, int ratingCount, String coverImage,
-                          boolean active) {
+                          boolean active, int version) {
 
     /** Copies the lists. */
     public BookDetails {

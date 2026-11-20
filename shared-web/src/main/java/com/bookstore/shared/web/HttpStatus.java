@@ -12,6 +12,8 @@ public final class HttpStatus {
     public static final int NOT_FOUND = 404;
     public static final int METHOD_NOT_ALLOWED = 405;
     public static final int CONFLICT = 409;
+    /** A condition such as {@code If-Match} did not hold. */
+    public static final int PRECONDITION_FAILED = 412;
     public static final int UNSUPPORTED_MEDIA_TYPE = 415;
     public static final int UNPROCESSABLE_CONTENT = 422;
     public static final int INTERNAL_SERVER_ERROR = 500;
@@ -36,6 +38,7 @@ public final class HttpStatus {
             case NOT_FOUND -> "Not Found";
             case METHOD_NOT_ALLOWED -> "Method Not Allowed";
             case CONFLICT -> "Conflict";
+            case PRECONDITION_FAILED -> "Precondition Failed";
             case UNSUPPORTED_MEDIA_TYPE -> "Unsupported Media Type";
             case UNPROCESSABLE_CONTENT -> "Unprocessable Content";
             case INTERNAL_SERVER_ERROR -> "Internal Server Error";

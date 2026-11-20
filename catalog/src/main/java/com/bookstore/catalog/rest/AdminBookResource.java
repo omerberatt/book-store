@@ -11,6 +11,7 @@ import com.bookstore.catalog.rest.CatalogAdminRequests.StockRequest;
 import com.bookstore.shared.kernel.identity.BookId;
 import com.bookstore.shared.kernel.money.Money;
 import com.bookstore.shared.web.Callers;
+import com.bookstore.shared.web.EntityTags;
 import com.bookstore.shared.web.PageResponse;
 import com.bookstore.shared.web.Params;
 import com.bookstore.shared.web.WebException;
@@ -25,6 +26,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
@@ -32,6 +34,7 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.EntityTag;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.SecurityContext;
@@ -108,7 +111,8 @@ public class AdminBookResource {
     public Response create(@Context SecurityContext security, @Valid @NotNull BookRequest book) {
         Callers.administrator(security);
         BookDetails created = catalog.createBook(book.toCommand());
-        return Response.created(URI.create("admin/books/" + created.id().value())).entity(created).build();
+        return Response.created(URI.create("admin/books/" + created.id().value())).entity(created)
+                .tag(tagOf(created)).build();
     }
 
     /**
@@ -125,48 +129,85 @@ public class AdminBookResource {
         return catalog.stats(Params.integer("lowStockBelow", lowStockBelow, DEFAULT_LOW_STOCK));
     }
 
-    /** @param security the request's security @param id the book @return the book, even off sale */
+    /**
+     * Shows a book, even one off sale.
+     *
+     * @param security the request's security
+     * @param id       the book
+     * @return the book, with its version as {@code ETag}
+     */
     @GET
     @Path("{id}")
-    public BookDetails one(@Context SecurityContext security, @PathParam("id") String id) {
+    public Response one(@Context SecurityContext security, @PathParam("id") String id) {
         Callers.administrator(security);
-        return catalog.book(book(id));
+        return answer(catalog.book(book(id)));
     }
 
-    /** @param security the request's security @param id the book @param book the new values @return the book */
+    /**
+     * Changes a book. Every change answers the new {@code ETag}; one whose {@code If-Match} names an
+     * outdated version is refused with 412 (ADR-0022).
+     *
+     * @param security the request's security
+     * @param id       the book
+     * @param ifMatch  the version the caller read, or {@code null} for no check
+     * @param book     the new values
+     * @return the changed book
+     */
     @PUT
     @Path("{id}")
-    public BookDetails update(@Context SecurityContext security, @PathParam("id") String id,
-                              @Valid @NotNull BookRequest book) {
+    public Response update(@Context SecurityContext security, @PathParam("id") String id,
+                           @HeaderParam(EntityTags.IF_MATCH) String ifMatch, @Valid @NotNull BookRequest book) {
         Callers.administrator(security);
-        return catalog.updateBook(book(id), book.toCommand());
+        BookId bookId = book(id);
+        return answer(catalog.updateBook(bookId, book.toCommand(), expectedVersion(bookId, ifMatch)));
     }
 
-    /** @param security the request's security @param id the book @param change the price @return the book */
+    /**
+     * @param security the request's security
+     * @param id       the book
+     * @param ifMatch  the version the caller read, or {@code null}
+     * @param change   the price
+     * @return the changed book
+     */
     @PUT
     @Path("{id}/price")
-    public BookDetails price(@Context SecurityContext security, @PathParam("id") String id,
-                             @Valid @NotNull PriceRequest change) {
+    public Response price(@Context SecurityContext security, @PathParam("id") String id,
+                          @HeaderParam(EntityTags.IF_MATCH) String ifMatch, @Valid @NotNull PriceRequest change) {
         Callers.administrator(security);
-        return catalog.changePrice(book(id), Money.of(change.price()));
+        BookId bookId = book(id);
+        return answer(catalog.changePrice(bookId, Money.of(change.price()), expectedVersion(bookId, ifMatch)));
     }
 
-    /** @param security the request's security @param id the book @param change the stock @return the book */
+    /**
+     * @param security the request's security
+     * @param id       the book
+     * @param ifMatch  the version the caller read, or {@code null}
+     * @param change   the stock
+     * @return the changed book
+     */
     @PUT
     @Path("{id}/stock")
-    public BookDetails stock(@Context SecurityContext security, @PathParam("id") String id,
-                             @Valid @NotNull StockRequest change) {
+    public Response stock(@Context SecurityContext security, @PathParam("id") String id,
+                          @HeaderParam(EntityTags.IF_MATCH) String ifMatch, @Valid @NotNull StockRequest change) {
         Callers.administrator(security);
-        return catalog.changeStock(book(id), change.stock());
+        BookId bookId = book(id);
+        return answer(catalog.changeStock(bookId, change.stock(), expectedVersion(bookId, ifMatch)));
     }
 
-    /** @param security the request's security @param id the book @param change on or off sale @return the book */
+    /**
+     * @param security the request's security
+     * @param id       the book
+     * @param ifMatch  the version the caller read, or {@code null}
+     * @param change   on or off sale
+     * @return the changed book
+     */
     @PUT
     @Path("{id}/active")
-    public BookDetails active(@Context SecurityContext security, @PathParam("id") String id,
-                              @Valid @NotNull ActiveRequest change) {
+    public Response active(@Context SecurityContext security, @PathParam("id") String id,
+                           @HeaderParam(EntityTags.IF_MATCH) String ifMatch, @Valid @NotNull ActiveRequest change) {
         Callers.administrator(security);
-        return catalog.setActive(book(id), change.active());
+        BookId bookId = book(id);
+        return answer(catalog.setActive(bookId, change.active(), expectedVersion(bookId, ifMatch)));
     }
 
     /**
@@ -206,6 +247,22 @@ public class AdminBookResource {
         while (dropped < DISCARD_LIMIT && (read = rest.read(buffer)) != -1) {
             dropped += read;
         }
+    }
+
+    /**
+     * Checks {@code If-Match} against the stored version. The use case checks the same version again
+     * inside its transaction, so a change in between is still caught (409).
+     */
+    private Integer expectedVersion(BookId bookId, String ifMatch) {
+        return ifMatch == null ? null : EntityTags.expectedVersion(ifMatch, catalog.book(bookId).version());
+    }
+
+    private static Response answer(BookDetails book) {
+        return Response.ok(book).tag(tagOf(book)).build();
+    }
+
+    private static EntityTag tagOf(BookDetails book) {
+        return new EntityTag(Integer.toString(book.version()));
     }
 
     private static BookId book(String id) {

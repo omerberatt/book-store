@@ -1,7 +1,7 @@
 // Adding or changing one book (ADM-1, ADM-3) and its cover image (ADM-4). Without ?id= the page
 // adds a book; the ISBN can only be entered then.
 
-import { api, upload } from '../api.js';
+import { api, ifMatch, upload } from '../api.js';
 import { $, fill, formValues, h, param } from '../dom.js';
 import { t } from '../i18n.js';
 import { busy, showError, showMessage } from '../layout.js';
@@ -10,6 +10,8 @@ import { categoryOptions, startAdminPage } from '../admin.js';
 await startAdminPage();
 const form = $('#book');
 const bookId = param('id');
+/** The book as last read; its version goes into If-Match, so nobody overwrites a newer save (ADR-0022). */
+let current = null;
 
 try {
   const [authors, categories] = await Promise.all([api.get('/admin/authors'), api.get('/categories')]);
@@ -42,7 +44,7 @@ form.addEventListener('submit', (event) => {
       stock: Number(values.stock),
     };
     if (bookId) {
-      showBook(await api.put(`/admin/books/${bookId}`, body));
+      showBook(await api.put(`/admin/books/${bookId}`, body, ifMatch(current)));
       showMessage(t('admin.saved', { title: body.title }), 'success');
     } else {
       const created = await api.post('/admin/books', body);
@@ -65,12 +67,14 @@ $('#cover-form').addEventListener('submit', (event) => {
 $('#active').addEventListener('change', (event) => {
   const box = event.currentTarget;
   busy(box, async () => {
-    const changed = await api.put(`/admin/books/${bookId}/active`, { active: box.checked });
+    const changed = await api.put(`/admin/books/${bookId}/active`, { active: box.checked }, ifMatch(current));
+    current = changed;
     showMessage(t(changed.active ? 'admin.backOnSale' : 'admin.offSale', { title: changed.title }), 'success');
   });
 });
 
 function showBook(book) {
+  current = book;
   if (param('created')) {
     showMessage(t('admin.created', { title: book.title }), 'success');
   }

@@ -19,8 +19,8 @@ export class ApiError extends Error {
   }
 }
 
-async function request(method, path, body) {
-  const headers = { [CLIENT_HEADER]: 'web', Accept: 'application/json' };
+async function request(method, path, body, extraHeaders = {}) {
+  const headers = { [CLIENT_HEADER]: 'web', Accept: 'application/json', ...extraHeaders };
   const options = { method, headers, credentials: 'same-origin' };
   if (body !== undefined) {
     headers['Content-Type'] = 'application/json';
@@ -46,8 +46,8 @@ async function request(method, path, body) {
 /** The API's methods; each returns the parsed JSON body or throws an {@link ApiError}. */
 export const api = {
   get: (path) => request('GET', path),
-  post: (path, body = {}) => request('POST', path, body),
-  put: (path, body = {}) => request('PUT', path, body),
+  post: (path, body = {}, headers = {}) => request('POST', path, body, headers),
+  put: (path, body = {}, headers = {}) => request('PUT', path, body, headers),
   delete: (path) => request('DELETE', path),
 };
 
@@ -92,4 +92,15 @@ export async function upload(path, file) {
     throw new ApiError(response.status, data);
   }
   return data;
+}
+
+/**
+ * The If-Match header for a record the page read, so a change made meanwhile by someone else is
+ * refused instead of overwritten (ADR-0022).
+ *
+ * @param {{version: number}} record what the API answered
+ * @returns {object} the header
+ */
+export function ifMatch(record) {
+  return { 'If-Match': `"${record.version}"` };
 }

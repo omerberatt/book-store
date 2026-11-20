@@ -37,12 +37,12 @@ final class CatalogMapper {
                 book.category().path(), book.publisher(), book.publicationYear().orElse(null),
                 book.language().code(), book.pageCount(), book.description(), book.price(), book.stock().quantity(),
                 book.isAvailableForSale(), book.ratings().average().orElse(null), book.ratings().count(),
-                book.coverImage().orElse(null), book.isActive());
+                book.coverImage().orElse(null), book.isActive(), book.version());
     }
 
     static AdminBookRow rowOf(Book book) {
         return new AdminBookRow(book.id(), book.isbn().value(), book.title(), book.authorNames(), book.category().name(),
-                book.price(), book.stock().quantity(), book.isActive());
+                book.price(), book.stock().quantity(), book.isActive(), book.version());
     }
 
     static AuthorView authorViewOf(Author author) {
