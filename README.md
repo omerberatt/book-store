@@ -1,5 +1,7 @@
 # Book Store 
 
+[![build](https://github.com/omerberatt/book-store/actions/workflows/build.yml/badge.svg)](https://github.com/omerberatt/book-store/actions/workflows/build.yml)
+
 Java ile yazılmış, modüler bir çevrimiçi kitap mağazası.
 
 Projenin amacı: çalışan bir e-ticaret uygulaması ortaya koymak.

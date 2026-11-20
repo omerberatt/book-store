@@ -205,7 +205,7 @@ Ders, bazı konuları sorularda bırakıp Lab projesine erteliyor. Kitap mağaza
 | `Idempotency-Key` *(13)* | — | ⏳ | 9 |
 | Hata yanıtına korelasyon kimliği *(13)* | — | ⏳ | 9 |
 | MicroProfile Health readiness *(14)* | — | ⏳ | 9 |
-| PostgreSQL ile entegrasyon testi CI'da *(14)* | GitHub Actions | ⏳ | 9 |
+| PostgreSQL ile entegrasyon testi CI'da *(14)* | GitHub Actions: `.github/workflows/build.yml`, Testcontainers ile PostgreSQL 17 *(ADR-0022)* | ✅ | 9.1 |
 
 ## Dersin dışında kalan, projede uygulanan konular
 

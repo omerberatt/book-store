@@ -12,7 +12,7 @@ Each module's migrations live in `src/main/resources/db/migration/<module>` with
 
 ## Commands
 
-- Build and test everything: `./mvnw -B -ntp verify` (Git Bash) or `mvnw.cmd -B -ntp verify` (cmd). Must pass without Docker.
+- Build and test everything: `./mvnw -B -ntp verify` (Git Bash) or `mvnw.cmd -B -ntp verify` (cmd). Must pass without Docker. GitHub Actions (`.github/workflows/build.yml`, ADR-0022) runs the same on every push to `main` and every PR, with Docker, so the PostgreSQL contract tests run there; check it with `gh run list`.
 - One module with its dependencies: `./mvnw -B -ntp -pl <module> -am verify`
 - Run the API on Payara Micro: `./mvnw -B -ntp install -DskipTests` then `./mvnw -B -ntp -pl app -Ppayara package exec:exec` (http://localhost:8080/api/v1; in-memory H2 with demo accounts `ayse@bookstore.local` and `admin@bookstore.local`, password `kitap2026`, unless `BOOKSTORE_DB_*` say otherwise). From Git Bash never pass `--contextRoot /` to java yourself: MSYS turns `/` into a Windows path. Payara must run with `-Duser.language=en` (the profile adds it): on a Turkish default locale it fails to start (`DYNAMİC`).
 - Requires JDK 21. On this machine: `C:\Program Files\Eclipse Adoptium\jdk-21.0.13.9-hotspot`. Maven comes from the wrapper.

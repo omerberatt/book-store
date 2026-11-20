@@ -35,6 +35,7 @@ ADR-0003 ile ADR-0010 arası, ders notlarındaki aynı numaralı ADR'lerin konul
 | [0019](ADR-0019.md) | Paylaşılan Web Modülü ve Elle Yazılmış HTTP Sınırı | 13 | Kabul edildi |
 | [0020](ADR-0020.md) | Kimlik Doğrulama, Oturum ve Misafir Sepeti | — | Kabul edildi |
 | [0021](ADR-0021.md) | Yönetim API'si ve Kapak Görselleri | — | Kabul edildi |
+| [0022](ADR-0022.md) | Sağlamlaştırma: CI, İzlenebilirlik, Tekrar ve Eşzamanlılık | — | Kabul edildi |
 
 ## Eski karar numaraları
 

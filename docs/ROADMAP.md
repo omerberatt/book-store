@@ -118,6 +118,18 @@ Ders notlarının soru bölümlerinde Lab projesine bırakılan konular ve son k
 - Performans hedefi *(NFR-9)* ve test kapsamı hedefi *(NFR-6)*.
 - JPA ile ikinci bir persistence uygulaması; aynı sözleşme testlerinden geçer *(ADR-0008)*.
 
+Kararlar [ADR-0022](adr/ADR-0022.md)'de.
+
+| Adım | İş |
+| --- | --- |
+| 9.1 ✅ | GitHub Actions: `verify` ve PostgreSQL testleri *(`.github/workflows/build.yml`)* |
+| 9.2 | Korelasyon kimliği, MicroProfile Health readiness |
+| 9.3 | `ETag` / `If-Match` ile kayıp güncelleme koruması *(yönetim API'sinde kitaplar)* |
+| 9.4 | Sipariş için `Idempotency-Key` |
+| 9.5 | Transactional Outbox |
+| 9.6 | Kapsam *(NFR-6, JaCoCo)* ve performans *(NFR-9)* hedefleri |
+| 9.7 | JPA ile ikinci persistence uygulaması *(isteğe bağlı)* |
+
 ---
 
 ## Tamamlanan fazların notları
