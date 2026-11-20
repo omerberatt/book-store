@@ -6,6 +6,7 @@ import com.bookstore.customer.persistence.CustomerDb;
 import com.bookstore.sales.domain.CartRepository;
 import com.bookstore.sales.domain.OrderNumberSequence;
 import com.bookstore.sales.domain.OrderRepository;
+import com.bookstore.sales.domain.OrderRequestLog;
 import com.bookstore.sales.domain.ProductSnapshot;
 import com.bookstore.shared.jdbc.JdbcExecutor;
 import com.bookstore.shared.jdbc.TestDatabase;
@@ -23,6 +24,7 @@ public final class SalesDb {
     public final CartRepository carts;
     public final OrderRepository orders;
     public final OrderNumberSequence orderNumbers;
+    public final OrderRequestLog requests;
 
     /** Creates a fresh H2 database. */
     public SalesDb() {
@@ -41,6 +43,7 @@ public final class SalesDb {
         this.carts = new JdbcCartRepository(jdbc);
         this.orders = new JdbcOrderRepository(jdbc);
         this.orderNumbers = new JdbcOrderNumberSequence(jdbc, database.transactions());
+        this.requests = new JdbcOrderRequestLog(jdbc);
     }
 
     private SalesDb(CatalogDb catalog, CustomerDb customers) {
@@ -50,6 +53,7 @@ public final class SalesDb {
         this.carts = new InMemoryCartRepository();
         this.orders = new InMemoryOrderRepository();
         this.orderNumbers = new InMemoryOrderNumberSequence();
+        this.requests = new InMemoryOrderRequestLog();
     }
 
     /**

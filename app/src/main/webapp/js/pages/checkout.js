@@ -8,6 +8,11 @@ import { busy, refreshCartBadge, showError, showMessage, startPage } from '../la
 import { showNotices, totals } from '../cart-view.js';
 
 await startPage({ signInRequired: true });
+
+// One key per visit of this page: pressing the button twice, or again after a network error, places
+// one order (ADR-0022). Random bytes work on plain HTTP too, where crypto.randomUUID is missing.
+const idempotencyKey = Array.from(crypto.getRandomValues(new Uint8Array(16)),
+  (byte) => byte.toString(16).padStart(2, '0')).join('');
 const form = $('#checkout');
 
 await Promise.all([showAddresses(), showSummary()]);
@@ -21,7 +26,8 @@ form.addEventListener('submit', (event) => {
       return;
     }
     try {
-      const order = await api.post('/orders', { addressId: Number(values.addressId), paymentMethod: values.paymentMethod });
+      const order = await api.post('/orders', { addressId: Number(values.addressId), paymentMethod: values.paymentMethod },
+        { 'Idempotency-Key': idempotencyKey });
       location.href = `orders.html?number=${encodeURIComponent(order.orderNumber)}&placed=1`;
     } catch (error) {
       await showSummary();

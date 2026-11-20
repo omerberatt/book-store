@@ -6,6 +6,8 @@ import com.bookstore.catalog.domain.InsufficientStockException;
 import com.bookstore.catalog.domain.Language;
 import com.bookstore.sales.api.CartChangedException;
 import com.bookstore.sales.api.PaymentDeclinedException;
+import com.bookstore.sales.application.CheckoutService;
+import com.bookstore.sales.domain.OrderRequestLog;
 import com.bookstore.sales.domain.OrderStatus;
 import com.bookstore.sales.domain.PaymentMethod;
 import com.bookstore.sales.domain.StockShortageException;
@@ -101,7 +103,8 @@ class WebPagesTest {
                 "book.isbn-taken", "author.in-use", "category.in-use", "category.has-children", "category.name-taken",
                 "customer.admin-protected", "request.unreadable",
                 // Phase 9, lost updates (ADR-0022).
-                WebException.preconditionFailed().code(), ConflictException.CONCURRENT_MODIFICATION));
+                WebException.preconditionFailed().code(), ConflictException.CONCURRENT_MODIFICATION,
+                CheckoutService.KEY_REUSED, OrderRequestLog.DUPLICATE_KEY));
         codes.forEach(code -> assertThat(turkish).as(code).containsKey("problem." + code));
     }
 

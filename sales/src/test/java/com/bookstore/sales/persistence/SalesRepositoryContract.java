@@ -10,6 +10,8 @@ import com.bookstore.sales.domain.CartItem;
 import com.bookstore.sales.domain.Order;
 import com.bookstore.sales.domain.OrderLine;
 import com.bookstore.sales.domain.OrderNumber;
+import com.bookstore.sales.domain.OrderRequest;
+import com.bookstore.sales.domain.OrderRequestLog;
 import com.bookstore.sales.domain.OrderStatus;
 import com.bookstore.sales.domain.PaymentMethod;
 import com.bookstore.sales.domain.ProductSnapshot;
@@ -17,6 +19,7 @@ import com.bookstore.sales.domain.ShippingPolicy;
 import com.bookstore.shared.jdbc.JdbcExecutor;
 import com.bookstore.shared.kernel.error.ConflictException;
 import com.bookstore.shared.kernel.identity.BookId;
+import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.kernel.money.Money;
 import com.bookstore.shared.kernel.paging.PageRequest;
 import com.bookstore.shared.kernel.testing.TestAddresses;
@@ -185,6 +188,35 @@ abstract class SalesRepositoryContract {
             Order order = Order.place(db.orderNumbers.next(Year.of(2026)), customer.id(), cart, products,
                     TestAddresses.home(), PaymentMethod.BANK_TRANSFER, ShippingPolicy.standard(), clock);
             return db.orders.save(order);
+        }
+    }
+
+    @Nested
+    class OrderRequests {
+
+        private final CustomerId ayse = CustomerId.of(10);
+        private final OrderRequest first = new OrderRequest(ayse, "key-1", "1:CREDIT_CARD",
+                new OrderNumber("BS-2026-000001"), TestClock.CLOCK.instant());
+
+        @Test
+        void aRecordedKeyIsFoundForItsCustomerOnly() {
+            db.requests.record(first);
+
+            assertThat(db.requests.find(ayse, "key-1")).contains(first);
+            assertThat(db.requests.find(ayse, "key-2")).isEmpty();
+            assertThat(db.requests.find(CustomerId.of(11), "key-1")).isEmpty();
+        }
+
+        @Test
+        void aKeyIsRecordedOncePerCustomer() {
+            db.requests.record(first);
+            db.requests.record(new OrderRequest(CustomerId.of(11), "key-1", "2:BANK_TRANSFER",
+                    new OrderNumber("BS-2026-000002"), TestClock.CLOCK.instant()));
+
+            assertThatThrownBy(() -> db.requests.record(new OrderRequest(ayse, "key-1", "1:CREDIT_CARD",
+                    new OrderNumber("BS-2026-000003"), TestClock.CLOCK.instant())))
+                    .isInstanceOfSatisfying(ConflictException.class,
+                            e -> assertThat(e.code()).isEqualTo(OrderRequestLog.DUPLICATE_KEY));
         }
     }
 

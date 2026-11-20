@@ -202,7 +202,7 @@ Ders, bazı konuları sorularda bırakıp Lab projesine erteliyor. Kitap mağaza
 | Sipariş numarasında boşluk ve geri alma *(12)* | Geri alınan numara yeniden verilir; testle belgelendi | ✅ | 3 |
 | Transactional Outbox *(11, 12, 14)* | — | ⏳ | 9 |
 | `ETag` / `If-Match` *(13)* | `EntityTags` *(shared-web)*, `AdminBookResource`; `CatalogAdminFacade` beklenen sürümü alır; yönetim sayfaları `If-Match` gönderir | ✅ | 9.3 |
-| `Idempotency-Key` *(13)* | — | ⏳ | 9 |
+| `Idempotency-Key` *(13)* | `OrderRequest`, `OrderRequestLog` *(`JdbcOrderRequestLog`, `order_requests` tablosu, sales V2)*; `CheckoutService` anahtarı ödemeden önce kaydeder; ödeme sayfası her açılışta anahtar üretir | ✅ | 9.4 |
 | Hata yanıtına korelasyon kimliği *(13)* | `CorrelationIds`, `CorrelationIdFilter` *(shared-web)*: `X-Correlation-Id` başlığı, problemlerde `correlationId`, beklenmeyen hatanın günlüğünde aynı kimlik | ✅ | 9.2 |
 | MicroProfile Health readiness *(14)* | `BookstoreReadiness` *(`/health/ready`: migration'lar ve veritabanı)* | ✅ | 9.2 |
 | PostgreSQL ile entegrasyon testi CI'da *(14)* | GitHub Actions: `.github/workflows/build.yml`, Testcontainers ile PostgreSQL 17 *(ADR-0022)* | ✅ | 9.1 |

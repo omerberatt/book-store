@@ -133,6 +133,32 @@ class CheckoutWithDatabaseTest {
         assertThat(store.database.jdbc().queryForLong("SELECT COUNT(*) FROM orders")).isEqualTo(1);
     }
 
+    @Test
+    void theSameKeySentTwiceAtOncePlacesOneOrderAndAnswersItTwice() throws Exception {
+        store.cart.add(CartRef.customer(ayse.id()), dune.id(), 1);
+        long addressId = ayse.defaultAddress().orElseThrow().id().value();
+        CountDownLatch start = new CountDownLatch(1);
+        Callable<String> attempt = () -> {
+            start.await();
+            return store.checkout.placeOrder(new PlaceOrderCommand(ayse.id(), addressId, "CREDIT_CARD", "same-key"))
+                    .orderNumber();
+        };
+
+        List<String> answers = new ArrayList<>();
+        try (ExecutorService pool = Executors.newFixedThreadPool(2)) {
+            List<Future<String>> futures = List.of(pool.submit(attempt), pool.submit(attempt));
+            start.countDown();
+            for (Future<String> future : futures) {
+                answers.add(future.get());
+            }
+        }
+
+        assertThat(answers).hasSize(2).allMatch(answers.getFirst()::equals);
+        assertThat(store.database.jdbc().queryForLong("SELECT COUNT(*) FROM orders")).isEqualTo(1);
+        assertThat(store.database.jdbc().queryForLong("SELECT COUNT(*) FROM order_requests")).isEqualTo(1);
+        assertThat(stockOf(dune)).isEqualTo(4);
+    }
+
     private OrderDetails place(Customer customer) {
         long addressId = customer.defaultAddress().orElseThrow().id().value();
         return store.checkout.placeOrder(new PlaceOrderCommand(customer.id(), addressId, "CREDIT_CARD"));

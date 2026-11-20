@@ -145,6 +145,45 @@ class CheckoutServiceTest {
                 .isEqualTo(Money.of("100.00"));
     }
 
+    @Test
+    void aRepeatedRequestGetsTheFirstOrderAndIsChargedOnce() {
+        shop.cart.add(cart, dune.id(), 1);
+        long address = shop.defaultAddressId(customerId);
+
+        OrderDetails first = shop.checkout.placeOrder(new PlaceOrderCommand(customerId, address, "CREDIT_CARD", "k-1"));
+        OrderDetails repeat = shop.checkout.placeOrder(new PlaceOrderCommand(customerId, address, "CREDIT_CARD", "k-1"));
+
+        assertThat(repeat).isEqualTo(first);
+        assertThat(shop.orders.count()).isEqualTo(1);
+        assertThat(shop.payments.charged()).hasSize(1);
+        assertThat(shop.catalog.stockOf(dune.id())).isEqualTo(9);
+    }
+
+    @Test
+    void aKeyCannotBeReusedForAnotherRequest() {
+        shop.cart.add(cart, dune.id(), 1);
+        long address = shop.defaultAddressId(customerId);
+        shop.checkout.placeOrder(new PlaceOrderCommand(customerId, address, "CREDIT_CARD", "k-1"));
+
+        assertThatThrownBy(() -> shop.checkout.placeOrder(new PlaceOrderCommand(customerId, address, "BANK_TRANSFER",
+                "k-1")))
+                .isInstanceOfSatisfying(RuleViolationException.class,
+                        e -> assertThat(e.code()).isEqualTo(CheckoutService.KEY_REUSED));
+        assertThat(shop.orders.count()).isEqualTo(1);
+    }
+
+    @Test
+    void ordersWithoutAKeyOrWithNewKeysAreSeparateOrders() {
+        long address = shop.defaultAddressId(customerId);
+        shop.cart.add(cart, dune.id(), 1);
+        shop.checkout.placeOrder(new PlaceOrderCommand(customerId, address, "CREDIT_CARD"));
+        shop.cart.add(cart, dune.id(), 1);
+        shop.checkout.placeOrder(new PlaceOrderCommand(customerId, address, "CREDIT_CARD", "k-2"));
+
+        assertThat(shop.orders.count()).isEqualTo(2);
+        assertThat(shop.requests.size()).isEqualTo(1);
+    }
+
     private OrderDetails place(String method) {
         return shop.checkout.placeOrder(new PlaceOrderCommand(customerId, shop.defaultAddressId(customerId), method));
     }

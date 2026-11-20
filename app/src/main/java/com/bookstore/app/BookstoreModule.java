@@ -39,6 +39,7 @@ import com.bookstore.sales.domain.ShippingPolicy;
 import com.bookstore.sales.persistence.JdbcCartRepository;
 import com.bookstore.sales.persistence.JdbcOrderNumberSequence;
 import com.bookstore.sales.persistence.JdbcOrderRepository;
+import com.bookstore.sales.persistence.JdbcOrderRequestLog;
 import com.bookstore.shared.jdbc.JdbcExecutor;
 import com.bookstore.shared.jdbc.JdbcTransactionRunner;
 import com.bookstore.shared.jdbc.ModuleMigrations;
@@ -117,7 +118,8 @@ public final class BookstoreModule {
         JdbcOrderRepository orderRepository = new JdbcOrderRepository(jdbc);
         this.cart = new CartService(stock, cartRepository, shipping, transactions);
         this.checkout = new CheckoutService(directory, cartRepository, stock, orderRepository,
-                new JdbcOrderNumberSequence(jdbc, transactions), adapters.paymentGateway(), shipping, transactions,
+                new JdbcOrderNumberSequence(jdbc, transactions), new JdbcOrderRequestLog(jdbc), adapters.paymentGateway(),
+                shipping, transactions,
                 events, adapters.clock());
         this.orders = new OrderService(orderRepository);
         this.orderAdmin = new OrderAdminService(orderRepository, stock, transactions, events, adapters.clock());

@@ -99,6 +99,26 @@ class SalesResourcesTest {
     }
 
     @Test
+    void theSameIdempotencyKeyPlacesOneOrder() {
+        ayse.post("/api/v1/cart/items", "{\"bookId\": " + dune.id().value() + ", \"quantity\": 1}");
+        HttpTestClient once = ayse.withHeader("Idempotency-Key", "checkout-7f3a");
+
+        HttpTestClient.Reply first = once.post("/api/v1/orders", placeOrder(shop.defaultAddressId(ayseId)));
+        HttpTestClient.Reply repeat = once.post("/api/v1/orders", placeOrder(shop.defaultAddressId(ayseId)));
+
+        assertThat(first.status()).isEqualTo(201);
+        assertThat(repeat.status()).isEqualTo(201);
+        assertThat(repeat.location()).isEqualTo(first.location());
+        assertThat(repeat.json().get("orderNumber")).isEqualTo(first.json().get("orderNumber"));
+        assertThat(ayse.get("/api/v1/orders").json().get("totalElements").asInt()).isEqualTo(1);
+        assertThat(once.post("/api/v1/orders", "{\"addressId\": " + shop.defaultAddressId(ayseId)
+                + ", \"paymentMethod\": \"BANK_TRANSFER\"}").code()).isEqualTo("idempotency.key-reused");
+        assertThat(ayse.withHeader("Idempotency-Key", "x".repeat(101))
+                .post("/api/v1/orders", placeOrder(shop.defaultAddressId(ayseId))).code())
+                .isEqualTo("request.bad-parameter");
+    }
+
+    @Test
     void checkoutRulesComeBackAsProblems() {
         assertThat(ayse.post("/api/v1/orders", placeOrder(shop.defaultAddressId(ayseId))).status()).isEqualTo(422);
         assertThat(ayse.post("/api/v1/orders", "{\"addressId\": 1, \"paymentMethod\": \"GOLD\"}").status())

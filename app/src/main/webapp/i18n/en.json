@@ -282,6 +282,8 @@
   "problem.reference": "(Reference: {id})",
   "problem.precondition.failed": "Someone else changed this record after you loaded it. Reload the page and try again.",
   "problem.concurrent-modification": "Someone else changed this record at the same time. Reload the page and try again.",
+  "problem.idempotency.key-reused": "This order request was already sent with other details. Reload the page and try again.",
+  "problem.order.request-duplicate": "Your order is being processed. Check your orders in a few seconds.",
   "problem.network": "The server cannot be reached. Check your connection.",
   "problem.internal-error": "Something went wrong on the server. Please try again later.",
   "problem.authentication.required": "Please sign in to do this.",
