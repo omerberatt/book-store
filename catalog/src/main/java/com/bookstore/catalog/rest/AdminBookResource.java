@@ -61,6 +61,9 @@ public class AdminBookResource {
     /** Books on sale with fewer copies than this run low, unless the request says otherwise. */
     static final int DEFAULT_LOW_STOCK = 5;
 
+    /** The most bytes of an oversized upload read and dropped before the answer: 32 MB. */
+    static final long DISCARD_LIMIT = 32L * 1024 * 1024;
+
     private final CatalogAdminFacade catalog;
 
     /**
@@ -168,7 +171,7 @@ public class AdminBookResource {
 
     /**
      * Uploads the cover image (ADM-4). The body is the image itself; at most one byte more than the
-     * limit is read, so a huge upload cannot fill the memory.
+     * limit is kept, so a huge upload cannot fill the memory; the rest is read and dropped.
      *
      * @param security the request's security
      * @param id       the book
@@ -183,10 +186,26 @@ public class AdminBookResource {
         byte[] content;
         try {
             content = image.readNBytes(CatalogAdminFacade.MAX_COVER_BYTES + 1);
+            if (content.length > CatalogAdminFacade.MAX_COVER_BYTES) {
+                discard(image);
+            }
         } catch (IOException e) {
             throw WebException.badRequest("request.unreadable", "The image could not be read");
         }
         return catalog.attachCover(book(id), content);
+    }
+
+    /**
+     * Reads and drops what is left of a body that is too large, up to {@link #DISCARD_LIMIT} bytes, so the
+     * client receives the 422 instead of a reset connection. Nothing is kept in memory.
+     */
+    private static void discard(InputStream rest) throws IOException {
+        byte[] buffer = new byte[64 * 1024];
+        long dropped = 0;
+        int read;
+        while (dropped < DISCARD_LIMIT && (read = rest.read(buffer)) != -1) {
+            dropped += read;
+        }
     }
 
     private static BookId book(String id) {
