@@ -134,6 +134,14 @@ Kararlar [ADR-0022](adr/ADR-0022.md)'de.
 
 ## Tamamlanan fazların notları
 
+### Faz 9 *(9.1 – 9.6)*
+
+- Yedi commit: CI ve ADR-0022 *(ilk CI koşusunun bulduğu bir hatanın düzeltmesiyle)*; korelasyon kimliği ve sağlık kontrolü; `ETag` / `If-Match`; `Idempotency-Key`; Transactional Outbox; kapsam ve performans hedefleri.
+- İlk CI koşusu, Docker'lı bir ortamda 38 PostgreSQL testini ilk kez koşturdu; hepsi geçti. Aynı koşu, Linux'ta 2 MB'ı aşan kapak yüklemesinin yanıtının bağlantı sıfırlanınca kaybolduğunu gösterdi; düzeltildi.
+- JDK HTTP test sunucusu başlık adlarının harf büyüklüğünü değiştiriyor; korelasyon filtresi başlığı harfe duyarsız arıyor.
+- Payara üzerinde `curl` ile denendi: `/health/ready`, problemlerde korelasyon kimliği, `If-Match` ile 412, aynı `Idempotency-Key` ile tek sipariş, outbox üzerinden giden bildirimler ve ortam değişkeniyle ayarlanan aktarım aralığı.
+- Kapsam: domain ve application paketlerinin hepsi %90'ın üstünde. Test sayısı: 540 koşan, 40'ı Docker'a bağlı.
+
 ### Faz 8
 
 - Dört commit: katalog yönetimi ve ADR-0021; kapak görselleri; kullanıcı ve yorum yönetimi; yönetim sayfaları.
