@@ -223,6 +223,7 @@ Bunlar ders notlarında yok; kitap mağazasının ihtiyacından doğdu ya da Faz
 | Kimlik doğrulama, BCrypt | ✅ Faz 7.1–7.2 *(ADR-0011, ADR-0020)*: `BcryptPasswordHasher`, `BookstoreAuthenticationMechanism`, `AccountIdentityStore`, `/api/v1/session`, `ClientHeaderFilter` |
 | HTML / JavaScript arayüz | ✅ Faz 7.4 *(ADR-0011)*: `app/src/main/webapp`, `js/api.js`, `js/i18n.js`, sayfa başına `js/pages/…`, `i18n/tr.json` ve `en.json`; `WebPagesTest` |
 | Yönetim paneli | Faz 8 *(ADR-0021)*: 8.1 ✅ `CatalogAdminFacade`, `CatalogAdminService`, `AdminBookResource`, `AdminAuthorResource`, `AdminCategoryResource`; 8.2 ✅ `FileStorage`, `FileSystemFileStorage`, `CoverImage`, `BookstoreFiles`; 8.3 ✅ `CustomerAdminFacade`, `ReviewAdminFacade`, `AdminCustomerResource`, `AdminReviewResource`; 8.4 ✅ `admin*.html`, `js/admin.js`, `js/pages/admin-…` |
+| Kapsam ölçümü ve eşiği *(NFR-6)*, performans testi *(NFR-9)* | ✅ Faz 9.6 *(ADR-0022)*: JaCoCo `check`, `CatalogPerformanceTest` |
 
 ## Plandan çıkarılanlar
 
