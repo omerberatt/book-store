@@ -25,6 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -118,6 +119,80 @@ class WebPagesTest {
                 assertThat(WEBAPP.resolve(target)).as(page + " → " + target).exists();
             }
         }
+    }
+
+    @Test
+    void everyPageLetsTheKeyboardSkipToItsContent() {
+        for (Path page : files(".html")) {
+            assertThat(read(page)).as(page.toString())
+                    .contains("<a class=\"skip-link\" href=\"#main\"", "<main id=\"main\" tabindex=\"-1\">");
+        }
+    }
+
+    /** WCAG 1.3.1 and 4.1.2: every field has a name a screen reader can say. */
+    @Test
+    void everyFormFieldHasALabel() {
+        Pattern field = Pattern.compile("<(input|select|textarea)\\b[^>]*>");
+        Pattern id = Pattern.compile("\\bid=\"([^\"]+)\"");
+        for (Path page : files(".html")) {
+            String html = read(page);
+            Matcher matcher = field.matcher(html);
+            while (matcher.find()) {
+                String tag = matcher.group();
+                if (tag.contains("type=\"hidden\"") || tag.contains("aria-label=") || tag.contains("data-i18n-label=")) {
+                    continue;
+                }
+                Matcher fieldId = id.matcher(tag);
+                boolean labelledFor = fieldId.find() && html.contains("for=\"" + fieldId.group(1) + "\"");
+                String before = html.substring(0, matcher.start());
+                boolean insideLabel = before.lastIndexOf("<label") > before.lastIndexOf("</label>");
+                assertThat(labelledFor || insideLabel).as(page + ": " + tag).isTrue();
+            }
+        }
+    }
+
+    /** WCAG 1.4.3 and 1.4.11: text at least 4.5:1 and the rating stars 3:1, in both themes. */
+    @Test
+    void theColoursOfBothThemesAreReadable() {
+        String css = read(WEBAPP.resolve("css/site.css"));
+        int dark = css.indexOf("@media (prefers-color-scheme: dark)");
+        List<Map<String, String>> themes = List.of(colours(css.substring(css.indexOf(":root {"), dark)),
+                colours(css.substring(dark, css.indexOf("}\n}", dark))));
+        String[][] text = {{"ink", "paper"}, {"ink", "surface"}, {"ink", "accent-soft"}, {"muted", "paper"},
+            {"muted", "surface"}, {"accent", "paper"}, {"accent", "surface"}, {"accent-ink", "accent"},
+            {"danger", "danger-soft"}, {"danger", "surface"}, {"success", "success-soft"}, {"success", "surface"}};
+        for (Map<String, String> theme : themes) {
+            for (String[] pair : text) {
+                assertThat(contrast(theme.get(pair[0]), theme.get(pair[1]))).as("%s on %s", pair[0], pair[1])
+                        .isGreaterThanOrEqualTo(4.5);
+            }
+            assertThat(contrast(theme.get("star"), theme.get("paper"))).as("stars").isGreaterThanOrEqualTo(3.0);
+            assertThat(contrast(theme.get("star"), theme.get("surface"))).as("stars").isGreaterThanOrEqualTo(3.0);
+        }
+    }
+
+    private static Map<String, String> colours(String block) {
+        Map<String, String> colours = new HashMap<>();
+        Matcher matcher = Pattern.compile("--([a-z-]+):\\s*(#[0-9a-fA-F]{6})").matcher(block);
+        while (matcher.find()) {
+            colours.put(matcher.group(1), matcher.group(2));
+        }
+        return colours;
+    }
+
+    private static double contrast(String first, String second) {
+        double a = luminance(first);
+        double b = luminance(second);
+        return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+    }
+
+    private static double luminance(String hex) {
+        double[] rgb = new double[3];
+        for (int i = 0; i < 3; i++) {
+            double channel = Integer.parseInt(hex.substring(1 + 2 * i, 3 + 2 * i), 16) / 255.0;
+            rgb[i] = channel <= 0.03928 ? channel / 12.92 : Math.pow((channel + 0.055) / 1.055, 2.4);
+        }
+        return 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2];
     }
 
     @Test

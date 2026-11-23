@@ -1,6 +1,7 @@
 {
   "site.name": "Book Store",
   "site.footer": "Book Store · Java Patterns and Practices lab project",
+  "site.skip": "Skip to content",
 
   "nav.label": "Main menu",
   "nav.catalog": "Books",

@@ -1,6 +1,7 @@
 {
   "site.name": "Kitap Mağazası",
   "site.footer": "Kitap Mağazası · Java Patterns and Practices Lab projesi",
+  "site.skip": "İçeriğe geç",
 
   "nav.label": "Ana menü",
   "nav.catalog": "Kitaplar",

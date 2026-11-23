@@ -8,8 +8,9 @@
   <script type="module" src="js/pages/book.js"></script>
 </head>
 <body>
+<a class="skip-link" href="#main" data-i18n="site.skip">İçeriğe geç</a>
 <header id="site-header" class="site-header"></header>
-<main>
+<main id="main" tabindex="-1">
   <div id="messages"></div>
   <p><a href="index.html" data-i18n="book.back"></a></p>
 
@@ -25,7 +26,7 @@
     <h2 data-i18n="reviews.heading"></h2>
     <div id="my-review"></div>
     <ul id="reviews" class="reviews"></ul>
-    <nav id="review-pager" class="pager"></nav>
+    <nav id="review-pager" class="pager" data-i18n-label="catalog.pages"></nav>
   </section>
 </main>
 <footer class="site-footer" data-i18n="site.footer"></footer>

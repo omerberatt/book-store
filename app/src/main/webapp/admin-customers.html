@@ -8,9 +8,10 @@
   <script type="module" src="js/pages/admin-customers.js"></script>
 </head>
 <body>
+<a class="skip-link" href="#main" data-i18n="site.skip">İçeriğe geç</a>
 <header id="site-header" class="site-header"></header>
-<main>
-  <nav id="admin-nav" class="tabs" data-i18n-title="admin.heading"></nav>
+<main id="main" tabindex="-1">
+  <nav id="admin-nav" class="tabs" data-i18n-label="admin.heading"></nav>
   <div id="messages"></div>
   <h1 data-i18n="admin.tabCustomers"></h1>
   <div class="panel table-wrap">
@@ -27,7 +28,7 @@
       <tbody id="customers"></tbody>
     </table>
   </div>
-  <nav id="pager" class="pager"></nav>
+  <nav id="pager" class="pager" data-i18n-label="catalog.pages"></nav>
 </main>
 <footer class="site-footer" data-i18n="site.footer"></footer>
 </body>
