@@ -140,8 +140,8 @@ Dokuz faz bitti. Çalışma her kesildiğinde nerede kalındığı burada tutulu
 | Durum | İş | Not |
 | --- | --- | --- |
 | ✅ | Outbox'u birden çok sunucuya hazırlamak: bekleyen olaylar `FOR UPDATE SKIP LOCKED` ile kilitleniyor | ADR-0022 notu; `OutboxRelayRaceContract` |
-| ⏳ sıradaki | Arayüzü klavye ve ekran okuyucuyla denetlemek *(odak sırası, etiketler, renk kontrastı)* | NFR-3/NFR-4'ün tamamlayıcısı |
-| ⏳ | JPA uygulamasını sunucuda seçilebilir yapmak: JTA veri kaynağı üzerinde kapsayıcının yönettiği `EntityManager` | ADR-0023'ün "sonraki adım"ı |
+| ✅ | Arayüzü klavye ve ekran okuyucu için iyileştirmek: atlama bağlantısı, adlandırılmış gezinme bölgeleri, yıldız rengi; `WebPagesTest` etiketleri ve iki temanın WCAG AA kontrastını denetliyor | Gerçek bir ekran okuyucuyla elle deneme henüz yapılmadı |
+| ⏳ sıradaki | JPA uygulamasını sunucuda seçilebilir yapmak: JTA veri kaynağı üzerinde kapsayıcının yönettiği `EntityManager` | ADR-0023'ün "sonraki adım"ı |
 | 🙋 karar | İlk sürüm etiketi `v2026.11.1` *(ADR-0017)* | Proje sahibinin kararı |
 | 🙋 karar | Ortak depoda *(software-lecture-labs)* PR #1'in onaylanıp `main`'e alınması | Depo kuralı bir onay istiyor |
 | 🙋 karar | Gerçek ödeme ve e-posta sağlayıcısı | Bugün demo ödeme ve günlüğe yazan bildirim var |
