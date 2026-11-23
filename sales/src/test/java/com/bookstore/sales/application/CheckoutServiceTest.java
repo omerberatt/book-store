@@ -11,12 +11,17 @@ import com.bookstore.sales.api.PaymentDeclinedException;
 import com.bookstore.sales.api.PlaceOrderCommand;
 import com.bookstore.sales.domain.Order;
 import com.bookstore.sales.domain.OrderPlaced;
+import com.bookstore.sales.domain.OrderRequest;
+import com.bookstore.sales.domain.OrderRequestLog;
 import com.bookstore.sales.domain.OrderStatus;
 import com.bookstore.sales.domain.OrderStatusChanged;
 import com.bookstore.shared.kernel.error.NotFoundException;
 import com.bookstore.shared.kernel.error.RuleViolationException;
 import com.bookstore.shared.kernel.identity.CustomerId;
 import com.bookstore.shared.kernel.money.Money;
+
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.Test;
 
@@ -157,6 +162,35 @@ class CheckoutServiceTest {
         assertThat(shop.orders.count()).isEqualTo(1);
         assertThat(shop.payments.charged()).hasSize(1);
         assertThat(shop.catalog.stockOf(dune.id())).isEqualTo(9);
+    }
+
+    @Test
+    void aRepeatThatMissedTheFirstRequestStillGetsItsOrder() {
+        shop.cart.add(cart, dune.id(), 1);
+        long address = shop.defaultAddressId(customerId);
+        OrderDetails first = shop.checkout.placeOrder(new PlaceOrderCommand(customerId, address, "CREDIT_CARD", "k-1"));
+        // The repeat looked for the key before the first request committed, so it did not see it then;
+        // by the time it reaches the cart, the first request has emptied it.
+        AtomicBoolean notYet = new AtomicBoolean(true);
+        OrderRequestLog lateLog = new OrderRequestLog() {
+            @Override
+            public Optional<OrderRequest> find(CustomerId customer, String key) {
+                return notYet.getAndSet(false) ? Optional.empty() : shop.requests.find(customer, key);
+            }
+
+            @Override
+            public void record(OrderRequest request) {
+                shop.requests.record(request);
+            }
+        };
+        CheckoutService repeat = new CheckoutService(shop.customers, shop.carts, shop.catalog, shop.orders,
+                shop.orderNumbers, lateLog, shop.payments, shop.shipping, shop.transactions, shop.outbox, shop.relay,
+                SalesShop.CLOCK);
+
+        OrderDetails answer = repeat.placeOrder(new PlaceOrderCommand(customerId, address, "CREDIT_CARD", "k-1"));
+
+        assertThat(answer).isEqualTo(first);
+        assertThat(shop.orders.count()).isEqualTo(1);
     }
 
     @Test

@@ -22,7 +22,7 @@ import com.bookstore.sales.domain.PaymentMethod;
 import com.bookstore.sales.domain.ProductSnapshot;
 import com.bookstore.sales.domain.ShippingPolicy;
 import com.bookstore.shared.kernel.address.Address;
-import com.bookstore.shared.kernel.error.ConflictException;
+import com.bookstore.shared.kernel.error.DomainException;
 import com.bookstore.shared.kernel.error.NotFoundException;
 import com.bookstore.shared.kernel.error.RuleViolationException;
 import com.bookstore.shared.kernel.error.ValidationException;
@@ -149,12 +149,14 @@ public class CheckoutService implements CheckoutFacade {
         Order order;
         try {
             order = transactions.inTransaction(() -> place(command, paymentMethod, fingerprint));
-        } catch (ConflictException duplicate) {
-            // The same key arrived twice at once; the first request has committed its order by now.
-            if (!OrderRequestLog.DUPLICATE_KEY.equals(duplicate.code())) {
-                throw duplicate;
+        } catch (DomainException failure) {
+            // The same key may have arrived twice at once. If the first request committed while this
+            // one ran, this one fails on the key, or earlier on the cart the first one emptied; either
+            // way it answers the first order instead of the failure.
+            if (command.idempotencyKey() == null) {
+                throw failure;
             }
-            return earlierAnswer(command, fingerprint).orElseThrow(() -> duplicate);
+            return earlierAnswer(command, fingerprint).orElseThrow(() -> failure);
         }
 
         relay.relayQuietly();
